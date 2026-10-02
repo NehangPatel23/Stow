@@ -1,0 +1,1063 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		80DC7407B46A31985750B419 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B56D6E45C56171E8AE8AC1FA;
+		};
+		D1288F865747BB667EB8C403 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = D81C82E194832D0599B73C0E;
+		};
+		DD225A536586C436D059335C /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = F27366964EACBF0AAF906A98;
+		};
+		6CC07D8745CFD147F7B26317 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 8770BF1DF7471F72D061C82E;
+		};
+		1DFEF45A620042FEABD9BC89 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = DED64117227BF1A4801944AA;
+		};
+		52FCE27AFFEB6E9BE72CCA17 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = A410FFA018394A5EC0CDEBAA;
+		};
+		6FE1DB23C9D61998199801A5 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = E8DE8FA8BF40A18EA633E5C7;
+		};
+		DAE562EB1B3927BCAB803A05 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = D49B91E2D1578E6DB17D1045;
+		};
+		E54F3BEF1DC0B60BD70CC8AC /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = BB71A3C02C5455B3E36B5640;
+		};
+		7B181CC05892B0CFAA13E6DC /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 6745D666DDC13D9262441C9F;
+		};
+		88BE4E5D889BB58E79941E5B /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 26AFEA612D0A9F861BDD7A27;
+		};
+		E0C4FE13C1088EE75E930261 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 3B681D55AA27167F4A91DABA;
+		};
+		A71C2E88D4B65F0193C0AA01 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = A71C2E88D4B65F0193C0AA10;
+		};
+		FF693C5831CA17C6DB2F25CA /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = FA01DFEAAA19AF36CADF241D;
+		};
+		45C37348C9DA97088B436D81 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 9777A3A45AB56D85BD6261B9;
+		};
+		B7BBE125935E05C303F585F4 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = E0445452ACBBF615ABE3B7C4;
+		};
+		11819AF75BCCC7CDE38EBBC2 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = BF6C23B5F5DE4F478127A032;
+		};
+		DC7B12D2C1AC475C3FF38343 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = D6D35248582792889F79E532;
+		};
+		0E53D894A698800288602BD8 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 7A243FAC3ECCF1A244ED4959;
+		};
+		73114A59606BD6B0FFD8131D /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 45C57EE0257E6E6D66C920FA;
+		};
+		E93D9E6B901BEB39D8CC774B /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = E21AD0ABA34C1ED004B02D6D;
+		};
+		8A7B81FA9CB4682E89562360 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = BADA37BB19ACD2670457341D;
+		};
+		B7D166CB5725765882847C8D /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 4BACAE29352BF62D87B20E69;
+		};
+		A449D1892E7DBC237642D826 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 5CBE27053B1B8960F11C5172;
+		};
+		D7A61B248160A0874BD37329 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 8059F1DF3C2D9C5570017300;
+		};
+		BBB97FB74519FF63122DCE8E /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 186437F34FB6F454A3E05D5F;
+		};
+		BBBC5685763CCD8A6B5026B9 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 4733C49C972528E446DD931E;
+		};
+		05520C22EBC2F8425D1B8891 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = DD817D5FD1D929B0A0FC3DDF;
+		};
+		A5E4661497B26ECA0A481591 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = ED04C1658F2A469403B40B74;
+		};
+		CB1F13C7774AADFC17FC9383 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 98F1BEF21E62F472F2ED04BD;
+		};
+		94760DAA6522B63EC00E8957 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 62DDB7EDB5D5C85E6F1EC4DC;
+		};
+		2FDE83B0557F5EF65FDAE106 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 1E5B85BD592A684230FAF87C;
+		};
+		D04113A4FEEED36CE521A9B6 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 4FF9BB3F34DDCF79A31D457A;
+		};
+		E7C31A90B2D84F16A0C85E21 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = F8D42B01C3E95027B1D96F32;
+		};
+		A91C0E44D7B18F2536C4AA10 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B02D1F55E8C29A3647D5BB21;
+		};
+		0B7FEAB559580959A7BC9681 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B56D6E45C56171E8AE8AC1FA;
+		};
+		8F6D8DF9CE0E86E6F29EEDA8 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = D81C82E194832D0599B73C0E;
+		};
+		FD03C362ACB0E21F88E5DCE5 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = F27366964EACBF0AAF906A98;
+		};
+		916C17A6EE638B9D35C54F96 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 8770BF1DF7471F72D061C82E;
+		};
+		8F3C90755C133FE5436B29A1 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = DED64117227BF1A4801944AA;
+		};
+		743891A8CF1244621087CB5B /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = A410FFA018394A5EC0CDEBAA;
+		};
+		918A0E0A09B8413EEECC6340 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = E8DE8FA8BF40A18EA633E5C7;
+		};
+		C9960720697742EEFD34BE36 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = D49B91E2D1578E6DB17D1045;
+		};
+		54FF2CD5E3E29E51B3A20A6D /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = BB71A3C02C5455B3E36B5640;
+		};
+		5C83256FE9841066E7A04DF0 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 6745D666DDC13D9262441C9F;
+		};
+		6FD2347A21F715B37EE64410 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 26AFEA612D0A9F861BDD7A27;
+		};
+		E5A1181749596DBEE63D4155 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 3B681D55AA27167F4A91DABA;
+		};
+		A71C2E88D4B65F0193C0AA02 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = A71C2E88D4B65F0193C0AA10;
+		};
+		A71C2E88D4B65F0193C0AA03 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = A71C2E88D4B65F0193C0AA11;
+		};
+		E0FC9B44A4FC318B7FCD3395 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = FA01DFEAAA19AF36CADF241D;
+		};
+		0431C67A9A0D89A634CBE8F4 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 9777A3A45AB56D85BD6261B9;
+		};
+		5646F27869C0E2B3E3AA2BE8 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = E0445452ACBBF615ABE3B7C4;
+		};
+		53E191E7A2D388B452E9F397 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = BF6C23B5F5DE4F478127A032;
+		};
+		BB0660DE2981FA77212CAF8D /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 72632EBD51DF09D1CF24EFFC;
+		};
+		3512D55F741A14345AF7D763 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 56E7A5962B3F4CDF2CF82E4A;
+		};
+		A966F708FAD599CD02645A49 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 6A5C6D99A553D46CA8246FAE;
+		};
+		6FF1EC64B81D9B02D6DB0725 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 4AD28D375A53BE2CBEDC39C6;
+		};
+		4453A89DA47A992066B3DF6D /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 6A0235AAEF48118CE6F54DDF;
+		};
+		6997D88C63B7E2EE23847BB4 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 276739D5590AA35A23B6086F;
+		};
+		F68147E79E29E6EDDED35421 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 7859B409C26784E30012964A;
+		};
+		FB969FF36F384EE36B2CBB40 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = AB0A310F81E98001670DFA47;
+		};
+		69E5736EAB6B7631F3709062 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = CA07719591C5A0AD274B9C35;
+		};
+		2406B9433A15F08195FD6EDA /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 58458960448E4566C1D5EA2D;
+		};
+		8AFA1F65F7CA60CD65736C02 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 81F4E47FAE5A28AE55AFB7EC;
+		};
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		B56D6E45C56171E8AE8AC1FA /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ByteFormat.swift;
+		sourceTree = "<group>";
+		};
+		D81C82E194832D0599B73C0E /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = Clip.swift;
+		sourceTree = "<group>";
+		};
+		F27366964EACBF0AAF906A98 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ClipClassifier.swift;
+		sourceTree = "<group>";
+		};
+		8770BF1DF7471F72D061C82E /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ClipKind.swift;
+		sourceTree = "<group>";
+		};
+		DED64117227BF1A4801944AA /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ClipText.swift;
+		sourceTree = "<group>";
+		};
+		A410FFA018394A5EC0CDEBAA /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ColorValue.swift;
+		sourceTree = "<group>";
+		};
+		E8DE8FA8BF40A18EA633E5C7 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ContentHash.swift;
+		sourceTree = "<group>";
+		};
+		D49B91E2D1578E6DB17D1045 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = HistoryOrganizer.swift;
+		sourceTree = "<group>";
+		};
+		BB71A3C02C5455B3E36B5640 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = HistoryStore.swift;
+		sourceTree = "<group>";
+		};
+		6745D666DDC13D9262441C9F /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = PasteTarget.swift;
+		sourceTree = "<group>";
+		};
+		26AFEA612D0A9F861BDD7A27 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = PasteboardPolicy.swift;
+		sourceTree = "<group>";
+		};
+		3B681D55AA27167F4A91DABA /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SearchQuery.swift;
+		sourceTree = "<group>";
+		};
+		A71C2E88D4B65F0193C0AA10 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ClipTransforms.swift;
+		sourceTree = "<group>";
+		};
+		FA01DFEAAA19AF36CADF241D /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SecretDetector.swift;
+		sourceTree = "<group>";
+		};
+		9777A3A45AB56D85BD6261B9 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = Snippet.swift;
+		sourceTree = "<group>";
+		};
+		E0445452ACBBF615ABE3B7C4 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SyntaxHighlighter.swift;
+		sourceTree = "<group>";
+		};
+		BF6C23B5F5DE4F478127A032 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = TimeBucket.swift;
+		sourceTree = "<group>";
+		};
+		D6D35248582792889F79E532 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = AccessibilityClient.swift;
+		sourceTree = "<group>";
+		};
+		7A243FAC3ECCF1A244ED4959 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = AppDelegate.swift;
+		sourceTree = "<group>";
+		};
+		45C57EE0257E6E6D66C920FA /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = AppModel.swift;
+		sourceTree = "<group>";
+		};
+		E21AD0ABA34C1ED004B02D6D /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ClipIngest.swift;
+		sourceTree = "<group>";
+		};
+		BADA37BB19ACD2670457341D /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ClipRowView.swift;
+		sourceTree = "<group>";
+		};
+		4BACAE29352BF62D87B20E69 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = HotkeyController.swift;
+		sourceTree = "<group>";
+		};
+		5CBE27053B1B8960F11C5172 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = KeyCodes.swift;
+		sourceTree = "<group>";
+		};
+		8059F1DF3C2D9C5570017300 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = PanelController.swift;
+		sourceTree = "<group>";
+		};
+		186437F34FB6F454A3E05D5F /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = PanelRootView.swift;
+		sourceTree = "<group>";
+		};
+		4733C49C972528E446DD931E /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = PasteService.swift;
+		sourceTree = "<group>";
+		};
+		DD817D5FD1D929B0A0FC3DDF /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = PasteboardMonitor.swift;
+		sourceTree = "<group>";
+		};
+		ED04C1658F2A469403B40B74 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = Preferences.swift;
+		sourceTree = "<group>";
+		};
+		98F1BEF21E62F472F2ED04BD /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = PreviewPaneView.swift;
+		sourceTree = "<group>";
+		};
+		62DDB7EDB5D5C85E6F1EC4DC /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SettingsView.swift;
+		sourceTree = "<group>";
+		};
+		1E5B85BD592A684230FAF87C /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = StatusItemController.swift;
+		sourceTree = "<group>";
+		};
+		4FF9BB3F34DDCF79A31D457A /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = Theme.swift;
+		sourceTree = "<group>";
+		};
+		F8D42B01C3E95027B1D96F32 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = LaunchExperience.swift;
+		sourceTree = "<group>";
+		};
+		B02D1F55E8C29A3647D5BB21 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ToastPresenter.swift;
+		sourceTree = "<group>";
+		};
+		72632EBD51DF09D1CF24EFFC /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ClipClassifierTests.swift;
+		sourceTree = "<group>";
+		};
+		56E7A5962B3F4CDF2CF82E4A /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ColorValueTests.swift;
+		sourceTree = "<group>";
+		};
+		6A5C6D99A553D46CA8246FAE /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = Fixtures.swift;
+		sourceTree = "<group>";
+		};
+		4AD28D375A53BE2CBEDC39C6 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = HistoryOrganizerTests.swift;
+		sourceTree = "<group>";
+		};
+		6A0235AAEF48118CE6F54DDF /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = HistoryStoreTests.swift;
+		sourceTree = "<group>";
+		};
+		276739D5590AA35A23B6086F /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = PasteTargetTests.swift;
+		sourceTree = "<group>";
+		};
+		7859B409C26784E30012964A /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = PasteboardPolicyTests.swift;
+		sourceTree = "<group>";
+		};
+		AB0A310F81E98001670DFA47 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SearchQueryTests.swift;
+		sourceTree = "<group>";
+		};
+		A71C2E88D4B65F0193C0AA11 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ClipTransformsTests.swift;
+		sourceTree = "<group>";
+		};
+		CA07719591C5A0AD274B9C35 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SecretDetectorTests.swift;
+		sourceTree = "<group>";
+		};
+		58458960448E4566C1D5EA2D /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SyntaxHighlighterTests.swift;
+		sourceTree = "<group>";
+		};
+		81F4E47FAE5A28AE55AFB7EC /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = folder.assetcatalog;
+		path = Assets.xcassets;
+		sourceTree = "<group>";
+		};
+		7E2B5A611512817A91B783CB /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text.plist.xml;
+		path = Info.plist;
+		sourceTree = "<group>";
+		};
+		3E3C69C43438748781B921C5 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text.plist.entitlements;
+		path = Stow.entitlements;
+		sourceTree = "<group>";
+		};
+		B6CDB6E5D160E013280D3C68 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		explicitFileType = wrapper.application;
+		includeInIndex = 0;
+		path = Stow.app;
+		sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		A8D8270AA6DB8732282C9541 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		explicitFileType = wrapper.cfbundle;
+		includeInIndex = 0;
+		path = StowTests.xctest;
+		sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		DC5E72DCDAFA3A0962FBEC53 /* PBXFrameworksBuildPhase */ = {
+		isa = PBXFrameworksBuildPhase;
+		buildActionMask = 2147483647;
+		files = (
+
+		);
+		runOnlyForDeploymentPostprocessing = 0;
+		};
+		96C8A1040BEA52B0A710C717 /* PBXFrameworksBuildPhase */ = {
+		isa = PBXFrameworksBuildPhase;
+		buildActionMask = 2147483647;
+		files = (
+
+		);
+		runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		FC8F5A85394B0D5FF7E93AFA /* PBXGroup */ = {
+		isa = PBXGroup;
+		children = (
+				B56D6E45C56171E8AE8AC1FA,
+				D81C82E194832D0599B73C0E,
+				F27366964EACBF0AAF906A98,
+				8770BF1DF7471F72D061C82E,
+				DED64117227BF1A4801944AA,
+				A410FFA018394A5EC0CDEBAA,
+				E8DE8FA8BF40A18EA633E5C7,
+				D49B91E2D1578E6DB17D1045,
+				BB71A3C02C5455B3E36B5640,
+				6745D666DDC13D9262441C9F,
+				26AFEA612D0A9F861BDD7A27,
+				3B681D55AA27167F4A91DABA,
+				A71C2E88D4B65F0193C0AA10,
+				FA01DFEAAA19AF36CADF241D,
+				9777A3A45AB56D85BD6261B9,
+				E0445452ACBBF615ABE3B7C4,
+				BF6C23B5F5DE4F478127A032,
+		);
+		name = StowCore;
+		path = Sources/StowCore;
+		sourceTree = "<group>";
+		};
+		CF8D0BD4B75E8C2C174692A5 /* PBXGroup */ = {
+		isa = PBXGroup;
+		children = (
+				D6D35248582792889F79E532,
+				7A243FAC3ECCF1A244ED4959,
+				45C57EE0257E6E6D66C920FA,
+				E21AD0ABA34C1ED004B02D6D,
+				BADA37BB19ACD2670457341D,
+				4BACAE29352BF62D87B20E69,
+				5CBE27053B1B8960F11C5172,
+				8059F1DF3C2D9C5570017300,
+				186437F34FB6F454A3E05D5F,
+				4733C49C972528E446DD931E,
+				DD817D5FD1D929B0A0FC3DDF,
+				ED04C1658F2A469403B40B74,
+				98F1BEF21E62F472F2ED04BD,
+				62DDB7EDB5D5C85E6F1EC4DC,
+				1E5B85BD592A684230FAF87C,
+				4FF9BB3F34DDCF79A31D457A,
+				F8D42B01C3E95027B1D96F32,
+				B02D1F55E8C29A3647D5BB21,
+		);
+		name = Stow;
+		path = Sources/Stow;
+		sourceTree = "<group>";
+		};
+		EEFE21A1443933CA4DE017DA /* PBXGroup */ = {
+		isa = PBXGroup;
+		children = (
+				72632EBD51DF09D1CF24EFFC,
+				56E7A5962B3F4CDF2CF82E4A,
+				6A5C6D99A553D46CA8246FAE,
+				4AD28D375A53BE2CBEDC39C6,
+				6A0235AAEF48118CE6F54DDF,
+				276739D5590AA35A23B6086F,
+				7859B409C26784E30012964A,
+				AB0A310F81E98001670DFA47,
+				A71C2E88D4B65F0193C0AA11,
+				CA07719591C5A0AD274B9C35,
+				58458960448E4566C1D5EA2D,
+		);
+		name = StowTests;
+		path = Tests/StowTests;
+		sourceTree = "<group>";
+		};
+		47A5B9F2961DC17B7FF68791 /* PBXGroup */ = {
+		isa = PBXGroup;
+		children = (
+				81F4E47FAE5A28AE55AFB7EC,
+				7E2B5A611512817A91B783CB,
+				3E3C69C43438748781B921C5,
+		);
+		name = Resources;
+		path = Stow;
+		sourceTree = "<group>";
+		};
+		00C45FD35CB0F9C5F764F070 /* PBXGroup */ = {
+		isa = PBXGroup;
+		children = (
+				B6CDB6E5D160E013280D3C68,
+				A8D8270AA6DB8732282C9541,
+		);
+		name = Products;
+		sourceTree = "<group>";
+		};
+		ADCF10F76EBF2A74473E9DC4 /* PBXGroup */ = {
+		isa = PBXGroup;
+		children = (
+				FC8F5A85394B0D5FF7E93AFA,
+				CF8D0BD4B75E8C2C174692A5,
+				EEFE21A1443933CA4DE017DA,
+				47A5B9F2961DC17B7FF68791,
+				00C45FD35CB0F9C5F764F070,
+		);
+		sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		29C7B681C8D62CBAC94D51C0 /* PBXNativeTarget */ = {
+		isa = PBXNativeTarget;
+		buildConfigurationList = 23746EFE221170E24101FE05;
+		buildPhases = (
+				507A349611DBB42F9CF9069B,
+				DC5E72DCDAFA3A0962FBEC53,
+				948756E4B49084A627CA0B9A,
+		);
+		buildRules = (
+		);
+		dependencies = (
+		);
+		name = Stow;
+		productName = Stow;
+		productReference = B6CDB6E5D160E013280D3C68;
+		productType = "com.apple.product-type.application";
+		};
+		EA5815D3D83100CE3F564964 /* PBXNativeTarget */ = {
+		isa = PBXNativeTarget;
+		buildConfigurationList = 48751F087EE6031B0313610C;
+		buildPhases = (
+				283236DFCBED01B817B33E02,
+				96C8A1040BEA52B0A710C717,
+		);
+		buildRules = (
+		);
+		dependencies = (
+		);
+		name = StowTests;
+		productName = StowTests;
+		productReference = A8D8270AA6DB8732282C9541;
+		productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		98F54143AB4E86B28C3AFEE0 /* PBXProject */ = {
+		isa = PBXProject;
+		attributes = {
+			BuildIndependentTargetsInParallel = 1;
+			LastUpgradeCheck = 2700;
+			TargetAttributes = {
+				29C7B681C8D62CBAC94D51C0 = {
+					CreatedOnToolsVersion = 27.0;
+				};
+				EA5815D3D83100CE3F564964 = {
+					CreatedOnToolsVersion = 27.0;
+				};
+			};
+		};
+		buildConfigurationList = B0D3B7D22269663DD77FCD84;
+		compatibilityVersion = "Xcode 14.0";
+		developmentRegion = en;
+		hasScannedForEncodings = 0;
+		knownRegions = (
+			en,
+			Base,
+		);
+		mainGroup = ADCF10F76EBF2A74473E9DC4;
+		productRefGroup = 00C45FD35CB0F9C5F764F070;
+		projectDirPath = "";
+		projectRoot = "";
+		targets = (
+				29C7B681C8D62CBAC94D51C0,
+				EA5815D3D83100CE3F564964,
+		);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		948756E4B49084A627CA0B9A /* PBXResourcesBuildPhase */ = {
+		isa = PBXResourcesBuildPhase;
+		buildActionMask = 2147483647;
+		files = (
+				8AFA1F65F7CA60CD65736C02,
+		);
+		runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		507A349611DBB42F9CF9069B /* PBXSourcesBuildPhase */ = {
+		isa = PBXSourcesBuildPhase;
+		buildActionMask = 2147483647;
+		files = (
+				80DC7407B46A31985750B419,
+				D1288F865747BB667EB8C403,
+				DD225A536586C436D059335C,
+				6CC07D8745CFD147F7B26317,
+				1DFEF45A620042FEABD9BC89,
+				52FCE27AFFEB6E9BE72CCA17,
+				6FE1DB23C9D61998199801A5,
+				DAE562EB1B3927BCAB803A05,
+				E54F3BEF1DC0B60BD70CC8AC,
+				7B181CC05892B0CFAA13E6DC,
+				88BE4E5D889BB58E79941E5B,
+				E0C4FE13C1088EE75E930261,
+				A71C2E88D4B65F0193C0AA01,
+				FF693C5831CA17C6DB2F25CA,
+				45C37348C9DA97088B436D81,
+				B7BBE125935E05C303F585F4,
+				11819AF75BCCC7CDE38EBBC2,
+				DC7B12D2C1AC475C3FF38343,
+				0E53D894A698800288602BD8,
+				73114A59606BD6B0FFD8131D,
+				E93D9E6B901BEB39D8CC774B,
+				8A7B81FA9CB4682E89562360,
+				B7D166CB5725765882847C8D,
+				A449D1892E7DBC237642D826,
+				D7A61B248160A0874BD37329,
+				BBB97FB74519FF63122DCE8E,
+				BBBC5685763CCD8A6B5026B9,
+				05520C22EBC2F8425D1B8891,
+				A5E4661497B26ECA0A481591,
+				CB1F13C7774AADFC17FC9383,
+				94760DAA6522B63EC00E8957,
+				2FDE83B0557F5EF65FDAE106,
+				D04113A4FEEED36CE521A9B6,
+				E7C31A90B2D84F16A0C85E21,
+				A91C0E44D7B18F2536C4AA10,
+		);
+		runOnlyForDeploymentPostprocessing = 0;
+		};
+		283236DFCBED01B817B33E02 /* PBXSourcesBuildPhase */ = {
+		isa = PBXSourcesBuildPhase;
+		buildActionMask = 2147483647;
+		files = (
+				0B7FEAB559580959A7BC9681,
+				8F6D8DF9CE0E86E6F29EEDA8,
+				FD03C362ACB0E21F88E5DCE5,
+				916C17A6EE638B9D35C54F96,
+				8F3C90755C133FE5436B29A1,
+				743891A8CF1244621087CB5B,
+				918A0E0A09B8413EEECC6340,
+				C9960720697742EEFD34BE36,
+				54FF2CD5E3E29E51B3A20A6D,
+				5C83256FE9841066E7A04DF0,
+				6FD2347A21F715B37EE64410,
+				E5A1181749596DBEE63D4155,
+				A71C2E88D4B65F0193C0AA02,
+				A71C2E88D4B65F0193C0AA03,
+				E0FC9B44A4FC318B7FCD3395,
+				0431C67A9A0D89A634CBE8F4,
+				5646F27869C0E2B3E3AA2BE8,
+				53E191E7A2D388B452E9F397,
+				BB0660DE2981FA77212CAF8D,
+				3512D55F741A14345AF7D763,
+				A966F708FAD599CD02645A49,
+				6FF1EC64B81D9B02D6DB0725,
+				4453A89DA47A992066B3DF6D,
+				6997D88C63B7E2EE23847BB4,
+				F68147E79E29E6EDDED35421,
+				FB969FF36F384EE36B2CBB40,
+				69E5736EAB6B7631F3709062,
+				2406B9433A15F08195FD6EDA,
+		);
+		runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		754064D2901B6752E802BA06 /* XCBuildConfiguration */ = {
+		isa = XCBuildConfiguration;
+		buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = Y3W97K33QU;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_APP_SANDBOX = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = -lsqlite3;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				SWIFT_OPTIMIZATION_LEVEL = -Onone;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_DEBUG_DYLIB = NO;
+				ONLY_ACTIVE_ARCH = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = Stow;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nehangpatel.Stow;
+				INFOPLIST_FILE = "Stow/Info.plist";
+				GENERATE_INFOPLIST_FILE = NO;
+				CODE_SIGN_ENTITLEMENTS = "Stow/Stow.entitlements";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_PREVIEWS = YES;
+		};
+		name = Debug;
+		};
+		831F0B0E7AD0243B76867D45 /* XCBuildConfiguration */ = {
+		isa = XCBuildConfiguration;
+		buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = Y3W97K33QU;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_APP_SANDBOX = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = -lsqlite3;
+				DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
+				SWIFT_OPTIMIZATION_LEVEL = -O;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				ENABLE_NS_ASSERTIONS = NO;
+				PRODUCT_NAME = Stow;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nehangpatel.Stow;
+				INFOPLIST_FILE = "Stow/Info.plist";
+				GENERATE_INFOPLIST_FILE = NO;
+				CODE_SIGN_ENTITLEMENTS = "Stow/Stow.entitlements";
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_PREVIEWS = YES;
+		};
+		name = Release;
+		};
+		E8A7D59B347239969BCF4442 /* XCBuildConfiguration */ = {
+		isa = XCBuildConfiguration;
+		buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				CODE_SIGN_IDENTITY = -;
+				CODE_SIGN_STYLE = Manual;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_APP_SANDBOX = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = -lsqlite3;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				SWIFT_OPTIMIZATION_LEVEL = -Onone;
+				ENABLE_TESTABILITY = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = StowTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nehangpatel.StowTests;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				BUNDLE_LOADER = "";
+				TEST_HOST = "";
+		};
+		name = Debug;
+		};
+		FB77EFCD69769151259EA1DF /* XCBuildConfiguration */ = {
+		isa = XCBuildConfiguration;
+		buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				CODE_SIGN_IDENTITY = -;
+				CODE_SIGN_STYLE = Manual;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_APP_SANDBOX = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 0.1.0;
+				OTHER_LDFLAGS = -lsqlite3;
+				DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
+				SWIFT_OPTIMIZATION_LEVEL = -O;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				ENABLE_NS_ASSERTIONS = NO;
+				PRODUCT_NAME = StowTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nehangpatel.StowTests;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @loader_path/../Frameworks";
+				BUNDLE_LOADER = "";
+				TEST_HOST = "";
+		};
+		name = Release;
+		};
+		62C0502E9DD2F4A0E153A290 /* XCBuildConfiguration */ = {
+		isa = XCBuildConfiguration;
+		buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = -Onone;
+				OTHER_CODE_SIGN_FLAGS = "--strip-disallowed-xattrs";
+		};
+		name = Debug;
+		};
+		A1076DB52F6D567F23A74575 /* XCBuildConfiguration */ = {
+		isa = XCBuildConfiguration;
+		buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf-with-dsym;
+				ENABLE_TESTABILITY = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				ONLY_ACTIVE_ARCH = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
+				SWIFT_OPTIMIZATION_LEVEL = -O;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				OTHER_CODE_SIGN_FLAGS = "--strip-disallowed-xattrs";
+		};
+		name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		23746EFE221170E24101FE05 /* XCConfigurationList */ = {
+		isa = XCConfigurationList;
+		buildConfigurations = (
+				754064D2901B6752E802BA06,
+				831F0B0E7AD0243B76867D45,
+		);
+		defaultConfigurationIsVisible = 0;
+		defaultConfigurationName = Debug;
+		};
+		48751F087EE6031B0313610C /* XCConfigurationList */ = {
+		isa = XCConfigurationList;
+		buildConfigurations = (
+				E8A7D59B347239969BCF4442,
+				FB77EFCD69769151259EA1DF,
+		);
+		defaultConfigurationIsVisible = 0;
+		defaultConfigurationName = Debug;
+		};
+		B0D3B7D22269663DD77FCD84 /* XCConfigurationList */ = {
+		isa = XCConfigurationList;
+		buildConfigurations = (
+				62C0502E9DD2F4A0E153A290,
+				A1076DB52F6D567F23A74575,
+		);
+		defaultConfigurationIsVisible = 0;
+		defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 98F54143AB4E86B28C3AFEE0 /* Project object */;
+}

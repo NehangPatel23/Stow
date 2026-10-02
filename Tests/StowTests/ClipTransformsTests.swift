@@ -1,0 +1,45 @@
+import XCTest
+
+final class ClipTransformsTests: XCTestCase {
+    func testHTMLToMarkdown() {
+        let html = "<p>Hello <a href=\"https://example.com\">there</a></p><p><strong>Bold</strong></p>"
+        let markdown = ClipTransform.htmlToMarkdown.output(text: html, html: html)
+        XCTAssertEqual(markdown, "Hello [there](https://example.com)\n\n**Bold**")
+    }
+
+    func testHTMLSourceCopiedAsRichText() {
+        let plain = "<h1>Title</h1><p>Hello <strong>world</strong> and a <a href=\"https://example.com\">link</a>.</p>"
+        let escaped = "<meta charset='utf-8'>&lt;h1&gt;Title&lt;/h1&gt;&lt;p&gt;Hello &lt;strong&gt;world&lt;/strong&gt; and a &lt;a href=\"https://example.com\"&gt;link&lt;/a&gt;.&lt;/p&gt;"
+        let markdown = ClipTransform.htmlToMarkdown.output(text: plain, html: escaped)
+        XCTAssertEqual(markdown, "Title\n\nHello **world** and a [link](https://example.com).")
+    }
+
+    func testEscapedWrapperAroundPlainTextOffersNothing() {
+        let plain = "A paragraph broken onto several short lines, with a blank line before the next paragraph"
+        let escaped = "<meta charset='utf-8'>A paragraph broken onto several short lines, with a blank line before the next paragraph"
+        XCTAssertNil(ClipTransform.htmlToMarkdown.output(text: plain, html: escaped))
+        XCTAssertNil(ClipTransform.unwrapLines.output(text: plain, html: escaped))
+    }
+
+    func testPrettyJSON() {
+        let pretty = ClipTransform.prettyJSON.output(text: #"{"b":1,"a":2}"#, html: nil)
+        XCTAssertEqual(pretty, "{\n  \"a\" : 2,\n  \"b\" : 1\n}")
+    }
+
+    func testUnwrapLinesKeepsParagraphs() {
+        let wrapped = "This line was\nwrapped on purpose.\n\nA second paragraph."
+        XCTAssertEqual(
+            ClipTransform.unwrapLines.output(text: wrapped, html: nil),
+            "This line was wrapped on purpose.\n\nA second paragraph."
+        )
+    }
+
+    func testStripTrackingParameters() {
+        let url = "https://example.com/path?utm_source=newsletter&id=4&fbclid=abc"
+        XCTAssertEqual(ClipTransform.stripTracking.output(text: url, html: nil), "https://example.com/path?id=4")
+    }
+
+    func testPlainTextOffersNothing() {
+        XCTAssertTrue(ClipTransform.available(text: "Hello", html: nil).isEmpty)
+    }
+}
