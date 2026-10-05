@@ -37,6 +37,8 @@ struct Preferences: Codable, Equatable, Sendable {
     var syncFolderBookmark: Data? = nil
     /// Display path shown in Settings (bookmark is the source of truth).
     var syncFolderDisplayPath: String? = nil
+    /// When off, copies arriving via Universal Clipboard (iPhone / iPad) are not recorded.
+    var includeUniversalClipboard: Bool = true
 
     private static let defaultsKey = "Stow.Preferences"
 
@@ -47,6 +49,7 @@ struct Preferences: Codable, Equatable, Sendable {
         case textRetentionDays, imageRetentionDays, abbreviationExpansionEnabled
         case hotkeyKeyCode, hotkeyCarbonModifiers, hotkeyLabel
         case syncEnabled, syncHistory, syncSnippets, syncFolderBookmark, syncFolderDisplayPath
+        case includeUniversalClipboard
     }
 
     init() {}
@@ -80,6 +83,7 @@ struct Preferences: Codable, Equatable, Sendable {
         syncSnippets = try container.decodeIfPresent(Bool.self, forKey: .syncSnippets) ?? true
         syncFolderBookmark = try container.decodeIfPresent(Data.self, forKey: .syncFolderBookmark)
         syncFolderDisplayPath = try container.decodeIfPresent(String.self, forKey: .syncFolderDisplayPath)
+        includeUniversalClipboard = try container.decodeIfPresent(Bool.self, forKey: .includeUniversalClipboard) ?? true
     }
 
     private static let retentionChoices = [0, 1, 7, 14, 30, 90, 365]

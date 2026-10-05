@@ -44,15 +44,26 @@ final class PasteboardMonitor {
             return
         }
 
-        let source = NSWorkspace.shared.frontmostApplication
-        if source?.bundleIdentifier == Bundle.main.bundleIdentifier {
-            return
-        }
-        if let bundleID = source?.bundleIdentifier, model.isExcluded(bundleID) {
+        let fromUniversalClipboard = PasteboardPolicy.isUniversalClipboard(types: types)
+        if fromUniversalClipboard, !model.preferences.includeUniversalClipboard {
             return
         }
 
-        guard let draft = ClipIngest.makeDraft(from: pasteboard, source: source) else { return }
+        let source = NSWorkspace.shared.frontmostApplication
+        if !fromUniversalClipboard {
+            if source?.bundleIdentifier == Bundle.main.bundleIdentifier {
+                return
+            }
+            if let bundleID = source?.bundleIdentifier, model.isExcluded(bundleID) {
+                return
+            }
+        }
+
+        guard var draft = ClipIngest.makeDraft(from: pasteboard, source: source) else { return }
+        if fromUniversalClipboard {
+            draft.sourceAppName = "Universal Clipboard"
+            draft.sourceBundleID = PasteboardPolicy.universalClipboardType
+        }
         let secret = draft.text.flatMap { SecretDetector.detect(in: $0) }
         model.ingest(draft: draft, secret: secret)
     }

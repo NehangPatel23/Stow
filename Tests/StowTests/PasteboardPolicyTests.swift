@@ -37,4 +37,11 @@ final class PasteboardPolicyTests: XCTestCase {
             )
         )
     }
+
+    func testUniversalClipboardMarker() {
+        let remote: Set<String> = ["public.utf8-plain-text", PasteboardPolicy.universalClipboardType]
+        XCTAssertTrue(PasteboardPolicy.isUniversalClipboard(types: remote))
+        XCTAssertFalse(PasteboardPolicy.shouldIgnore(types: remote))
+        XCTAssertFalse(PasteboardPolicy.isUniversalClipboard(types: ["public.utf8-plain-text"]))
+    }
 }

@@ -659,6 +659,26 @@ struct SettingsView: View {
             symbol: "eye.slash",
             theme: theme
         ) {
+            settingsRow(isActive: true, theme: theme) {
+                settingsLabel(
+                    title: "Universal Clipboard",
+                    detail: "Keep copies that arrive from your iPhone or iPad. Turn off to ignore them.",
+                    theme: theme
+                )
+            } trailing: {
+                Toggle(
+                    "Universal Clipboard",
+                    isOn: Binding(
+                        get: { model.preferences.includeUniversalClipboard },
+                        set: { model.preferences.includeUniversalClipboard = $0 }
+                    )
+                )
+                .labelsHidden()
+                .toggleStyle(.switch)
+            }
+
+            settingsDivider(theme)
+
             if model.preferences.excludedApps.isEmpty {
                 emptyHint("No apps excluded yet.", theme: theme)
             } else {

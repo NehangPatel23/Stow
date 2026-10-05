@@ -20,6 +20,9 @@ enum PasteboardPolicy {
 
     static let originType = "com.nehangpatel.stow.origin"
 
+    /// Apple marks Continuity / Universal Clipboard payloads with this type.
+    static let universalClipboardType = "com.apple.is-remote-clipboard"
+
     static let supported: Set<String> = [
         "public.utf8-plain-text",
         "public.rtf",
@@ -37,5 +40,10 @@ enum PasteboardPolicy {
             return true
         }
         return types.isDisjoint(with: supported)
+    }
+
+    /// True when the pasteboard change arrived from another Apple device.
+    static func isUniversalClipboard(types: Set<String>) -> Bool {
+        types.contains(universalClipboardType)
     }
 }

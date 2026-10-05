@@ -98,11 +98,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: NSWorkspace.didActivateApplicationNotification,
             object: nil
         )
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(libraryChangedFromIntent(_:)),
+            name: StowIntentSupport.libraryDidChangeNotification,
+            object: nil
+        )
     }
 
     @objc private func frontAppChanged(_ notification: Notification) {
         let app = notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication
         model?.notePreviousApp(app)
+    }
+
+    @objc private func libraryChangedFromIntent(_ notification: Notification) {
+        model?.refresh()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

@@ -14,7 +14,7 @@ Update the Done column when you check boxes.
 | --- | --- | ---: | ---: |
 | Match Maccy | Behaviors the first paste loop still has to have | 7 | 7 |
 | First version | Build before daily paste feels right | 15 | 15 |
-| Later wave | Add after the first version is trustworthy | 11 | 10 |
+| Later wave | Add after the first version is trustworthy | 11 | 11 |
 | Further ideas | After history, preview, and paste beat Maccy | 26 | 1 |
 
 ## Match Maccy first
@@ -78,7 +78,7 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 
 - [x] **Local archive** — Later. Export and import a file you choose. Export can leave clips out; import can add new items only or replace everything. History does not leave the Mac unless you save that file.
 - [x] **Opt-in sync** — Later. Encrypted sync across your own Macs is off until you enable it. Snippets and history can sync separately. Items flagged as secrets never sync.
-- [ ] **Universal Clipboard and Shortcuts** — Later. A toggle includes or ignores copies arriving from an iPhone. Shortcuts actions cover latest clip, search, and save as snippet.
+- [x] **Universal Clipboard and Shortcuts** — Later. A toggle includes or ignores copies arriving from an iPhone. Shortcuts actions cover latest clip, search, and save as snippet.
 
 ## How the window should feel
 
@@ -92,7 +92,7 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 
 Ship a trustworthy history before snippets, OCR, or sync. The first version is the panel, preview, type recognition, filters, visible actions, paste-target awareness, a separate snippets list, undo, secret skip, and app exclusions.
 
-Clip transforms, multi-paste, collections, fill-in templates, a pinned compact panel, storage rules, optional abbreviations, a local archive (selective export, merge or replace import), on-device OCR for text inside screenshots, and opt-in encrypted folder sync are in the app. Still in that wave: Universal Clipboard with Shortcuts.
+The later wave is in the app: clip transforms, multi-paste, collections, fill-in templates, a pinned compact panel, storage rules, optional abbreviations, a local archive, on-device OCR, opt-in encrypted folder sync, a Universal Clipboard toggle, and Shortcuts actions for latest clip, search, and save as snippet.
 
 ## Further ideas
 

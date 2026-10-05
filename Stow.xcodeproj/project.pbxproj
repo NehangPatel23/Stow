@@ -123,6 +123,10 @@
 		isa = PBXBuildFile;
 		fileRef = A91C2E88D4B65F0193C0AA10;
 		};
+		E91C2E88D4B65F0193C0AA01 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = E91C2E88D4B65F0193C0AA10;
+		};
 		B7BBE125935E05C303F585F4 /* PBXBuildFile */ = {
 		isa = PBXBuildFile;
 		fileRef = E0445452ACBBF615ABE3B7C4;
@@ -498,6 +502,12 @@
 		path = SyncFolderAccess.swift;
 		sourceTree = "<group>";
 		};
+		E91C2E88D4B65F0193C0AA10 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = StowAppIntents.swift;
+		sourceTree = "<group>";
+		};
 		E0445452ACBBF615ABE3B7C4 /* PBXFileReference */ = {
 		isa = PBXFileReference;
 		lastKnownFileType = sourcecode.swift;
@@ -792,6 +802,7 @@
 				B91C2E88D4B65F0193C0AA10,
 				C91C2E88D4B65F0193C0AA10,
 				D91C2E88D4B65F0193C0AA10,
+				E91C2E88D4B65F0193C0AA10,
 		);
 		name = Stow;
 		path = Sources/Stow;
@@ -963,6 +974,7 @@
 				B91C2E88D4B65F0193C0AA01,
 				C91C2E88D4B65F0193C0AA01,
 				D91C2E88D4B65F0193C0AA01,
+				E91C2E88D4B65F0193C0AA01,
 				B7BBE125935E05C303F585F4,
 				11819AF75BCCC7CDE38EBBC2,
 				DC7B12D2C1AC475C3FF38343,
