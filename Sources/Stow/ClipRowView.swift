@@ -127,6 +127,14 @@ struct ClipRowView: View {
                 model.select(clip.id)
                 model.pasteSelected(plain: true)
             }
+            Button("Paste Once") {
+                model.select(clip.id)
+                model.pasteSelected(plain: false, oneShot: true)
+            }
+            Button("Paste Plain Once") {
+                model.select(clip.id)
+                model.pasteSelected(plain: true, oneShot: true)
+            }
             Button("Copy") {
                 model.select(clip.id)
                 model.copySelected()
@@ -289,6 +297,10 @@ struct SnippetRowView: View {
             Button("Paste") {
                 model.selectOnly(snippet.id)
                 model.pasteSelected(plain: false)
+            }
+            Button("Paste Once") {
+                model.selectOnly(snippet.id)
+                model.pasteSelected(plain: false, oneShot: true)
             }
             Button("Copy") {
                 model.selectOnly(snippet.id)

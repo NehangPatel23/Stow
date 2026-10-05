@@ -17,6 +17,8 @@ struct Preferences: Codable, Equatable, Sendable {
     var ignoreNextCopy: Bool = false
     var showShortcutFooter: Bool = true
     var keepPanelOpen: Bool = false
+    /// After Option-Return paste, put the previous system clipboard back.
+    var oneShotPaste: Bool = false
     var compactRows: Bool = false
     var hasSeenFirstRun: Bool = false
     /// Days to keep unpinned text-like clips. `0` means keep forever.
@@ -45,7 +47,7 @@ struct Preferences: Codable, Equatable, Sendable {
     enum CodingKeys: String, CodingKey {
         case excludedApps, extraIgnoredPasteboardTypes, manuallyPaused, pauseUntil
         case frontAppPauseBundleID, frontAppPauseName, frontAppPauseUntil, ignoreNextCopy
-        case showShortcutFooter, keepPanelOpen, compactRows, hasSeenFirstRun
+        case showShortcutFooter, keepPanelOpen, oneShotPaste, compactRows, hasSeenFirstRun
         case textRetentionDays, imageRetentionDays, abbreviationExpansionEnabled
         case hotkeyKeyCode, hotkeyCarbonModifiers, hotkeyLabel
         case syncEnabled, syncHistory, syncSnippets, syncFolderBookmark, syncFolderDisplayPath
@@ -66,6 +68,7 @@ struct Preferences: Codable, Equatable, Sendable {
         ignoreNextCopy = try container.decodeIfPresent(Bool.self, forKey: .ignoreNextCopy) ?? false
         showShortcutFooter = try container.decodeIfPresent(Bool.self, forKey: .showShortcutFooter) ?? true
         keepPanelOpen = try container.decodeIfPresent(Bool.self, forKey: .keepPanelOpen) ?? false
+        oneShotPaste = try container.decodeIfPresent(Bool.self, forKey: .oneShotPaste) ?? false
         compactRows = try container.decodeIfPresent(Bool.self, forKey: .compactRows) ?? false
         hasSeenFirstRun = try container.decodeIfPresent(Bool.self, forKey: .hasSeenFirstRun) ?? false
         textRetentionDays = Self.normalizedRetention(

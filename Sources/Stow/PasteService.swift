@@ -53,6 +53,15 @@ enum PasteService {
         pasteboard.writeObjects([item])
     }
 
+    static func snapshot(from pasteboard: NSPasteboard = .general) -> PasteboardSnapshot? {
+        PasteboardSnapshot.capture(from: pasteboard)
+    }
+
+    @discardableResult
+    static func restore(_ snapshot: PasteboardSnapshot, onto pasteboard: NSPasteboard = .general) -> Bool {
+        snapshot.restore(onto: pasteboard)
+    }
+
     static func imageData(for clip: Clip, store: HistoryStore) -> Data? {
         guard let path = clip.imageRelativePath else { return nil }
         return try? Data(contentsOf: store.url(forRelativePath: path))

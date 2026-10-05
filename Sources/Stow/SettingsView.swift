@@ -195,7 +195,7 @@ struct SettingsView: View {
             VStack(spacing: 0) {
                 settingsToggle(
                     title: "Shortcut footer",
-                    detail: "Show Paste, Plain, Copy, Pin, and Delete at the bottom.",
+                    detail: "Show Paste, Plain, Once, Copy, Pin, and Delete at the bottom.",
                     isOn: Binding(
                         get: { model.preferences.showShortcutFooter },
                         set: { model.preferences.showShortcutFooter = $0 }
@@ -209,6 +209,16 @@ struct SettingsView: View {
                     isOn: Binding(
                         get: { model.preferences.keepPanelOpen },
                         set: { model.preferences.keepPanelOpen = $0 }
+                    ),
+                    theme: theme
+                )
+                settingsDivider(theme)
+                settingsToggle(
+                    title: "One-shot paste",
+                    detail: "After Option-Return paste, put the previous system clipboard back. ⌘⌥↩ always does this once.",
+                    isOn: Binding(
+                        get: { model.preferences.oneShotPaste },
+                        set: { model.preferences.oneShotPaste = $0 }
                     ),
                     theme: theme
                 )

@@ -395,6 +395,7 @@ struct PanelRootView: View {
                 HStack(spacing: 12) {
                     footerKey("⌥↩", "Paste", theme)
                     footerKey("⇧⌥↩", "Plain", theme)
+                    footerKey("⌘⌥↩", "Once", theme)
                     footerKey("↩", "Copy", theme)
                     footerKey("⌘P", "Pin", theme)
                     footerKey("⌘⌫", "Delete", theme)
