@@ -14,7 +14,7 @@ Update the Done column when you check boxes.
 | --- | --- | ---: | ---: |
 | Match Maccy | Behaviors the first paste loop still has to have | 7 | 7 |
 | First version | Build before daily paste feels right | 15 | 15 |
-| Later wave | Add after the first version is trustworthy | 11 | 2 |
+| Later wave | Add after the first version is trustworthy | 11 | 8 |
 | Further ideas | After history, preview, and paste beat Maccy | 26 | 1 |
 
 ## Match Maccy first
@@ -42,7 +42,7 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 
 ### Find it
 
-- [x] **Structured search** — First. Filter chips for type and pinned items, plus operators such as `type:image`, `app:Safari`, and `from:today`. Matches are highlighted in the row.
+- [x] **Structured search** — First. Filter chips for type and pinned items, plus operators such as `type:image`, `app:Safari`, `from:today`, `board:Support`, and `abbr:addr`. Matches are highlighted in the row.
 - [x] **Duplicate folding** — First. The same text copied five times appears once, with a count. Opening it shows the recent copies if you need an older one.
 - [ ] **On-device OCR** — Later. Text inside screenshots is indexed on the Mac, so a search for an error message finds the image that contains it.
 
@@ -55,28 +55,28 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 
 ### Reuse it
 
-- [x] **Snippets library** — First. Saved text lives apart from history. Clearing history does not delete a support reply, an address, or a git command you pinned on purpose. Snippets use the same type filters, including Pinned, and are grouped as Today, Yesterday, and Older.
-- [ ] **Collections and reorder** — Later. Group snippets into small boards (Support, Git, Design). Drag or use the keyboard to reorder. Search can include history, snippets, or both.
-- [ ] **Fill-in templates** — Later. A snippet can contain fields such as name, ticket, and date. Choosing it opens a small form, then pastes the filled text.
-- [ ] **Optional abbreviations** — Later. An abbreviation expands only for snippets you mark. It stays off everywhere else, so typing in mail and chat is never surprising.
+- [x] **Snippets library** — First. Saved text lives apart from history. Clearing history does not delete a support reply, an address, or a git command you pinned on purpose. Snippets use the same type filters, including Pinned. With boards enabled they group as Pinned, each board, and Unfiled.
+- [x] **Collections and reorder** — Later. Group snippets into small boards (Support, Git, Design). Drag a snippet onto another, or use ⌥⌘↑ / ⌥⌘↓ and the context menu, to reorder. Filter with board chips or `board:Support`. History and snippets stay separate libraries.
+- [x] **Fill-in templates** — Later. A snippet can contain fields such as `{{name}}`, `{{ticket}}`, and `{{date}}`. Pasting opens a small form, then pastes the filled text. `date` and `time` start filled in.
+- [x] **Optional abbreviations** — Later. An abbreviation expands only for snippets you mark, after you type it and a delimiter such as space or return. Secure fields and Stow itself are skipped. A Settings toggle can turn expansion off without clearing the marks.
 
 ### Privacy
 
 - [x] **App exclusions in Settings** — First. Pick apps that should never be recorded, and a one-hour pause for the front app. Password-manager and concealed pasteboard types stay ignored, as in Maccy.
 - [x] **Secret skip** — First. Private-key blocks, card numbers, and long token-like strings are not stored. The menu-bar icon shows a quiet skipped-copy state you can override for that one item.
 - [x] **Paused state you can see** — First. Pause, pause for an hour, and ignore-next-copy change the menu-bar icon. Maccy can do these actions, but the paused state is easy to miss.
-- [ ] **Storage rules** — Later. History is encrypted with the Mac's data protection. Text and images can expire on different schedules, with a storage readout and a one-click trim.
+- [x] **Storage rules** — Later. History is encrypted with the Mac's data protection. Text and images can expire on different schedules, with a storage readout and a one-click trim.
 
 ### Window
 
 - [x] **Panel, not a menu** — First. The menu bar opens the library window. ⌘⇧C opens a floating quick panel with search already focused. A menu truncates rows and fights the menu bar; these windows have room for a list and a preview.
 - [x] **Undo** — First. Deleting a clip or clearing history shows one in-window toast with an undo icon for about six seconds. Accidental clears are the failure people remember.
 - [x] **First-run and shortcut footer** — First. Launch opens with a short splash, then one screen explains the hotkey and the Accessibility permission required to paste. A hideable footer lists the shortcuts. There is no permission banner inside the history window.
-- [ ] **Density and a pinned panel** — Later. Compact or comfortable rows. Optionally keep the panel open while you paste several clips, instead of dismissing after every choice.
+- [x] **Density and a pinned panel** — Later. Compact or comfortable rows in Settings. The pin control in the header, or Settings, keeps the panel open while you paste several clips instead of dismissing after every choice.
 
 ### Carry it
 
-- [ ] **Local archive** — Later. Export and import a file you choose. History does not leave the Mac unless you save that file.
+- [x] **Local archive** — Later. Export and import a file you choose. Export can leave clips out; import can add new items only or replace everything. History does not leave the Mac unless you save that file.
 - [ ] **Opt-in sync** — Later. Encrypted sync across your own Macs is off until you enable it. Snippets and history can sync separately. Items flagged as secrets never sync.
 - [ ] **Universal Clipboard and Shortcuts** — Later. A toggle includes or ignores copies arriving from an iPhone. Shortcuts actions cover latest clip, search, and save as snippet.
 
@@ -86,13 +86,13 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 | --- | --- |
 | Open | Stow is a Dock app and a menu-bar app. The library window opens near the size of the screen. ⌘⇧C toggles a quick panel. Search is focused. Nothing is selected until you click a clip. |
 | Read | Each row shows a type mark, a preview, then the source app and time. The preview pane shows the whole clip, including images and readable rich text. |
-| Act | Return copies. Option-Return pastes into the previous app. Shift-Option-Return pastes plain text. The footer lists those shortcuts. Right-click adds Edit Clip, Save as Snippet, and Delete. |
+| Act | Return copies. Option-Return pastes into the previous app. Shift-Option-Return pastes plain text. The footer lists those shortcuts. Right-click adds Edit Clip or Edit Snippet, Save as Snippet on history, and Delete. |
 
 ## Build order
 
 Ship a trustworthy history before snippets, OCR, or sync. The first version is the panel, preview, type recognition, filters, visible actions, paste-target awareness, a separate snippets list, undo, secret skip, and app exclusions.
 
-Clip transforms and multi-paste are in the app. Still in that wave: OCR, collections, templates, abbreviations, a panel that stays open while you paste, encrypted retention, an export file, optional sync, and Shortcuts.
+Clip transforms, multi-paste, collections, fill-in templates, a pinned compact panel, storage rules, optional abbreviations, and a local archive (selective export, merge or replace import) are in the app. Still in that wave: OCR, optional sync, and Universal Clipboard with Shortcuts.
 
 ## Further ideas
 
@@ -162,4 +162,4 @@ These wait until history, preview, and paste already feel better than Maccy. Che
 
 ## Leave these out
 
-A required account, a shared team clipboard, a plugin store, and an assistant that rewrites every copy. Text expansion that fires in every text field is also a poor default. Those products are slower, and they put clipboard contents somewhere the user did not choose.
+A required account, a shared team clipboard, a plugin store, and an assistant that rewrites every copy. Global text expansion that fires for every keystroke is also a poor default; abbreviations stay opt-in per snippet. Those products are slower, and they put clipboard contents somewhere the user did not choose.

@@ -6,10 +6,21 @@ struct SearchQuery: Equatable, Sendable {
     var app: String?
     var bucket: TimeBucket?
     var pinnedOnly: Bool
+    var collection: String?
+    var abbreviation: String?
     /// Set when two kind filters disagree, so the list stays empty instead of guessing.
     var impossible: Bool
 
-    static let empty = SearchQuery(terms: [], kind: nil, app: nil, bucket: nil, pinnedOnly: false, impossible: false)
+    static let empty = SearchQuery(
+        terms: [],
+        kind: nil,
+        app: nil,
+        bucket: nil,
+        pinnedOnly: false,
+        collection: nil,
+        abbreviation: nil,
+        impossible: false
+    )
 
     static func parse(_ raw: String) -> SearchQuery {
         var query = SearchQuery.empty
@@ -48,6 +59,10 @@ struct SearchQuery: Equatable, Sendable {
                 } else {
                     terms.append(token)
                 }
+            case "board", "collection":
+                query.collection = value
+            case "abbr", "abbreviation":
+                query.abbreviation = value
             default:
                 terms.append(token)
             }
@@ -86,12 +101,33 @@ struct SearchQuery: Equatable, Sendable {
         return terms.allSatisfy { searchable.contains($0.lowercased()) }
     }
 
-    func matches(_ snippet: Snippet) -> Bool {
+    func matches(_ snippet: Snippet, collectionName: ((UUID) -> String?)? = nil) -> Bool {
         guard !impossible else { return false }
         if pinnedOnly && !snippet.pinned { return false }
         if bucket != nil || app != nil { return false }
         if let kind, snippet.kind != kind { return false }
-        let searchable = (snippet.title + "\n" + snippet.text).lowercased()
+        if let abbreviation {
+            guard let marked = snippet.normalizedAbbreviation,
+                  marked == abbreviation.lowercased() || marked.contains(abbreviation.lowercased()) else {
+                return false
+            }
+        }
+        if let collection {
+            let needle = collection.lowercased()
+            if needle == "none" || needle == "unfiled" {
+                if snippet.collectionID != nil { return false }
+            } else if let id = snippet.collectionID {
+                let name = collectionName?(id)?.lowercased() ?? ""
+                if !name.contains(needle) { return false }
+            } else {
+                return false
+            }
+        }
+        let searchable = [
+            snippet.title,
+            snippet.text,
+            snippet.normalizedAbbreviation ?? "",
+        ].joined(separator: "\n").lowercased()
         return terms.allSatisfy { searchable.contains($0.lowercased()) }
     }
 

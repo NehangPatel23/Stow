@@ -60,12 +60,12 @@ enum PasteService {
 
     /// Posts Command-V into whichever app is focused.
     static func sendCommandV() {
-        let tap = HotkeyController.activeTap
-        if let tap {
+        let taps = [HotkeyController.activeTap, AbbreviationExpander.activeTap].compactMap { $0 }
+        for tap in taps {
             CGEvent.tapEnable(tap: tap, enable: false)
         }
         defer {
-            if let tap {
+            for tap in taps {
                 CGEvent.tapEnable(tap: tap, enable: true)
             }
         }

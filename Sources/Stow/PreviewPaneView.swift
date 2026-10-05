@@ -8,7 +8,7 @@ struct PreviewPaneView: View {
     var body: some View {
         Group {
             if model.library == .snippets, let snippet = model.selectedSnippet() {
-                textPreview(snippet.text, kind: snippet.kind, title: snippet.title)
+                snippetPreview(snippet)
             } else if let clip = model.preview {
                 clipPreview(clip)
             } else {
@@ -185,12 +185,60 @@ struct PreviewPaneView: View {
         }
     }
 
+    private func snippetPreview(_ snippet: Snippet) -> some View {
+        let fields = snippet.templateFields
+        return ScrollView {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(snippet.title).font(.system(size: 13, weight: .semibold))
+                    Spacer()
+                    Button("Edit") {
+                        model.beginEditingSnippet(snippet)
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+                if let abbr = snippet.normalizedAbbreviation {
+                    Text("Abbreviation \(abbr) · type it, then space or return")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(theme.accent)
+                }
+                transformRow(text: snippet.text, html: nil)
+                if !fields.isEmpty {
+                    Text("Fill-in fields: \(fields.map(\.label).joined(separator: ", "))")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(theme.secondary)
+                    Button("Fill and Paste") {
+                        model.pasteSelected(plain: false)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                }
+                Text(snippet.text.isEmpty ? "Empty snippet" : snippet.text)
+                    .font(.system(size: 13))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .textSelection(.enabled)
+            }
+        }
+    }
+
     private func textPreview(_ text: String, kind: ClipKind, title: String?) -> some View {
-        ScrollView {
+        let fields = SnippetTemplate.fields(in: text)
+        return ScrollView {
             VStack(alignment: .leading, spacing: 8) {
                 if let title {
                     Text(title).font(.system(size: 13, weight: .semibold))
                     transformRow(text: text, html: nil)
+                }
+                if !fields.isEmpty {
+                    Text("Fill-in fields: \(fields.map(\.label).joined(separator: ", "))")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(theme.secondary)
+                    Button("Fill and Paste") {
+                        model.pasteSelected(plain: false)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
                 }
                 Text(text.isEmpty ? "Empty clip" : text)
                     .font(.system(size: 13, design: kind == .link || kind == .email ? .default : .default))

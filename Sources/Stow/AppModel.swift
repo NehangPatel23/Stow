@@ -1,11 +1,17 @@
 import AppKit
 import Foundation
+import UniformTypeIdentifiers
 
 struct UndoState: Equatable {
     var clips: [Clip]
     var snippets: [Snippet]
     var message: String
     var deadline: Date
+}
+
+struct ArchiveExportPickerState: Identifiable, Equatable {
+    var id = UUID()
+    var clips: [Clip]
 }
 
 struct SkippedCapture: Equatable {
@@ -32,6 +38,12 @@ enum Library: String, CaseIterable, Identifiable, Equatable {
     }
 }
 
+enum CollectionFilter: Equatable, Hashable {
+    case all
+    case unfiled
+    case collection(UUID)
+}
+
 enum MenuBarState: Equatable {
     case ready
     case paused
@@ -48,9 +60,19 @@ final class AppModel {
         didSet {
             let hotkeyChanged = oldValue.hotkeyKeyCode != preferences.hotkeyKeyCode
                 || oldValue.hotkeyCarbonModifiers != preferences.hotkeyCarbonModifiers
+            let layoutChanged = oldValue.compactRows != preferences.compactRows
+                || oldValue.showShortcutFooter != preferences.showShortcutFooter
+            let retentionChanged = oldValue.textRetentionDays != preferences.textRetentionDays
+                || oldValue.imageRetentionDays != preferences.imageRetentionDays
             preferences.save()
             if hotkeyChanged {
                 onHotkeyChange?()
+            }
+            if layoutChanged {
+                relayoutQuickPanel?()
+            }
+            if retentionChanged {
+                enforceStorageRules(force: true)
             }
             onChromeChange?()
         }
@@ -60,8 +82,10 @@ final class AppModel {
     var query = ""
     var chipKind: ClipKind?
     var chipPinned = false
+    var collectionFilter: CollectionFilter = .all
     private(set) var history: [Clip] = []
     private(set) var snippets: [Snippet] = []
+    private(set) var collections: [SnippetCollection] = []
     var selectedID: UUID?
     var selection: Set<UUID> = []
     var selectionAnchor: UUID?
@@ -74,6 +98,9 @@ final class AppModel {
     var showPermission = false
     var showsSettings = false
     var clipBeingEdited: Clip?
+    var snippetBeingEdited: Snippet?
+    var templateFill: TemplateFillRequest?
+    var archiveExportPicker: ArchiveExportPickerState?
     var joinSeparator = ", "
     var focusToken = 0
     var activeHotkeyLabel: String
@@ -82,20 +109,32 @@ final class AppModel {
     var closePanel: (@MainActor (Bool) -> Void)?
     var openSettings: (@MainActor () -> Void)?
     var presentJoinPrompt: (@MainActor () -> Void)?
+    var presentTextPrompt: (@MainActor (
+        _ title: String,
+        _ message: String,
+        _ defaultValue: String,
+        _ confirmTitle: String,
+        _ onConfirm: @escaping @MainActor (String) -> Void
+    ) -> Void)?
     var relayoutQuickPanel: (@MainActor () -> Void)?
-    var stepAside: (@MainActor (NSRunningApplication) -> Void)?
+    var stepAside: (@MainActor (_ app: NSRunningApplication, _ keepOpen: Bool) -> Void)?
+    var restorePanelAfterPaste: (@MainActor () -> Void)?
     var onHotkeyChange: (@MainActor () -> Void)?
     var onChromeChange: (@MainActor () -> Void)?
     var notePasteboardWrite: (@MainActor () -> Void)?
     var notice: Notice?
+    private(set) var storageByteCount = 0
     private var noticeTask: Task<Void, Never>?
+    private var lastStorageEnforceAt: Date?
 
     init(store: HistoryStore) {
         self.store = store
         let loaded = Preferences.load()
         preferences = loaded
         activeHotkeyLabel = loaded.hotkeyLabel
+        store.applyDataProtection()
         refresh()
+        enforceStorageRules(force: true)
     }
 
     var showingFirstRun: Bool {
@@ -145,27 +184,75 @@ final class AppModel {
     }
 
     var visibleSnippets: [Snippet] {
-        let parsed = SearchQuery.parse(query).merging(kind: chipKind, pinned: chipPinned)
-        return snippets.filter { parsed.matches($0) }
+        let parsed = effectiveQuery
+        let names = Dictionary(uniqueKeysWithValues: collections.map { ($0.id, $0.name) })
+        let filtered = snippets.filter { snippet in
+            guard matchesCollectionFilter(snippet) else { return false }
+            return parsed.matches(snippet) { names[$0] }
+        }
+        guard parsed.terms.count == 1, let term = parsed.terms.first?.lowercased() else {
+            return filtered
+        }
+        return filtered.sorted { lhs, rhs in
+            let leftExact = lhs.normalizedAbbreviation == term
+            let rightExact = rhs.normalizedAbbreviation == term
+            if leftExact != rightExact { return leftExact && !rightExact }
+            return false
+        }
+    }
+
+    /// Lowercased abbreviation → expansion text for marked snippets only.
+    var abbreviationExpansions: [String: String] {
+        var map: [String: String] = [:]
+        for snippet in snippets {
+            guard let abbr = snippet.normalizedAbbreviation else { continue }
+            let fields = snippet.templateFields
+            if fields.isEmpty {
+                map[abbr] = snippet.text
+            } else {
+                map[abbr] = SnippetTemplate.render(
+                    snippet.text,
+                    values: SnippetTemplate.defaults(for: fields)
+                )
+            }
+        }
+        return map
+    }
+
+    var canExpandAbbreviations: Bool {
+        preferences.abbreviationExpansionEnabled
+            && !abbreviationExpansions.isEmpty
+            && AccessibilityClient.isTrusted(prompt: false)
     }
 
     var snippetSections: [SnippetSection] {
-        let now = Date()
-        let pinned = visibleSnippets.filter(\.pinned).sorted { $0.createdAt > $1.createdAt }
-        let rest = visibleSnippets.filter { !$0.pinned }
-        var sections: [SnippetSection] = []
-        if !pinned.isEmpty {
-            sections.append(SnippetSection(id: "pinned", title: "Pinned", snippets: pinned))
-        }
-        for bucket in TimeBucket.allCases {
-            let items = rest
-                .filter { TimeBucket.bucket(for: $0.createdAt, now: now) == bucket }
-                .sorted { $0.createdAt > $1.createdAt }
-            if !items.isEmpty {
-                sections.append(SnippetSection(id: bucket.rawValue, title: bucket.title, snippets: items))
+        let items = visibleSnippets
+        switch collectionFilter {
+        case .collection(let id):
+            let name = collections.first { $0.id == id }?.name ?? "Board"
+            return [SnippetSection(id: id.uuidString, title: name, snippets: sortedSnippets(items))]
+        case .unfiled:
+            return [SnippetSection(id: "unfiled", title: "Unfiled", snippets: sortedSnippets(items))]
+        case .all:
+            var sections: [SnippetSection] = []
+            let pinned = items.filter(\.pinned)
+            if !pinned.isEmpty {
+                sections.append(SnippetSection(id: "pinned", title: "Pinned", snippets: sortedSnippets(pinned)))
             }
+            for collection in collections {
+                let board = items.filter { !$0.pinned && $0.collectionID == collection.id }
+                if !board.isEmpty {
+                    sections.append(
+                        SnippetSection(id: collection.id.uuidString, title: collection.name, snippets: sortedSnippets(board))
+                    )
+                }
+            }
+            let unfiled = items.filter { !$0.pinned && $0.collectionID == nil }
+            if !unfiled.isEmpty {
+                sections.append(SnippetSection(id: "unfiled", title: "Unfiled", snippets: sortedSnippets(unfiled)))
+            }
+            return sections
         }
-        return sections
     }
 
     var orderedSnippets: [Snippet] {
@@ -179,6 +266,11 @@ final class AppModel {
     func refresh() {
         history = (try? store.foldedHistory()) ?? []
         snippets = (try? store.snippets()) ?? []
+        collections = (try? store.collections()) ?? []
+        storageByteCount = store.storageByteCount()
+        if case .collection(let id) = collectionFilter, !collections.contains(where: { $0.id == id }) {
+            collectionFilter = .all
+        }
         if let selectedID, !containsSelection(selectedID) {
             self.selectedID = nil
             preview = nil
@@ -191,6 +283,7 @@ final class AppModel {
         query = ""
         chipKind = nil
         chipPinned = false
+        collectionFilter = .all
         expandedHashes = []
         refresh()
         if let selectedID, !containsSelection(selectedID) {
@@ -426,21 +519,34 @@ final class AppModel {
     }
 
     private func deliverToPreviousApp(message: String) {
-        closePanel?(false)
+        let keepOpen = preferences.keepPanelOpen
+        if !keepOpen {
+            closePanel?(false)
+        }
         guard let target = previousApp else {
             notify("Copied", detail: "Switch to an app, then paste.", symbol: "doc.on.doc")
             return
         }
-        stepAside?(target)
+        stepAside?(target, keepOpen)
         notify(message, symbol: "arrow.down.doc")
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             if NSWorkspace.shared.frontmostApplication?.processIdentifier != target.processIdentifier {
-                self.stepAside?(target)
+                self.stepAside?(target, keepOpen)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     PasteService.sendCommandV()
+                    if keepOpen {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            self.restorePanelAfterPaste?()
+                        }
+                    }
                 }
             } else {
                 PasteService.sendCommandV()
+                if keepOpen {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                        self.restorePanelAfterPaste?()
+                    }
+                }
             }
         }
     }
@@ -559,15 +665,47 @@ final class AppModel {
             return
         }
         notify("Copied", symbol: "doc.on.doc")
-        closePanel?(true)
+        if !preferences.keepPanelOpen {
+            closePanel?(true)
+        }
     }
 
     func pasteSelected(plain requestedPlain: Bool) {
+        if library == .snippets, let snippet = selectedSnippet() {
+            let fields = snippet.templateFields
+            if !fields.isEmpty {
+                templateFill = TemplateFillRequest(
+                    title: snippet.title,
+                    template: snippet.text,
+                    fields: fields,
+                    values: SnippetTemplate.defaults(for: fields),
+                    plain: requestedPlain
+                )
+                return
+            }
+        }
+
         guard let clip = selectedClip() else {
             notify("Select a clip", symbol: "arrow.down.doc")
             return
         }
         let full = materialized(clip)
+        pasteClip(full, plain: requestedPlain)
+    }
+
+    func completeTemplateFill(_ filled: String) {
+        let plain = templateFill?.plain ?? false
+        templateFill = nil
+        PasteService.writeText(filled)
+        notePasteboardWrite?()
+        deliverToPreviousApp(message: plain ? "Pasted as plain text" : "Pasted")
+    }
+
+    func cancelTemplateFill() {
+        templateFill = nil
+    }
+
+    private func pasteClip(_ full: Clip, plain requestedPlain: Bool) {
         let target = previousApp
         let plain = requestedPlain || full.kind == .code || PasteTarget.prefersPlainText(
             bundleID: target?.bundleIdentifier,
@@ -674,6 +812,195 @@ final class AppModel {
         }
     }
 
+    func exportArchive() {
+        let alert = NSAlert()
+        alert.messageText = "Export Stow archive"
+        alert.informativeText = "Include every clip, or leave some out. Snippets and boards always export."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Export All")
+        alert.addButton(withTitle: "Choose Clips…")
+        alert.addButton(withTitle: "Cancel")
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            finishExport(excludingContentHashes: [])
+        case .alertSecondButtonReturn:
+            let candidates = (try? store.foldedHistory()) ?? history
+            guard !candidates.isEmpty else {
+                finishExport(excludingContentHashes: [])
+                return
+            }
+            archiveExportPicker = ArchiveExportPickerState(clips: candidates)
+        default:
+            break
+        }
+    }
+
+    func cancelArchiveExportPicker() {
+        archiveExportPicker = nil
+    }
+
+    func confirmArchiveExportPicker(excludedContentHashes: Set<String>) {
+        archiveExportPicker = nil
+        finishExport(excludingContentHashes: excludedContentHashes)
+    }
+
+    func importArchive() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.title = "Import Stow Archive"
+        if let type = UTType(filenameExtension: LocalArchive.pathExtension) {
+            panel.allowedContentTypes = [type]
+        }
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Import Stow archive"
+        alert.informativeText = "Add new only keeps what you already have and imports the rest. Replace clears history, snippets, and boards first. Preferences stay as they are."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Add New Only")
+        alert.addButton(withTitle: "Replace Everything")
+        alert.addButton(withTitle: "Cancel")
+        let mode: ArchiveImportMode
+        switch alert.runModal() {
+        case .alertFirstButtonReturn:
+            mode = .merge
+        case .alertSecondButtonReturn:
+            mode = .replace
+        default:
+            return
+        }
+
+        do {
+            let result = try LocalArchive.importArchive(from: url, into: store, mode: mode)
+            selectedID = nil
+            selection = []
+            preview = nil
+            library = .history
+            collectionFilter = .all
+            refresh()
+            switch mode {
+            case .merge:
+                if result.addedClips == 0 && result.addedSnippets == 0 && result.addedCollections == 0 {
+                    notify("Nothing new to import", symbol: "square.and.arrow.down")
+                } else {
+                    notify(
+                        "Added from archive",
+                        detail: "\(result.addedClips) clips · \(result.addedSnippets) snippets",
+                        symbol: "square.and.arrow.down"
+                    )
+                }
+            case .replace:
+                notify(
+                    "Imported archive",
+                    detail: "\(result.manifest.counts.clips) clips · \(result.manifest.counts.snippets) snippets",
+                    symbol: "square.and.arrow.down"
+                )
+            }
+        } catch {
+            let message = (error as? ArchiveError)?.description
+                ?? (error as? StoreError)?.description
+                ?? "Couldn't import that archive"
+            notify(message, symbol: "exclamationmark.circle")
+        }
+    }
+
+    private func finishExport(excludingContentHashes: Set<String>) {
+        let panel = NSSavePanel()
+        panel.canCreateDirectories = true
+        panel.isExtensionHidden = false
+        panel.title = "Export Stow Archive"
+        panel.nameFieldStringValue = "Stow Archive"
+        if let type = UTType(filenameExtension: LocalArchive.pathExtension) {
+            panel.allowedContentTypes = [type]
+        }
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let manifest = try LocalArchive.export(
+                from: store,
+                to: url,
+                excludingContentHashes: excludingContentHashes
+            )
+            let excluded = excludingContentHashes.isEmpty
+                ? nil
+                : "Left out \(excludingContentHashes.count) \(excludingContentHashes.count == 1 ? "clip" : "clips")"
+            notify(
+                "Exported archive",
+                detail: excluded ?? "\(manifest.counts.clips) clips · \(manifest.counts.snippets) snippets",
+                symbol: "square.and.arrow.up"
+            )
+        } catch {
+            let message = (error as? ArchiveError)?.description
+                ?? (error as? StoreError)?.description
+                ?? "Couldn't export that archive"
+            notify(message, symbol: "exclamationmark.circle")
+        }
+    }
+
+    /// Removes expired unpinned clips, orphaned image files, and compacts the database.
+    func trimStorage() {
+        let before = store.storageByteCount()
+        do {
+            let removed = try store.deleteExpired(
+                textOlderThan: retentionCutoff(days: preferences.textRetentionDays),
+                imageOlderThan: retentionCutoff(days: preferences.imageRetentionDays)
+            )
+            let orphanBytes = try store.reapOrphanedImages()
+            if !removed.isEmpty {
+                try store.reapImages(hashes: Set(removed.map(\.contentHash)))
+            }
+            try store.compactStorage()
+            lastStorageEnforceAt = Date()
+            refresh()
+            let freed = max(0, before - storageByteCount)
+            if removed.isEmpty && orphanBytes == 0 && freed == 0 {
+                notify("Nothing to trim", symbol: "internaldrive")
+            } else if freed > 0 {
+                notify(
+                    "Trimmed \(ByteFormat.string(for: freed))",
+                    detail: removed.isEmpty ? nil : "Removed \(removed.count) expired \(removed.count == 1 ? "clip" : "clips")",
+                    symbol: "internaldrive"
+                )
+            } else {
+                notify(
+                    removed.isEmpty ? "Storage cleaned up" : "Removed \(removed.count) expired \(removed.count == 1 ? "clip" : "clips")",
+                    symbol: "internaldrive"
+                )
+            }
+        } catch {
+            notify("Couldn't trim storage", symbol: "exclamationmark.circle")
+        }
+    }
+
+    @discardableResult
+    func enforceStorageRules(force: Bool = false) -> Int {
+        if !force, let lastStorageEnforceAt, Date().timeIntervalSince(lastStorageEnforceAt) < 60 {
+            return 0
+        }
+        let textCutoff = retentionCutoff(days: preferences.textRetentionDays)
+        let imageCutoff = retentionCutoff(days: preferences.imageRetentionDays)
+        guard textCutoff != nil || imageCutoff != nil else {
+            lastStorageEnforceAt = Date()
+            storageByteCount = store.storageByteCount()
+            return 0
+        }
+        do {
+            let removed = try store.deleteExpired(textOlderThan: textCutoff, imageOlderThan: imageCutoff)
+            if !removed.isEmpty {
+                try store.reapImages(hashes: Set(removed.map(\.contentHash)))
+                refresh()
+            } else {
+                storageByteCount = store.storageByteCount()
+            }
+            lastStorageEnforceAt = Date()
+            return removed.count
+        } catch {
+            lastStorageEnforceAt = Date()
+            return 0
+        }
+    }
+
     func performUndo() {
         guard let undo else { return }
         do {
@@ -696,15 +1023,217 @@ final class AppModel {
         }
         let title = ClipText.previewLine(from: text, limit: 48)
         let kind: ClipKind = full.kind == .image || full.kind == .file ? .text : full.kind
+        let board: UUID? = {
+            if case .collection(let id) = collectionFilter { return id }
+            return nil
+        }()
         do {
-            let snippet = try store.addSnippet(title: title, text: text, kind: kind)
+            let snippet = try store.addSnippet(title: title, text: text, kind: kind, collectionID: board)
             refresh()
             notify("Saved to snippets", symbol: "text.badge.plus")
             library = .snippets
             selectedID = snippet.id
+            selection = [snippet.id]
             loadPreview()
         } catch {
             notify("Couldn't save that snippet", symbol: "exclamationmark.circle")
+        }
+    }
+
+    func beginEditingSnippet(_ snippet: Snippet? = nil) {
+        let target = snippet ?? selectedSnippet()
+        guard let target else { return }
+        snippetBeingEdited = target
+    }
+
+    func saveEditedSnippet(id: UUID, title: String, text: String, abbreviation: String?) {
+        do {
+            let kind = ClipClassifier.classify(
+                text: text,
+                html: nil,
+                hasRTF: false,
+                hasImage: false,
+                fileURLs: []
+            )
+            try store.updateSnippet(
+                id: id,
+                title: title,
+                text: text,
+                kind: kind,
+                abbreviation: abbreviation
+            )
+            snippetBeingEdited = nil
+            refresh()
+            selectedID = id
+            selection = [id]
+            notify(
+                SnippetAbbreviation.normalize(abbreviation) == nil
+                    ? "Snippet updated"
+                    : "Abbreviation ready",
+                symbol: "textformat.abc"
+            )
+        } catch {
+            let message = (error as? StoreError)?.description ?? "Couldn't update that snippet"
+            notify(message, symbol: "exclamationmark.circle")
+        }
+    }
+
+    func cancelSnippetEdit() {
+        snippetBeingEdited = nil
+    }
+
+    func createCollection() {
+        presentTextPrompt?(
+            "New collection",
+            "Snippets on this board stay when you clear history.",
+            "",
+            "Create"
+        ) { [weak self] name in
+            self?.addCollection(named: name)
+        }
+    }
+
+    func renameCollection(_ id: UUID) {
+        let current = collections.first { $0.id == id }?.name ?? ""
+        presentTextPrompt?(
+            "Rename collection",
+            "The snippets on this board keep their place.",
+            current,
+            "Rename"
+        ) { [weak self] name in
+            self?.renameCollection(id, to: name)
+        }
+    }
+
+    func addCollection(named name: String) {
+        do {
+            let collection = try store.addCollection(name: name)
+            if library == .snippets, let selectedID {
+                try store.setSnippetCollection(id: selectedID, collectionID: collection.id)
+            }
+            refresh()
+            collectionFilter = .collection(collection.id)
+            notify("Created \(collection.name)", symbol: "folder.badge.plus")
+            relayoutQuickPanel?()
+        } catch {
+            notify("Couldn't create that collection", symbol: "exclamationmark.circle")
+        }
+    }
+
+    func renameCollection(_ id: UUID, to name: String) {
+        do {
+            try store.renameCollection(id: id, name: name)
+            refresh()
+            notify("Renamed collection", symbol: "pencil")
+        } catch {
+            notify("Couldn't rename that collection", symbol: "exclamationmark.circle")
+        }
+    }
+
+    func deleteCollection(_ id: UUID) {
+        let name = collections.first { $0.id == id }?.name ?? "collection"
+        do {
+            try store.deleteCollection(id: id)
+            if case .collection(let selected) = collectionFilter, selected == id {
+                collectionFilter = .all
+            }
+            refresh()
+            notify("Deleted \(name)", detail: "Snippets moved to Unfiled.", symbol: "folder")
+            relayoutQuickPanel?()
+        } catch {
+            notify("Couldn't delete that collection", symbol: "exclamationmark.circle")
+        }
+    }
+
+    func moveSnippet(_ id: UUID, to collectionID: UUID?) {
+        do {
+            try store.setSnippetCollection(id: id, collectionID: collectionID)
+            refresh()
+            if let collectionID, let name = collections.first(where: { $0.id == collectionID })?.name {
+                notify("Moved to \(name)", symbol: "folder")
+            } else {
+                notify("Moved to Unfiled", symbol: "folder")
+            }
+        } catch {
+            notify("Couldn't move that snippet", symbol: "exclamationmark.circle")
+        }
+    }
+
+    func moveSelectedSnippet(to collectionID: UUID?) {
+        guard library == .snippets, let id = selectedID else { return }
+        moveSnippet(id, to: collectionID)
+    }
+
+    func reorderSelectedSnippet(by delta: Int) {
+        guard library == .snippets, let id = selectedID else { return }
+        reorderSnippet(id, by: delta)
+    }
+
+    func dropSnippet(_ draggedID: UUID, onto targetID: UUID) {
+        guard draggedID != targetID,
+              let dragged = snippets.first(where: { $0.id == draggedID }),
+              let target = snippets.first(where: { $0.id == targetID }) else { return }
+        do {
+            if dragged.collectionID != target.collectionID {
+                try store.setSnippetCollection(id: draggedID, collectionID: target.collectionID)
+                refresh()
+            }
+            let peers = snippets
+                .filter { $0.collectionID == target.collectionID }
+                .sorted {
+                    if $0.pinned != $1.pinned { return $0.pinned && !$1.pinned }
+                    if $0.sortOrder != $1.sortOrder { return $0.sortOrder < $1.sortOrder }
+                    return $0.createdAt > $1.createdAt
+                }
+                .map(\.id)
+                .filter { $0 != draggedID }
+            guard let targetIndex = peers.firstIndex(of: targetID) else { return }
+            var ordered = peers
+            ordered.insert(draggedID, at: targetIndex)
+            try store.reorderSnippets(ids: ordered)
+            refresh()
+            selectOnly(draggedID)
+        } catch {
+            notify("Couldn't reorder that snippet", symbol: "exclamationmark.circle")
+        }
+    }
+
+    private func reorderSnippet(_ id: UUID, by delta: Int) {
+        guard let snippet = snippets.first(where: { $0.id == id }) else { return }
+        let peers = snippets
+            .filter { $0.collectionID == snippet.collectionID }
+            .sorted {
+                if $0.pinned != $1.pinned { return $0.pinned && !$1.pinned }
+                if $0.sortOrder != $1.sortOrder { return $0.sortOrder < $1.sortOrder }
+                return $0.createdAt > $1.createdAt
+            }
+        guard let index = peers.firstIndex(where: { $0.id == id }) else { return }
+        let next = index + delta
+        guard peers.indices.contains(next) else { return }
+        var ordered = peers.map(\.id)
+        ordered.swapAt(index, next)
+        do {
+            try store.reorderSnippets(ids: ordered)
+            refresh()
+            select(id)
+        } catch {
+            notify("Couldn't reorder that snippet", symbol: "exclamationmark.circle")
+        }
+    }
+
+    private func matchesCollectionFilter(_ snippet: Snippet) -> Bool {
+        switch collectionFilter {
+        case .all: true
+        case .unfiled: snippet.collectionID == nil
+        case .collection(let id): snippet.collectionID == id
+        }
+    }
+
+    private func sortedSnippets(_ items: [Snippet]) -> [Snippet] {
+        items.sorted {
+            if $0.pinned != $1.pinned { return $0.pinned && !$1.pinned }
+            if $0.sortOrder != $1.sortOrder { return $0.sortOrder < $1.sortOrder }
+            return $0.createdAt > $1.createdAt
         }
     }
 
@@ -750,6 +1279,7 @@ final class AppModel {
             preferences.frontAppPauseBundleID = nil
             preferences.frontAppPauseName = nil
         }
+        enforceStorageRules()
         if before != menuBarState {
             onChromeChange?()
         }
@@ -851,5 +1381,10 @@ final class AppModel {
             return front
         }
         return previousApp
+    }
+
+    private func retentionCutoff(days: Int) -> Date? {
+        guard days > 0 else { return nil }
+        return Calendar.current.date(byAdding: .day, value: -days, to: Date())
     }
 }

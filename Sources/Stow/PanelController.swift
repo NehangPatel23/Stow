@@ -37,11 +37,23 @@ final class PanelController: NSObject, NSWindowDelegate {
         model.relayoutQuickPanel = { [weak self] in
             self?.resizeQuick(animated: true)
         }
-        model.stepAside = { [weak self] app in
-            self?.stepAside(for: app)
+        model.stepAside = { [weak self] app, keepOpen in
+            self?.stepAside(for: app, keepOpen: keepOpen)
+        }
+        model.restorePanelAfterPaste = { [weak self] in
+            self?.restoreAfterPaste()
         }
         model.presentJoinPrompt = { [weak self] in
             self?.presentJoinPrompt()
+        }
+        model.presentTextPrompt = { [weak self] title, message, defaultValue, confirmTitle, onConfirm in
+            self?.presentTextPrompt(
+                title: title,
+                message: message,
+                defaultValue: defaultValue,
+                confirmTitle: confirmTitle,
+                onConfirm: onConfirm
+            )
         }
     }
 
@@ -84,13 +96,34 @@ final class PanelController: NSObject, NSWindowDelegate {
         showLibrary()
     }
 
-    func stepAside(for app: NSRunningApplication) {
-        panel.orderOut(nil)
-        library.makeFirstResponder(nil)
-        library.orderBack(nil)
+    func stepAside(for app: NSRunningApplication, keepOpen: Bool) {
+        if keepOpen {
+            panel.makeFirstResponder(nil)
+            library.makeFirstResponder(nil)
+            if library.isKeyWindow {
+                library.orderBack(nil)
+            }
+        } else {
+            panel.orderOut(nil)
+            library.makeFirstResponder(nil)
+            library.orderBack(nil)
+        }
         NSApp.yieldActivation(to: app)
         app.unhide()
         app.activate(from: .current)
+    }
+
+    func restoreAfterPaste() {
+        guard model.preferences.keepPanelOpen else { return }
+        ignorePanelResignUntil = Date().addingTimeInterval(0.6)
+        NSApp.activate()
+        if panel.isVisible {
+            panel.makeKeyAndOrderFront(nil)
+        } else if library.isVisible {
+            library.makeKeyAndOrderFront(nil)
+        } else {
+            openQuick()
+        }
     }
 
     func toggle() {
@@ -128,23 +161,44 @@ final class PanelController: NSObject, NSWindowDelegate {
     }
 
     func presentJoinPrompt() {
+        presentTextPrompt(
+            title: "Join with",
+            message: "The selected clips are pasted in the order you copied them, separated by what you type.",
+            defaultValue: model.joinSeparator,
+            confirmTitle: "Paste",
+            placeholder: "Separator"
+        ) { [weak self] value in
+            self?.model.joinSeparator = value
+            self?.model.pasteSelection(separator: value)
+        }
+    }
+
+    func presentTextPrompt(
+        title: String,
+        message: String,
+        defaultValue: String,
+        confirmTitle: String,
+        placeholder: String = "Name",
+        onConfirm: @escaping @MainActor (String) -> Void
+    ) {
         let window = NSApp.keyWindow ?? (library.isVisible ? library : panel)
         let alert = NSAlert()
-        alert.messageText = "Join with"
-        alert.informativeText = "The selected clips are pasted in the order you copied them, separated by what you type."
-        alert.addButton(withTitle: "Paste")
+        alert.messageText = title
+        alert.informativeText = message
+        alert.addButton(withTitle: confirmTitle)
         alert.addButton(withTitle: "Cancel")
-        let field = NSTextField(string: model.joinSeparator)
-        field.placeholderString = "Separator"
+        let field = NSTextField(string: defaultValue)
+        field.placeholderString = placeholder
         field.frame = NSRect(x: 0, y: 0, width: 240, height: 24)
         alert.accessoryView = field
-        alert.beginSheetModal(for: window) { [weak self] response in
+        alert.beginSheetModal(for: window) { response in
             MainActor.assumeIsolated {
                 guard response == .alertFirstButtonReturn else { return }
-                let separator = field.stringValue
-                self?.model.joinSeparator = separator
-                self?.model.pasteSelection(separator: separator)
+                onConfirm(field.stringValue)
             }
+        }
+        DispatchQueue.main.async {
+            field.currentEditor()?.selectAll(nil)
         }
     }
 
@@ -172,6 +226,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     func windowDidResignKey(_ notification: Notification) {
         guard let window = notification.object as? NSWindow, window === panel else { return }
         guard panel.isVisible, !NSApp.isActive, Date() > ignorePanelResignUntil else { return }
+        if model.preferences.keepPanelOpen { return }
         closeQuick(returnFocus: false)
     }
 
@@ -274,11 +329,19 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
         if key == KeyCode.up {
-            model.moveSelection(-1)
+            if command && option {
+                model.reorderSelectedSnippet(by: -1)
+            } else {
+                model.moveSelection(-1)
+            }
             return true
         }
         if key == KeyCode.down {
-            model.moveSelection(1)
+            if command && option {
+                model.reorderSelectedSnippet(by: 1)
+            } else {
+                model.moveSelection(1)
+            }
             return true
         }
         if key == KeyCode.return || key == KeyCode.enter {

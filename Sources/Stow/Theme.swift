@@ -74,13 +74,14 @@ enum PanelMetrics {
     static func quickBand(for model: AppModel) -> CGFloat {
         let count = itemCount(model)
         let rows = CGFloat(max(count, 1))
-        let natural = rows * 68 + (model.selectedID == nil ? 12 : 36)
+        let rowHeight: CGFloat = model.preferences.compactRows ? 52 : 68
+        let natural = rows * rowHeight + (model.selectedID == nil ? 12 : 36)
         return min(max(natural, 188), 340)
     }
 
     @MainActor
     static func quickSize(for model: AppModel, screenHeight: CGFloat) -> NSSize {
-        let header: CGFloat = 196
+        let header: CGFloat = model.library == .snippets ? 232 : 196
         let banner: CGFloat = model.banner == nil ? 0 : 28
         let permission: CGFloat = model.showPermission ? 44 : 0
         let footer: CGFloat = (model.preferences.showShortcutFooter ? 50 : 38) + (model.undo == nil ? 0 : 42)

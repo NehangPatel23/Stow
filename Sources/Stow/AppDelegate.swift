@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var model: AppModel?
     private var monitor: PasteboardMonitor?
     private var hotkeys: HotkeyController?
+    private var abbreviations: AbbreviationExpander?
     private var status: StatusItemController?
     private var panel: PanelController?
     private var launch: LaunchController?
@@ -28,11 +29,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let model = AppModel(store: store)
         let monitor = PasteboardMonitor(model: model)
         let hotkeys = HotkeyController()
+        let abbreviations = AbbreviationExpander()
         let status = StatusItemController(model: model)
         let panel = PanelController(model: model)
 
         model.notePasteboardWrite = { [weak monitor] in
             monitor?.noteOwnWrite()
+        }
+        abbreviations.noteOwnWrite = { [weak monitor] in
+            monitor?.noteOwnWrite()
+        }
+        abbreviations.expansions = { [weak model] in
+            model?.abbreviationExpansions ?? [:]
+        }
+        abbreviations.shouldExpand = { [weak model] in
+            guard let model else { return false }
+            guard model.canExpandAbbreviations else { return false }
+            if NSApp.isActive { return false }
+            if let front = NSWorkspace.shared.frontmostApplication,
+               front.bundleIdentifier == Bundle.main.bundleIdentifier {
+                return false
+            }
+            if let front = NSWorkspace.shared.frontmostApplication {
+                return !FocusedField.isSecureTextField(pid: front.processIdentifier)
+            }
+            return true
         }
         model.onChromeChange = { [weak status] in
             status?.refresh()
@@ -61,12 +82,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.model = model
         self.monitor = monitor
         self.hotkeys = hotkeys
+        self.abbreviations = abbreviations
         self.status = status
         self.panel = panel
         self.launch = launch
 
         registerHotkey()
         monitor.start()
+        abbreviations.start()
         model.notePreviousApp(NSWorkspace.shared.frontmostApplication)
         launch.start()
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -101,6 +124,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         hotkeys?.unregister()
+        abbreviations?.stop()
         monitor?.stop()
     }
 

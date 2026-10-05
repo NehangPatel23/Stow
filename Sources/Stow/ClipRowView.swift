@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ClipRowView: View {
     var clip: Clip
@@ -86,7 +87,7 @@ struct ClipRowView: View {
             }
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 8)
+        .padding(.vertical, model.preferences.compactRows ? 5 : 8)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(isSelected ? theme.highlight : (hovered ? theme.chip.opacity(0.85) : Color.clear))
@@ -96,7 +97,7 @@ struct ClipRowView: View {
                 RoundedRectangle(cornerRadius: 1)
                     .fill(theme.accent)
                     .frame(width: 2)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, model.preferences.compactRows ? 5 : 8)
                     .padding(.leading, 3)
             }
         }
@@ -227,11 +228,23 @@ struct SnippetRowView: View {
                     Text(snippet.title)
                         .font(.system(size: 13))
                         .lineLimit(1)
-                    Text("\(dayLabel(snippet.createdAt)) · \(snippet.createdAt.formatted(date: .omitted, time: .shortened))")
+                    Text(snippetSubtitle)
                         .font(.system(size: 11))
                         .foregroundStyle(theme.secondary)
                 }
                 Spacer()
+                if let abbr = snippet.normalizedAbbreviation {
+                    Text(abbr)
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(theme.accent)
+                        .help("Abbreviation: \(abbr)")
+                }
+                if !snippet.templateFields.isEmpty {
+                    Image(systemName: "text.badge.plus")
+                        .font(.system(size: 10))
+                        .foregroundStyle(theme.accent)
+                        .help("Fill-in template")
+                }
                 if snippet.pinned {
                     Image(systemName: "pin.fill")
                         .font(.system(size: 10))
@@ -245,7 +258,7 @@ struct SnippetRowView: View {
             }
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 8)
+        .padding(.vertical, model.preferences.compactRows ? 5 : 8)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(isSelected ? theme.highlight : (hovered ? theme.chip.opacity(0.85) : Color.clear))
@@ -266,20 +279,179 @@ struct SnippetRowView: View {
                 model.selectOnly(snippet.id)
                 model.copySelected()
             }
+            Button("Edit Snippet…") {
+                model.selectOnly(snippet.id)
+                model.beginEditingSnippet(snippet)
+            }
+            Menu("Move to Board") {
+                Button("Unfiled") { model.moveSnippet(snippet.id, to: nil) }
+                if !model.collections.isEmpty {
+                    Divider()
+                    ForEach(model.collections) { collection in
+                        Button(collection.name) { model.moveSnippet(snippet.id, to: collection.id) }
+                    }
+                }
+                Divider()
+                Button("New Collection…") {
+                    model.selectOnly(snippet.id)
+                    model.createCollection()
+                }
+            }
+            Button("Move Up") {
+                model.selectOnly(snippet.id)
+                model.reorderSelectedSnippet(by: -1)
+            }
+            Button("Move Down") {
+                model.selectOnly(snippet.id)
+                model.reorderSelectedSnippet(by: 1)
+            }
             if model.selection.count > 1, model.selection.contains(snippet.id) {
                 Divider()
                 Button("Paste in order") { model.pasteSelection(separator: "\n") }
                 Button("Join with comma") { model.pasteSelection(separator: ", ") }
                 Button("Join with…") { model.askJoinSeparator() }
             }
+            Divider()
+            Button("Delete") {
+                model.selectOnly(snippet.id)
+                model.deleteSelected()
+            }
+        }
+        .onDrag {
+            NSItemProvider(object: snippet.id.uuidString as NSString)
+        }
+        .onDrop(of: [.text], isTargeted: nil) { providers in
+            guard let provider = providers.first else { return false }
+            _ = provider.loadObject(ofClass: NSString.self) { object, _ in
+                guard let value = object as? String, let dragged = UUID(uuidString: value) else { return }
+                Task { @MainActor in
+                    model.dropSnippet(dragged, onto: snippet.id)
+                }
+            }
+            return true
         }
     }
 
-    private func dayLabel(_ date: Date) -> String {
-        switch TimeBucket.bucket(for: date, now: Date()) {
-        case .today: "Today"
-        case .yesterday: "Yesterday"
-        case .older: date.formatted(date: .abbreviated, time: .omitted)
+    private var snippetSubtitle: String {
+        let day: String = {
+            switch TimeBucket.bucket(for: snippet.createdAt, now: Date()) {
+            case .today: "Today"
+            case .yesterday: "Yesterday"
+            case .older: snippet.createdAt.formatted(date: .abbreviated, time: .omitted)
+            }
+        }()
+        let time = snippet.createdAt.formatted(date: .omitted, time: .shortened)
+        var parts: [String] = []
+        if let abbr = snippet.normalizedAbbreviation {
+            parts.append(abbr)
+        }
+        if let id = snippet.collectionID, let name = model.collections.first(where: { $0.id == id })?.name {
+            parts.append(name)
+        }
+        parts.append(day)
+        parts.append(time)
+        return parts.joined(separator: " · ")
+    }
+}
+
+struct SnippetEditorView: View {
+    var snippet: Snippet
+    var theme: Theme
+    var onSave: (String, String, String?) -> Void
+    var onCancel: () -> Void
+
+    @State private var title: String
+    @State private var text: String
+    @State private var abbreviation: String
+    @FocusState private var focused: Field?
+
+    private enum Field: Hashable {
+        case title, abbreviation, body
+    }
+
+    init(
+        snippet: Snippet,
+        theme: Theme,
+        onSave: @escaping (String, String, String?) -> Void,
+        onCancel: @escaping () -> Void
+    ) {
+        self.snippet = snippet
+        self.theme = theme
+        self.onSave = onSave
+        self.onCancel = onCancel
+        _title = State(initialValue: snippet.title)
+        _text = State(initialValue: snippet.text)
+        _abbreviation = State(initialValue: snippet.abbreviation ?? "")
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack {
+                Text("Edit Snippet")
+                    .font(.system(size: 14, weight: .semibold))
+                Spacer()
+            }
+            .padding(14)
+
+            VStack(alignment: .leading, spacing: 12) {
+                labeledField("Title") {
+                    TextField("Support reply", text: $title)
+                        .textFieldStyle(.plain)
+                        .focused($focused, equals: .title)
+                        .padding(10)
+                        .background(theme.chip, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+
+                labeledField("Abbreviation") {
+                    VStack(alignment: .leading, spacing: 6) {
+                        TextField("addr", text: $abbreviation)
+                            .textFieldStyle(.plain)
+                            .focused($focused, equals: .abbreviation)
+                            .padding(10)
+                            .background(theme.chip, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        Text("Leave blank to keep expansion off. Type the abbreviation, then space or return.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(theme.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                labeledField("Snippet") {
+                    TextEditor(text: $text)
+                        .font(.system(size: 13))
+                        .focused($focused, equals: .body)
+                        .scrollContentBackground(.hidden)
+                        .padding(8)
+                        .frame(minHeight: 180)
+                        .background(theme.chip, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                }
+            }
+            .padding(.horizontal, 14)
+
+            HStack {
+                Spacer()
+                Button("Cancel", action: onCancel)
+                    .keyboardShortcut(.cancelAction)
+                Button("Save") {
+                    onSave(title, text, abbreviation)
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
+                .disabled(title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    || text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+            .padding(14)
+        }
+        .frame(width: 520, height: 460)
+        .onAppear { focused = .abbreviation }
+    }
+
+    private func labeledField<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(theme.secondary)
+            content()
         }
     }
 }

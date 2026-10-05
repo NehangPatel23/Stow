@@ -24,6 +24,39 @@ struct PanelRootView: View {
                 model.clipBeingEdited = nil
             }
         }
+        .sheet(item: $model.snippetBeingEdited) { snippet in
+            SnippetEditorView(
+                snippet: snippet,
+                theme: theme,
+                onSave: { title, text, abbreviation in
+                    model.saveEditedSnippet(
+                        id: snippet.id,
+                        title: title,
+                        text: text,
+                        abbreviation: abbreviation
+                    )
+                },
+                onCancel: { model.cancelSnippetEdit() }
+            )
+        }
+        .sheet(item: $model.templateFill) { request in
+            TemplateFillView(
+                request: request,
+                theme: theme,
+                onPaste: { model.completeTemplateFill($0) },
+                onCancel: { model.cancelTemplateFill() }
+            )
+        }
+        .sheet(item: $model.archiveExportPicker) { picker in
+            ArchiveExportPickerView(
+                clips: picker.clips,
+                theme: theme,
+                onExport: { excluded in
+                    model.confirmArchiveExportPicker(excludedContentHashes: excluded)
+                },
+                onCancel: { model.cancelArchiveExportPicker() }
+            )
+        }
     }
 
     @ViewBuilder
@@ -108,6 +141,17 @@ struct PanelRootView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .fixedSize(horizontal: true, vertical: false)
+                Button {
+                    model.preferences.keepPanelOpen.toggle()
+                } label: {
+                    Image(systemName: model.preferences.keepPanelOpen ? "pin.fill" : "pin")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(model.preferences.keepPanelOpen ? theme.accent : theme.secondary)
+                        .frame(width: 28, height: 28)
+                        .background(Circle().fill(model.preferences.keepPanelOpen ? theme.chipActive : theme.chip))
+                }
+                .buttonStyle(.plain)
+                .help(model.preferences.keepPanelOpen ? "Panel stays open while pasting" : "Keep panel open while pasting")
                 panelMenu(theme)
             }
             .padding(.leading, surface == .quickPick ? 54 : 0)
@@ -115,7 +159,12 @@ struct PanelRootView: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(theme.secondary)
-                TextField("Search, or type:image, app:Safari, from:today", text: $model.query)
+                TextField(
+                    model.library == .snippets
+                        ? "Search snippets, or board:Support"
+                        : "Search, or type:image, app:Safari, from:today",
+                    text: $model.query
+                )
                     .textFieldStyle(.plain)
                     .focused($searchFocused)
                 if !model.query.isEmpty {
@@ -137,6 +186,9 @@ struct PanelRootView: View {
                     .stroke(theme.separator, lineWidth: 1)
             )
             chips(theme)
+            if model.library == .snippets {
+                collectionChips(theme)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.top, surface == .library ? 8 : 16)
@@ -185,6 +237,37 @@ struct PanelRootView: View {
                 }
                 chip("Pinned", symbol: "pin", active: model.chipPinned, theme: theme) {
                     model.chipPinned.toggle()
+                }
+            }
+            .padding(.vertical, 1)
+        }
+    }
+
+    private func collectionChips(_ theme: Theme) -> some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                chip("All boards", symbol: "square.stack", active: model.collectionFilter == .all, theme: theme) {
+                    model.collectionFilter = .all
+                }
+                chip("Unfiled", symbol: "tray", active: model.collectionFilter == .unfiled, theme: theme) {
+                    model.collectionFilter = .unfiled
+                }
+                ForEach(model.collections) { collection in
+                    chip(
+                        collection.name,
+                        symbol: "folder",
+                        active: model.collectionFilter == .collection(collection.id),
+                        theme: theme
+                    ) {
+                        model.collectionFilter = .collection(collection.id)
+                    }
+                    .contextMenu {
+                        Button("Rename…") { model.renameCollection(collection.id) }
+                        Button("Delete Board", role: .destructive) { model.deleteCollection(collection.id) }
+                    }
+                }
+                chip("New", symbol: "plus", active: false, theme: theme) {
+                    model.createCollection()
                 }
             }
             .padding(.vertical, 1)
@@ -266,11 +349,13 @@ struct PanelRootView: View {
         if model.visibleSnippets.isEmpty {
             emptyState(
                 title: model.snippets.isEmpty ? "No snippets yet" : "No matches",
-                detail: model.snippets.isEmpty ? "Save a clip with ⌘S. Clearing history leaves it here." : "Try a different word.",
+                detail: model.snippets.isEmpty
+                    ? "Save a clip with ⌘S. Put it on a board when you want it grouped."
+                    : "Try a different word or board.",
                 symbol: "text.badge.plus",
                 theme: theme
             )
-        }         else {
+        } else {
             ForEach(model.snippetSections) { section in
                 Text(section.title.uppercased())
                     .font(.system(size: 10, weight: .semibold))
