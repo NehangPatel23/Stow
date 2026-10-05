@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var model: AppModel?
     private var monitor: PasteboardMonitor?
     private var hotkeys: HotkeyController?
+    private var slotHotkeys: SlotHotkeyController?
     private var abbreviations: AbbreviationExpander?
     private var status: StatusItemController?
     private var panel: PanelController?
@@ -29,6 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let model = AppModel(store: store)
         let monitor = PasteboardMonitor(model: model)
         let hotkeys = HotkeyController()
+        let slotHotkeys = SlotHotkeyController()
         let abbreviations = AbbreviationExpander()
         let status = StatusItemController(model: model)
         let panel = PanelController(model: model)
@@ -61,8 +63,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         model.onHotkeyChange = { [weak self] in
             self?.registerHotkey()
         }
+        model.onSlotsHotkeyChange = { [weak self] in
+            self?.registerSlotHotkeys()
+        }
         hotkeys.onPress = { [weak panel] in
             panel?.toggle()
+        }
+        slotHotkeys.onPaste = { [weak model] index in
+            model?.pasteSlot(index)
         }
         status.onOpenLibrary = { [weak panel] in
             panel?.focusLibrary()
@@ -84,12 +92,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.model = model
         self.monitor = monitor
         self.hotkeys = hotkeys
+        self.slotHotkeys = slotHotkeys
         self.abbreviations = abbreviations
         self.status = status
         self.panel = panel
         self.launch = launch
 
         registerHotkey()
+        registerSlotHotkeys()
         monitor.start()
         abbreviations.start()
         model.notePreviousApp(NSWorkspace.shared.frontmostApplication)
@@ -144,6 +154,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         hotkeys?.unregister()
+        slotHotkeys?.unregister()
         abbreviations?.stop()
         monitor?.stop()
     }
@@ -171,6 +182,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         model.banner = "Stow couldn't register a shortcut. Change it in Settings."
+    }
+
+    private func registerSlotHotkeys() {
+        guard let model, let slotHotkeys else { return }
+        slotHotkeys.register(slots: model.slots)
     }
 
     private func installMainMenu() {

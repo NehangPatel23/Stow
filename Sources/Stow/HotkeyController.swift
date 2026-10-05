@@ -57,10 +57,12 @@ final class HotkeyController {
         return label
     }
 
+    private static let signature = OSType(0x5354_4F57) // 'STOW'
+
     private func registerCarbon(keyCode: UInt32, modifiers: UInt32) -> Bool {
         installHandlerIfNeeded()
         var hotKey: EventHotKeyRef?
-        let id = EventHotKeyID(signature: OSType(0x5354_4F57), id: 1)
+        let id = EventHotKeyID(signature: Self.signature, id: 1)
         let status = RegisterEventHotKey(
             keyCode,
             modifiers,
@@ -89,8 +91,21 @@ final class HotkeyController {
         )
         InstallEventHandler(
             GetApplicationEventTarget(),
-            { _, _, userData in
+            { _, event, userData in
                 guard let userData else { return noErr }
+                var hotKeyID = EventHotKeyID()
+                let status = GetEventParameter(
+                    event,
+                    EventParamName(kEventParamDirectObject),
+                    EventParamType(typeEventHotKeyID),
+                    nil,
+                    MemoryLayout<EventHotKeyID>.size,
+                    nil,
+                    &hotKeyID
+                )
+                guard status == noErr, hotKeyID.signature == HotkeyController.signature else {
+                    return noErr
+                }
                 let controller = Unmanaged<HotkeyController>.fromOpaque(userData).takeUnretainedValue()
                 DispatchQueue.main.async {
                     MainActor.assumeIsolated {

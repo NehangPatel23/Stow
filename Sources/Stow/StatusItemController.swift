@@ -56,6 +56,14 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.addItem(item("More clips…", action: #selector(openLibrary)))
         menu.addItem(.separator())
 
+        let filledSlots = model.slots.filter { !$0.isEmpty }
+        if !filledSlots.isEmpty {
+            for slot in filledSlots {
+                menu.addItem(slotItem(slot))
+            }
+            menu.addItem(.separator())
+        }
+
         if model.isPaused {
             menu.addItem(item("Resume recording", action: #selector(togglePause)))
         } else {
@@ -105,6 +113,21 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         item.representedObject = clip.id.uuidString
         item.image = menuImage(for: clip)
         item.toolTip = "\(clip.kind.title) · \(clip.sourceAppName)"
+        return item
+    }
+
+    private func slotItem(_ slot: ClipSlot) -> NSMenuItem {
+        let item = NSMenuItem(title: slot.menuTitle, action: #selector(pasteSlot(_:)), keyEquivalent: "")
+        item.target = self
+        item.representedObject = slot.index
+        item.toolTip = "\(slot.hotkeyLabel) · paste \(slot.name)"
+        if let payload = slot.payload {
+            let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+            item.image = NSImage(
+                systemSymbolName: payload.kind.symbolName,
+                accessibilityDescription: payload.kind.title
+            )?.withSymbolConfiguration(config)
+        }
         return item
     }
 
@@ -212,6 +235,11 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         guard let raw = sender.representedObject as? String,
               let id = UUID(uuidString: raw) else { return }
         model.pasteMenuClip(id: id)
+    }
+
+    @objc private func pasteSlot(_ sender: NSMenuItem) {
+        guard let index = sender.representedObject as? Int else { return }
+        model.pasteSlot(index)
     }
 
     @objc private func openLibrary() { onOpenLibrary?() }

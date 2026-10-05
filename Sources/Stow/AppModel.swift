@@ -115,6 +115,18 @@ final class AppModel {
     var focusToken = 0
     var activeHotkeyLabel: String
     var previousApp: NSRunningApplication?
+    /// Fixed clipboard registers (named slots). Independent of scrolling history.
+    var slots: [ClipSlot] {
+        didSet {
+            let hotkeysChanged = oldValue.map { "\($0.hotkeyKeyCode)-\($0.hotkeyCarbonModifiers)" }
+                != slots.map { "\($0.hotkeyKeyCode)-\($0.hotkeyCarbonModifiers)" }
+            SlotStore.save(slots)
+            if hotkeysChanged {
+                onSlotsHotkeyChange?()
+            }
+            onChromeChange?()
+        }
+    }
 
     var closePanel: (@MainActor (Bool) -> Void)?
     var openSettings: (@MainActor () -> Void)?
@@ -127,6 +139,7 @@ final class AppModel {
         _ onConfirm: @escaping @MainActor (String) -> Void
     ) -> Void)?
     var relayoutQuickPanel: (@MainActor () -> Void)?
+    var onSlotsHotkeyChange: (@MainActor () -> Void)?
     var stepAside: (@MainActor (_ app: NSRunningApplication, _ keepOpen: Bool) -> Void)?
     var restorePanelAfterPaste: (@MainActor () -> Void)?
     var onHotkeyChange: (@MainActor () -> Void)?
@@ -146,6 +159,7 @@ final class AppModel {
         self.syncEngine = engine
         let loaded = Preferences.load()
         preferences = loaded
+        slots = SlotStore.load()
         activeHotkeyLabel = loaded.hotkeyLabel
         engine.onStatusChange = { [weak self] status in
             self?.syncStatus = status
@@ -771,6 +785,53 @@ final class AppModel {
         pasteClip(full, plain: false)
     }
 
+    /// Assign the selected history clip (or snippet text) to a named slot.
+    func assignSelectionToSlot(_ index: Int) {
+        guard slots.contains(where: { $0.index == index }) else { return }
+        guard let clip = selectedClip() else {
+            notify("Select a clip", symbol: "exclamationmark.circle")
+            return
+        }
+        assignClipToSlot(clip, index: index)
+    }
+
+    func assignClipToSlot(_ clip: Clip, index: Int) {
+        let full = (try? store.payload(id: clip.id)) ?? clip
+        let image = PasteService.imageData(for: full, store: store)
+        assignToSlot(full, index: index, imagePNG: image)
+    }
+
+    private func assignToSlot(_ clip: Clip, index: Int, imagePNG: Data?) {
+        guard let position = slots.firstIndex(where: { $0.index == index }) else { return }
+        var next = slots
+        next[position].payload = SlotPayload.from(clip: clip, imagePNG: imagePNG)
+        slots = next
+        let name = next[position].name
+        notify("Saved to \(name)", symbol: "rectangle.stack.fill")
+    }
+
+    func clearSlot(_ index: Int) {
+        guard let position = slots.firstIndex(where: { $0.index == index }) else { return }
+        var next = slots
+        next[position].payload = nil
+        slots = next
+        notify("Cleared \(next[position].name)", symbol: "rectangle.stack")
+    }
+
+    /// Paste a named slot into the previous app without opening the panel.
+    func pasteSlot(_ index: Int) {
+        guard let slot = slots.first(where: { $0.index == index }) else { return }
+        guard let payload = slot.payload else {
+            notify("\(slot.name) is empty", detail: "Assign a clip from the right-click menu.", symbol: "rectangle.stack")
+            return
+        }
+        if let front = NSWorkspace.shared.frontmostApplication,
+           front.bundleIdentifier != Bundle.main.bundleIdentifier {
+            notePreviousApp(front)
+        }
+        pasteClip(payload.asClip(), plain: false, imageData: payload.imagePNG)
+    }
+
     func completeTemplateFill(_ filled: String) {
         let plain = templateFill?.plain ?? false
         let oneShot = pendingTemplateOneShot
@@ -790,7 +851,12 @@ final class AppModel {
         templateFill = nil
     }
 
-    private func pasteClip(_ full: Clip, plain requestedPlain: Bool, oneShot: Bool? = nil) {
+    private func pasteClip(
+        _ full: Clip,
+        plain requestedPlain: Bool,
+        oneShot: Bool? = nil,
+        imageData: Data? = nil
+    ) {
         let target = previousApp
         let plain = requestedPlain || full.kind == .code || PasteTarget.prefersPlainText(
             bundleID: target?.bundleIdentifier,
@@ -800,13 +866,13 @@ final class AppModel {
         if AccessibilityClient.isTrusted(prompt: false),
            let pid = target?.processIdentifier,
            FocusedField.isSecureTextField(pid: pid) {
-            commitWrite(full, plain: true)
+            commitWrite(full, plain: true, imageData: imageData)
             notify("Copied", detail: "The focused field is secure, so Stow did not type into it.", symbol: "lock")
             return
         }
 
         let restore = beginOneShotPaste(forced: oneShot)
-        commitWrite(full, plain: plain)
+        commitWrite(full, plain: plain, imageData: imageData)
         deliverToPreviousApp(
             message: plain ? "Pasted as plain text" : "Pasted",
             restore: restore
@@ -1570,8 +1636,8 @@ final class AppModel {
         return true
     }
 
-    private func commitWrite(_ clip: Clip, plain: Bool) {
-        let image = PasteService.imageData(for: clip, store: store)
+    private func commitWrite(_ clip: Clip, plain: Bool, imageData: Data? = nil) {
+        let image = imageData ?? PasteService.imageData(for: clip, store: store)
         PasteService.write(clip, plain: plain, imageData: image)
         notePasteboardWrite?()
     }

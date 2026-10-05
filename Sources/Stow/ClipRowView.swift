@@ -152,6 +152,14 @@ struct ClipRowView: View {
                     model.saveSnippetFromSelection()
                 }
             }
+            Menu("Assign to Slot") {
+                ForEach(model.slots) { slot in
+                    Button(slot.isEmpty ? slot.name : slot.menuTitle) {
+                        model.select(clip.id)
+                        model.assignClipToSlot(clip, index: slot.index)
+                    }
+                }
+            }
             if model.selection.count > 1, model.selection.contains(clip.id) {
                 Divider()
                 Button("Paste in order") { model.pasteSelection(separator: "\n") }
@@ -309,6 +317,14 @@ struct SnippetRowView: View {
             Button("Edit Snippet…") {
                 model.selectOnly(snippet.id)
                 model.beginEditingSnippet(snippet)
+            }
+            Menu("Assign to Slot") {
+                ForEach(model.slots) { slot in
+                    Button(slot.isEmpty ? slot.name : slot.menuTitle) {
+                        model.selectOnly(snippet.id)
+                        model.assignSelectionToSlot(slot.index)
+                    }
+                }
             }
             Menu("Move to Board") {
                 Button("Unfiled") { model.moveSnippet(snippet.id, to: nil) }

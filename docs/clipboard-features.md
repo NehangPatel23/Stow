@@ -99,11 +99,10 @@ The later wave is in the app: clip transforms, multi-paste, collections, fill-in
 These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done.
 
 <details>
-<summary>Slots (5)</summary>
+<summary>Slots (4)</summary>
 
 - [x] **One-shot paste.** Paste an older clip once and leave the system clipboard on whatever you copied last.
-- [ ] **Named slots.** Keep a few clips in slots, like registers, and paste a slot with its own shortcut while the panel stays closed.
-- [ ] **Paste previous.** A second hotkey pastes the item just before the current one. Useful when a copy overwrote the thing you still needed.
+- [x] **Named slots.** Keep a few clips in slots, like registers, and paste a slot with its own shortcut while the panel stays closed.
 - [x] **Menu of recent items.** The menu-bar icon opens the last several clips for a click, so a mouse path never needs the full panel.
 - [ ] **Sort by use.** A Frequent view ranks clips by how often you paste them, separate from the order you copied them.
 

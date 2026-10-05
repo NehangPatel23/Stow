@@ -117,6 +117,7 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 shortcutSection(theme)
+                slotsSection(theme)
                 windowSection(theme)
                 abbreviationsSection(theme)
                 storageSection(theme)
@@ -242,6 +243,54 @@ struct SettingsView: View {
                     .frame(maxWidth: 220)
                 }
                 .padding(.vertical, 14)
+            }
+        }
+    }
+
+    private func slotsSection(_ theme: Theme) -> some View {
+        settingsSection(
+            title: "Named slots",
+            detail: "Fixed registers that keep a clip until you replace them. Paste with Control-Option and the slot number while the panel stays closed.",
+            symbol: "rectangle.stack",
+            theme: theme
+        ) {
+            VStack(spacing: 0) {
+                ForEach(Array(model.slots.enumerated()), id: \.element.id) { offset, slot in
+                    if offset > 0 { settingsDivider(theme) }
+                    HStack(alignment: .center, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(slot.name)
+                                .font(.system(size: 13, weight: .medium))
+                            Text(
+                                slot.isEmpty
+                                    ? "Empty — assign from a clip’s right-click menu."
+                                    : ClipText.previewLine(from: slot.payload?.preview ?? "", limit: 72)
+                            )
+                                .font(.system(size: 11))
+                                .foregroundStyle(theme.secondary)
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 12)
+                        Text(slot.hotkeyLabel)
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                            .foregroundStyle(theme.accent)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(theme.keycap))
+                            .overlay(Capsule().strokeBorder(theme.separator))
+                        if !slot.isEmpty {
+                            Button("Clear") {
+                                model.clearSlot(slot.index)
+                            }
+                            .buttonStyle(.plain)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(theme.secondary)
+                        }
+                    }
+                    .padding(.vertical, 12)
+                }
             }
         }
     }
