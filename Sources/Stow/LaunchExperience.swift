@@ -275,3 +275,138 @@ private struct OnboardingPage {
     var title: String
     var message: String
 }
+
+@MainActor
+final class AboutWindowController {
+    static let shared = AboutWindowController()
+
+    private var window: NSWindow?
+
+    func show() {
+        if let window, window.isVisible {
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+
+        let host = NSHostingView(rootView: AboutView())
+        host.sizingOptions = [.intrinsicContentSize]
+        // Sized to content so credits fit without scrolling.
+        let fitted = host.fittingSize
+        let size = NSSize(width: 440, height: max(fitted.height, 480))
+
+        let window = NSWindow(
+            contentRect: NSRect(origin: .zero, size: size),
+            styleMask: [.titled, .closable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "About Stow"
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.isMovableByWindowBackground = true
+        window.isReleasedWhenClosed = false
+        window.standardWindowButton(.miniaturizeButton)?.isHidden = true
+        window.standardWindowButton(.zoomButton)?.isHidden = true
+        window.contentView = host
+        window.setContentSize(size)
+        window.center()
+        window.alphaValue = 0
+        self.window = window
+
+        NSApp.activate(ignoringOtherApps: true)
+        window.makeKeyAndOrderFront(nil)
+        NSAnimationContext.runAnimationGroup { context in
+            context.duration = 0.2
+            window.animator().alphaValue = 1
+        }
+    }
+}
+
+private struct AboutView: View {
+    @Environment(\.colorScheme) private var scheme
+    @Environment(\.openURL) private var openURL
+    @State private var appear = false
+
+    private var version: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.1.0"
+    }
+
+    private var build: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+    }
+
+    private var copyright: String {
+        Bundle.main.object(forInfoDictionaryKey: "NSHumanReadableCopyright") as? String
+            ?? "Copyright © 2026 Nehang Patel. All rights reserved."
+    }
+
+    var body: some View {
+        let theme = Theme(scheme: scheme)
+        VStack(spacing: 18) {
+            AppIconMark(size: 96)
+                .scaleEffect(appear ? 1 : 0.92)
+                .opacity(appear ? 1 : 0)
+
+            VStack(spacing: 6) {
+                Text("Stow")
+                    .font(.system(size: 32, weight: .semibold, design: .rounded))
+                Text("Version \(version) (\(build))")
+                    .font(.system(size: 12, weight: .medium, design: .monospaced))
+                    .foregroundStyle(theme.secondary)
+            }
+            .opacity(appear ? 1 : 0)
+            .offset(y: appear ? 0 : 6)
+
+            Text("On-device clipboard history for macOS,\nready in a keystroke.")
+                .font(.system(size: 14, weight: .medium))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .opacity(appear ? 1 : 0)
+
+            VStack(spacing: 8) {
+                Text("History stays on this Mac — no account required.")
+                Text("Password-manager copies are never stored.")
+                Text("⌘⇧C opens the quick panel; the menu bar keeps\nrecent clips a click away.")
+            }
+            .font(.system(size: 13))
+            .foregroundStyle(theme.secondary)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .opacity(appear ? 1 : 0)
+
+            VStack(spacing: 6) {
+                Text("Nehang Patel · University of Southern California")
+                    .font(.system(size: 13, weight: .medium))
+                Button("github.com/NehangPatel23/Stow") {
+                    if let url = URL(string: "https://github.com/NehangPatel23/Stow") {
+                        openURL(url)
+                    }
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(theme.accent)
+                .underline(true, color: theme.accent.opacity(0.45))
+            }
+            .padding(.top, 4)
+            .opacity(appear ? 1 : 0)
+
+            Text(copyright)
+                .font(.system(size: 11))
+                .foregroundStyle(theme.secondary.opacity(0.85))
+                .multilineTextAlignment(.center)
+                .padding(.top, 8)
+                .opacity(appear ? 1 : 0)
+        }
+        .padding(.horizontal, 36)
+        .padding(.top, 36)
+        .padding(.bottom, 32)
+        .frame(width: 440)
+        .background(theme.background)
+        .onAppear {
+            withAnimation(.spring(response: 0.55, dampingFraction: 0.86)) {
+                appear = true
+            }
+        }
+    }
+}

@@ -108,6 +108,8 @@ final class AppModel {
     var clipBeingEdited: Clip?
     var snippetBeingEdited: Snippet?
     var templateFill: TemplateFillRequest?
+    /// Carries an explicit one-shot choice across the template fill sheet.
+    private var pendingTemplateOneShot: Bool?
     var archiveExportPicker: ArchiveExportPickerState?
     var joinSeparator = ", "
     var focusToken = 0
@@ -525,16 +527,20 @@ final class AppModel {
         presentJoinPrompt?()
     }
 
-    func pasteSelection(separator: String) {
+    func pasteSelection(separator: String, oneShot: Bool? = nil) {
         let pieces = selectionTexts()
         guard !pieces.isEmpty else {
             notify("Select a clip", symbol: "arrow.down.doc")
             return
         }
+        let restore = beginOneShotPaste(forced: oneShot)
         let joined = pieces.joined(separator: separator)
         PasteService.writeText(joined)
         notePasteboardWrite?()
-        deliverToPreviousApp(message: pieces.count == 1 ? "Pasted" : "Pasted \(pieces.count) clips")
+        deliverToPreviousApp(
+            message: pieces.count == 1 ? "Pasted" : "Pasted \(pieces.count) clips",
+            restore: restore
+        )
     }
 
     private func visibleIDs() -> [UUID] {
@@ -558,13 +564,14 @@ final class AppModel {
             .map(\.text)
     }
 
-    private func deliverToPreviousApp(message: String) {
+    private func deliverToPreviousApp(message: String, restore: PasteboardSnapshot? = nil) {
         let keepOpen = preferences.keepPanelOpen
         if !keepOpen {
             closePanel?(false)
         }
         guard let target = previousApp else {
             notify("Copied", detail: "Switch to an app, then paste.", symbol: "doc.on.doc")
+            scheduleClipboardRestore(restore)
             return
         }
         stepAside?(target, keepOpen)
@@ -574,6 +581,7 @@ final class AppModel {
                 self.stepAside?(target, keepOpen)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     PasteService.sendCommandV()
+                    self.scheduleClipboardRestore(restore)
                     if keepOpen {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                             self.restorePanelAfterPaste?()
@@ -582,12 +590,29 @@ final class AppModel {
                 }
             } else {
                 PasteService.sendCommandV()
+                self.scheduleClipboardRestore(restore)
                 if keepOpen {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                         self.restorePanelAfterPaste?()
                     }
                 }
             }
+        }
+    }
+
+    /// Snapshot the current clipboard before Stow overwrites it for a one-shot paste.
+    private func beginOneShotPaste(forced: Bool?) -> PasteboardSnapshot? {
+        let enabled = forced ?? preferences.oneShotPaste
+        guard enabled else { return nil }
+        return PasteService.snapshot()
+    }
+
+    private func scheduleClipboardRestore(_ snapshot: PasteboardSnapshot?) {
+        guard let snapshot else { return }
+        // Wait until the target app has consumed ⌘V before putting the old clipboard back.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) {
+            _ = PasteService.restore(snapshot)
+            self.notePasteboardWrite?()
         }
     }
 
@@ -710,10 +735,11 @@ final class AppModel {
         }
     }
 
-    func pasteSelected(plain requestedPlain: Bool) {
+    func pasteSelected(plain requestedPlain: Bool, oneShot: Bool? = nil) {
         if library == .snippets, let snippet = selectedSnippet() {
             let fields = snippet.templateFields
             if !fields.isEmpty {
+                pendingTemplateOneShot = oneShot
                 templateFill = TemplateFillRequest(
                     title: snippet.title,
                     template: snippet.text,
@@ -730,22 +756,41 @@ final class AppModel {
             return
         }
         let full = materialized(clip)
-        pasteClip(full, plain: requestedPlain)
+        pasteClip(full, plain: requestedPlain, oneShot: oneShot)
+    }
+
+    /// Paste a history clip chosen from the menu-bar menu without opening a window.
+    func pasteMenuClip(id: UUID) {
+        let clip = history.first(where: { $0.id == id })
+            ?? flattenedHistory.first(where: { $0.id == id })
+        guard let clip else {
+            notify("That clip is gone", symbol: "exclamationmark.circle")
+            return
+        }
+        let full = (try? store.payload(id: clip.id)) ?? clip
+        pasteClip(full, plain: false)
     }
 
     func completeTemplateFill(_ filled: String) {
         let plain = templateFill?.plain ?? false
+        let oneShot = pendingTemplateOneShot
+        pendingTemplateOneShot = nil
         templateFill = nil
+        let restore = beginOneShotPaste(forced: oneShot)
         PasteService.writeText(filled)
         notePasteboardWrite?()
-        deliverToPreviousApp(message: plain ? "Pasted as plain text" : "Pasted")
+        deliverToPreviousApp(
+            message: plain ? "Pasted as plain text" : "Pasted",
+            restore: restore
+        )
     }
 
     func cancelTemplateFill() {
+        pendingTemplateOneShot = nil
         templateFill = nil
     }
 
-    private func pasteClip(_ full: Clip, plain requestedPlain: Bool) {
+    private func pasteClip(_ full: Clip, plain requestedPlain: Bool, oneShot: Bool? = nil) {
         let target = previousApp
         let plain = requestedPlain || full.kind == .code || PasteTarget.prefersPlainText(
             bundleID: target?.bundleIdentifier,
@@ -760,8 +805,12 @@ final class AppModel {
             return
         }
 
+        let restore = beginOneShotPaste(forced: oneShot)
         commitWrite(full, plain: plain)
-        deliverToPreviousApp(message: plain ? "Pasted as plain text" : "Pasted")
+        deliverToPreviousApp(
+            message: plain ? "Pasted as plain text" : "Pasted",
+            restore: restore
+        )
     }
 
     func copyTransform(_ transform: ClipTransform, text: String, html: String?) {

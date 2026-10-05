@@ -1,21 +1,25 @@
 import AppKit
 
 @MainActor
-final class StatusItemController: NSObject {
+final class StatusItemController: NSObject, NSMenuDelegate {
     private let model: AppModel
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+    private let menu = NSMenu()
     private var lastState: MenuBarState?
 
-    var onOpen: (() -> Void)?
+    /// Opens the library window ("More clips…").
+    var onOpenLibrary: (() -> Void)?
     var onSettings: (() -> Void)?
+    var onAbout: (() -> Void)?
     var onQuit: (() -> Void)?
+
+    private let recentLimit = 8
 
     init(model: AppModel) {
         self.model = model
         super.init()
-        statusItem.button?.target = self
-        statusItem.button?.action = #selector(click)
-        statusItem.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
+        menu.delegate = self
+        statusItem.menu = menu
         refresh()
     }
 
@@ -31,21 +35,27 @@ final class StatusItemController: NSObject {
         statusItem.button?.setAccessibilityLabel("Stow")
     }
 
-    @objc private func click() {
-        let event = NSApp.currentEvent
-        let rightClick = event?.type == .rightMouseUp
-        let controlClick = event?.modifierFlags.contains(.control) == true
-        if rightClick || controlClick {
-            showMenu()
-        } else {
-            onOpen?()
-        }
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        rebuildMenu()
     }
 
-    private func showMenu() {
-        let menu = NSMenu()
-        menu.addItem(item("Open Stow", action: #selector(openPanel)))
+    private func rebuildMenu() {
+        menu.removeAllItems()
+
+        let recent = Array(model.history.prefix(recentLimit))
+        if recent.isEmpty {
+            let empty = NSMenuItem(title: "No recent clips", action: nil, keyEquivalent: "")
+            empty.isEnabled = false
+            menu.addItem(empty)
+        } else {
+            for (index, clip) in recent.enumerated() {
+                menu.addItem(clipItem(clip, index: index))
+            }
+        }
+
+        menu.addItem(item("More clips…", action: #selector(openLibrary)))
         menu.addItem(.separator())
+
         if model.isPaused {
             menu.addItem(item("Resume recording", action: #selector(togglePause)))
         } else {
@@ -66,24 +76,84 @@ final class StatusItemController: NSObject {
         if model.undo != nil {
             menu.addItem(item("Undo", action: #selector(undo)))
         }
+
         menu.addItem(.separator())
-        menu.addItem(item("Clear unpinned history", action: #selector(clearUnpinned)))
-        menu.addItem(item("Clear everything", action: #selector(clearAll)))
-        menu.addItem(.separator())
-        menu.addItem(item("Settings…", action: #selector(settings)))
-        menu.addItem(item("Quit Stow", action: #selector(quit), key: "⌘Q"))
-        guard let button = statusItem.button else { return }
-        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height), in: button)
+
+        let clear = NSMenuItem(title: "Clear", action: #selector(clearUnpinned), keyEquivalent: String(UnicodeScalar(NSBackspaceCharacter)!))
+        clear.keyEquivalentModifierMask = [.command, .option]
+        clear.target = self
+        menu.addItem(clear)
+
+        let preferences = NSMenuItem(title: "Preferences…", action: #selector(settings), keyEquivalent: ",")
+        preferences.keyEquivalentModifierMask = .command
+        preferences.target = self
+        menu.addItem(preferences)
+
+        menu.addItem(item("About", action: #selector(about)))
+
+        let quit = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "q")
+        quit.keyEquivalentModifierMask = .command
+        quit.target = self
+        menu.addItem(quit)
     }
 
-    private func item(_ title: String, action: Selector, key: String? = nil) -> NSMenuItem {
+    private func clipItem(_ clip: Clip, index: Int) -> NSMenuItem {
+        let title = menuTitle(for: clip)
+        let key = index < 9 ? "\(index + 1)" : ""
+        let item = NSMenuItem(title: title, action: #selector(pasteClip(_:)), keyEquivalent: key)
+        item.target = self
+        item.representedObject = clip.id.uuidString
+        item.image = menuImage(for: clip)
+        item.toolTip = "\(clip.kind.title) · \(clip.sourceAppName)"
+        return item
+    }
+
+    private func menuTitle(for clip: Clip) -> String {
+        let line = ClipText.previewLine(from: clip.preview, limit: 72)
+        if line.isEmpty {
+            return clip.kind.title
+        }
+        return line
+    }
+
+    private func menuImage(for clip: Clip) -> NSImage? {
+        let size = NSSize(width: 16, height: 16)
+        if clip.kind == .image, let path = clip.thumbRelativePath {
+            let url = model.store.url(forRelativePath: path)
+            if let image = NSImage(contentsOf: url) {
+                return resized(image, to: size)
+            }
+        }
+        if clip.kind == .color, let hex = clip.colorHex, let value = ColorValue.parse(hex) {
+            let swatch = NSImage(size: size, flipped: false) { rect in
+                NSColor(calibratedRed: value.red, green: value.green, blue: value.blue, alpha: 1).setFill()
+                NSBezierPath(ovalIn: rect.insetBy(dx: 2, dy: 2)).fill()
+                return true
+            }
+            return swatch
+        }
+        let config = NSImage.SymbolConfiguration(pointSize: 12, weight: .medium)
+        return NSImage(systemSymbolName: clip.kind.symbolName, accessibilityDescription: clip.kind.title)?
+            .withSymbolConfiguration(config)
+    }
+
+    private func resized(_ image: NSImage, to size: NSSize) -> NSImage {
+        let result = NSImage(size: size)
+        result.lockFocus()
+        NSGraphicsContext.current?.imageInterpolation = .high
+        image.draw(
+            in: NSRect(origin: .zero, size: size),
+            from: .zero,
+            operation: .copy,
+            fraction: 1
+        )
+        result.unlockFocus()
+        return result
+    }
+
+    private func item(_ title: String, action: Selector) -> NSMenuItem {
         let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
         item.target = self
-        if let key {
-            item.keyEquivalent = ""
-            // The menu is transient, so the label carries the shortcut instead of a live equivalent.
-            item.title = "\(title)  \(key)"
-        }
         return item
     }
 
@@ -138,7 +208,13 @@ final class StatusItemController: NSObject {
         }
     }
 
-    @objc private func openPanel() { onOpen?() }
+    @objc private func pasteClip(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String,
+              let id = UUID(uuidString: raw) else { return }
+        model.pasteMenuClip(id: id)
+    }
+
+    @objc private func openLibrary() { onOpenLibrary?() }
     @objc private func togglePause() { model.togglePause() }
     @objc private func pauseHour() { model.pauseForOneHour() }
     @objc private func pauseFront() { model.pauseFrontAppForOneHour() }
@@ -152,7 +228,7 @@ final class StatusItemController: NSObject {
     @objc private func discardSkipped() { model.discardSkipped() }
     @objc private func undo() { model.performUndo() }
     @objc private func clearUnpinned() { model.clearHistory(includingPinned: false) }
-    @objc private func clearAll() { model.clearHistory(includingPinned: true) }
     @objc private func settings() { onSettings?() }
+    @objc private func about() { onAbout?() }
     @objc private func quit() { onQuit?() }
 }

@@ -18,6 +18,10 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleGetInfoString</key>
+	<string>Stow $(MARKETING_VERSION). On-device clipboard history for macOS.</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2026 Nehang Patel. All rights reserved.</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSHighResolutionCapable</key>

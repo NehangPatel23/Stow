@@ -50,7 +50,7 @@ Honest snapshot against [`docs/clipboard-features.md`](./docs/clipboard-features
 
 ### Not in this version
 
-A one-time Maccy history import and the further-ideas list stay unchecked. The later wave above is in the app.
+A one-time Maccy history import and most further ideas stay unchecked. The later wave above is in the app.
 
 ---
 
@@ -63,7 +63,7 @@ The first version and later wave are in the app. What remains in [`docs/clipboar
 | **Match Maccy** | Hotkey and menu-bar icon, search-as-you-type, number keys, pin, delete and clear, pause and ignore-next-copy, concealed pasteboard types |
 | **First version** | Panel, preview, type recognition, filters, shortcut footer and context menu, paste-target awareness, a separate snippets list, undo on the toast, secret skip, app exclusions, source and time, duplicate folding, drag-out images and files, paused icon, first-run splash |
 | **Later wave** | Clip transforms and multi-paste, snippet boards, `{{field}}` fill-in templates, keep-open pin, compact rows, storage rules, opt-in abbreviations, local archive, on-device OCR, opt-in encrypted folder sync, Universal Clipboard toggle, Shortcuts (latest clip, search, save as snippet) |
-| **Further** | Slots, edit-before-paste (Edit Clip, which updates the stored clip, is already in the app), copy bursts, per-app defaults, recording-aware privacy, a one-time Maccy history import |
+| **Further** | One-shot paste and menu of recent items (in the app). Named slots, paste previous, edit-before-paste (Edit Clip updates the stored clip), copy bursts, per-app defaults, recording-aware privacy, a one-time Maccy history import |
 
 Daily use and the further-ideas list are next — not another later-wave checkbox.
 
@@ -77,7 +77,7 @@ Full wording and checkboxes live in the catalog. This is the map.
 | --- | --- | --- |
 | **See it** | Preview pane, type recognition (text, rich text, code, link, email, color, image, file), drag-out thumbnails, source app and Today / Yesterday / Older | — |
 | **Find it** | Type and pin chips on history and snippets, operators like `type:image`, `from:today`, `board:Support`, and `abbr:addr`, duplicate folding, on-device OCR for text inside screenshots | — |
-| **Paste it** | Return copies. Option-Return pastes. Shift-Option-Return pastes plain text. Terminals get plain text. A secure field is copied, not typed into. Right-click can edit the stored clip | — |
+| **Paste it** | Return copies. Option-Return pastes. Shift-Option-Return pastes plain text. Command-Option-Return pastes once and restores the previous clipboard. Terminals get plain text. A secure field is copied, not typed into. Right-click can edit the stored clip | — |
 | **Transforms** | HTML to Markdown, pretty JSON, unwrap lines, and strip tracking parameters. Each copies a new version and leaves the stored clip alone | — |
 | **Multi-paste** | Several clips paste in the order they were copied, joined with a newline, a comma, or a separator you type | — |
 | **Reuse it** | Snippets live apart from history. Boards group them. `{{name}}` fields open a fill-in form before paste. Marked abbreviations expand while typing | — |
@@ -87,9 +87,9 @@ Full wording and checkboxes live in the catalog. This is the map.
 
 ### How the window should feel
 
-- **Open.** The menu bar opens the library. ⌘⇧C toggles the quick panel. Search is focused. Nothing is selected until you choose a clip.
+- **Open.** The menu bar opens recent clips; More clips… opens the library. ⌘⇧C toggles the quick panel. Search is focused. Nothing is selected until you choose a clip.
 - **Read.** Two lines per clip: a type mark, a preview, then the source app and time. The preview pane shows the whole clip, including images.
-- **Act.** The shortcut footer lists Paste, Plain, Copy, Pin, and Delete. The same actions are on the right-click menu, along with Edit Clip or Edit Snippet. Rows do not show those buttons.
+- **Act.** The shortcut footer lists Paste, Plain, Once, Copy, Pin, and Delete. The same actions are on the right-click menu, along with Edit Clip or Edit Snippet. Rows do not show those buttons.
 
 ### Leave these out
 
@@ -125,7 +125,7 @@ xcodebuild -project Stow.xcodeproj -scheme Stow -destination 'platform=macOS' -d
 open build/Build/Products/Debug/Stow.app
 ```
 
-Stow appears in the Dock and the menu bar. The default shortcut is **⌘⇧C**, which toggles the quick panel. The first launch explains that shortcut and the Accessibility permission paste needs. A click in the menu bar opens the library. Nothing is selected until you choose a clip. Return copies it. Option-Return pastes it back. Shift-Option-Return pastes plain text.
+Stow appears in the Dock and the menu bar. The default shortcut is **⌘⇧C**, which toggles the quick panel. The first launch explains that shortcut and the Accessibility permission paste needs. A click in the menu bar opens recent clips; More clips… opens the library. Nothing is selected until you choose a clip. Return copies it. Option-Return pastes it back. Shift-Option-Return pastes plain text.
 
 ```bash
 xcodebuild -project Stow.xcodeproj -scheme Stow -destination 'platform=macOS' -derivedDataPath build test

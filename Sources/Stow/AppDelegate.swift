@@ -64,20 +64,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotkeys.onPress = { [weak panel] in
             panel?.toggle()
         }
-        status.onOpen = { [weak panel] in
+        status.onOpenLibrary = { [weak panel] in
             panel?.focusLibrary()
         }
         status.onSettings = { [weak panel] in
             panel?.showSettings()
+        }
+        status.onAbout = { [weak self] in
+            self?.showAbout()
         }
         status.onQuit = {
             NSApp.terminate(nil)
         }
 
         let launch = LaunchController(model: model)
-        launch.onFinished = { [weak panel] in
-            panel?.showLibrary()
-        }
+        // Stay menu-bar first after launch; the library opens from "More clips…".
+        launch.onFinished = nil
 
         self.model = model
         self.monitor = monitor
@@ -128,6 +130,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         panel?.showSettings()
     }
 
+    @objc private func showAboutFromMenu(_ sender: Any?) {
+        showAbout()
+    }
+
+    private func showAbout() {
+        AboutWindowController.shared.show()
+    }
+
     func applicationDidBecomeActive(_ notification: Notification) {
         model?.refreshAccessibilityTrust()
     }
@@ -170,7 +180,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         main.addItem(appItem)
         let appMenu = NSMenu()
         appItem.submenu = appMenu
-        appMenu.addItem(withTitle: "About Stow", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        let about = appMenu.addItem(withTitle: "About Stow", action: #selector(showAboutFromMenu(_:)), keyEquivalent: "")
+        about.target = self
         appMenu.addItem(.separator())
         let settings = appMenu.addItem(withTitle: "Settings…", action: #selector(openSettingsFromMenu(_:)), keyEquivalent: ",")
         settings.target = self

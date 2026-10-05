@@ -88,7 +88,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         return screen.visibleFrame.insetBy(dx: 12, dy: 10)
     }
 
-    /// Menu bar click should surface the window already on screen, not a second one.
+    /// "More clips…" / Dock reopen should surface the library already on screen, not a second one.
     func focusLibrary() {
         if panel.isVisible {
             closeQuick(returnFocus: false)
@@ -345,13 +345,18 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
         if key == KeyCode.return || key == KeyCode.enter {
+            // One-shot: ⌃⌥↩ or ⌘⌥↩. Plain Option-Return follows the Settings toggle.
+            let oneShot = option && (flags.contains(.control) || command)
             if option && shift {
-                model.pasteSelected(plain: true)
-            } else if option {
-                model.pasteSelected(plain: false)
-            } else {
-                model.copySelected()
+                model.pasteSelected(plain: true, oneShot: oneShot ? true : nil)
+                return true
             }
+            if option {
+                model.pasteSelected(plain: false, oneShot: oneShot ? true : nil)
+                return true
+            }
+            if command { return false }
+            model.copySelected()
             return true
         }
         if command && key == KeyCode.p {
@@ -382,6 +387,14 @@ final class PanelController: NSObject, NSWindowDelegate {
             } else {
                 model.copySelected()
             }
+            return true
+        }
+        // Number-row paste-once: hold Control with Option (and optional Shift for plain).
+        if model.query.isEmpty, let number = KeyCode.digits[key],
+           flags.contains(.control), flags.contains(.option),
+           flags.isDisjoint(with: [.command]) {
+            model.selectShortcut(number)
+            model.pasteSelected(plain: flags.contains(.shift), oneShot: true)
             return true
         }
         return false

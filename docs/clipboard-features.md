@@ -15,7 +15,7 @@ Update the Done column when you check boxes.
 | Match Maccy | Behaviors the first paste loop still has to have | 7 | 7 |
 | First version | Build before daily paste feels right | 15 | 15 |
 | Later wave | Add after the first version is trustworthy | 11 | 11 |
-| Further ideas | After history, preview, and paste beat Maccy | 26 | 1 |
+| Further ideas | After history, preview, and paste beat Maccy | 26 | 2 |
 
 ## Match Maccy first
 
@@ -69,7 +69,7 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 
 ### Window
 
-- [x] **Panel, not a menu** — First. The menu bar opens the library window. ⌘⇧C opens a floating quick panel with search already focused. A menu truncates rows and fights the menu bar; these windows have room for a list and a preview.
+- [x] **Panel, not a menu** — First. The menu bar shows recent clips; More clips… opens the library window. ⌘⇧C opens a floating quick panel with search already focused. A menu alone truncates rows; these windows have room for a list and a preview.
 - [x] **Undo** — First. Deleting a clip or clearing history shows one in-window toast with an undo icon for about six seconds. Accidental clears are the failure people remember.
 - [x] **First-run and shortcut footer** — First. Launch opens with a short splash, then one screen explains the hotkey and the Accessibility permission required to paste. A hideable footer lists the shortcuts. There is no permission banner inside the history window.
 - [x] **Density and a pinned panel** — Later. Compact or comfortable rows in Settings. The pin control in the header, or Settings, keeps the panel open while you paste several clips instead of dismissing after every choice.
@@ -84,7 +84,7 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 
 | Moment | Behavior |
 | --- | --- |
-| Open | Stow is a Dock app and a menu-bar app. The library window opens near the size of the screen. ⌘⇧C toggles a quick panel. Search is focused. Nothing is selected until you click a clip. |
+| Open | Stow is a Dock app and a menu-bar app. The menu bar opens recent clips; More clips… opens the library near the size of the screen. ⌘⇧C toggles a quick panel. Search is focused. Nothing is selected until you click a clip. |
 | Read | Each row shows a type mark, a preview, then the source app and time. The preview pane shows the whole clip, including images and readable rich text. |
 | Act | Return copies. Option-Return pastes into the previous app. Shift-Option-Return pastes plain text. The footer lists those shortcuts. Right-click adds Edit Clip or Edit Snippet, Save as Snippet on history, and Delete. |
 
@@ -101,10 +101,10 @@ These wait until history, preview, and paste already feel better than Maccy. Che
 <details>
 <summary>Slots (5)</summary>
 
-- [ ] **One-shot paste.** Paste an older clip once and leave the system clipboard on whatever you copied last.
+- [x] **One-shot paste.** Paste an older clip once and leave the system clipboard on whatever you copied last.
 - [ ] **Named slots.** Keep a few clips in slots, like registers, and paste a slot with its own shortcut while the panel stays closed.
 - [ ] **Paste previous.** A second hotkey pastes the item just before the current one. Useful when a copy overwrote the thing you still needed.
-- [ ] **Menu of recent items.** The menu-bar icon opens the last several clips for a click, so a mouse path never needs the full panel.
+- [x] **Menu of recent items.** The menu-bar icon opens the last several clips for a click, so a mouse path never needs the full panel.
 - [ ] **Sort by use.** A Frequent view ranks clips by how often you paste them, separate from the order you copied them.
 
 </details>
