@@ -50,6 +50,16 @@ struct ArchiveImportResult: Equatable, Sendable {
     var addedCollections: Int
 }
 
+struct ArchiveExportOptions: Equatable, Sendable {
+    var includeHistory: Bool = true
+    var includeSnippets: Bool = true
+    var excludingContentHashes: Set<String> = []
+    /// Drop clips whose text still matches SecretDetector, even if kept locally.
+    var excludeSecretClips: Bool = false
+
+    static let `default` = ArchiveExportOptions()
+}
+
 /// Versioned zip of JSON + image files. History leaves the Mac only when the user saves this file.
 enum LocalArchive {
     static let pathExtension = "stowarchive"
@@ -62,9 +72,42 @@ enum LocalArchive {
         to url: URL,
         excludingContentHashes: Set<String> = []
     ) throws -> ArchiveManifest {
-        let clips = try store.allClips().filter { !excludingContentHashes.contains($0.contentHash) }
-        let snippets = try store.snippets()
-        let collections = try store.collections()
+        var options = ArchiveExportOptions.default
+        options.excludingContentHashes = excludingContentHashes
+        return try export(from: store, to: url, options: options)
+    }
+
+    @discardableResult
+    static func export(
+        from store: HistoryStore,
+        to url: URL,
+        options: ArchiveExportOptions
+    ) throws -> ArchiveManifest {
+        let clips: [Clip]
+        if options.includeHistory {
+            clips = try store.allClips().filter { clip in
+                if options.excludingContentHashes.contains(clip.contentHash) { return false }
+                if options.excludeSecretClips,
+                   let text = clip.text,
+                   SecretDetector.detect(in: text) != nil {
+                    return false
+                }
+                return true
+            }
+        } else {
+            clips = []
+        }
+
+        let snippets: [Snippet]
+        let collections: [SnippetCollection]
+        if options.includeSnippets {
+            snippets = try store.snippets()
+            collections = try store.collections()
+        } else {
+            snippets = []
+            collections = []
+        }
+
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -221,6 +264,7 @@ private struct ArchiveClip: Codable {
     var imageWidth: Int?
     var imageHeight: Int?
     var byteSize: Int
+    var ocrText: String?
 
     init(clip: Clip) {
         id = clip.id
@@ -241,6 +285,7 @@ private struct ArchiveClip: Codable {
         imageWidth = clip.imageWidth
         imageHeight = clip.imageHeight
         byteSize = clip.byteSize
+        ocrText = clip.ocrText
     }
 
     func makeClip() throws -> Clip {
@@ -266,7 +311,8 @@ private struct ArchiveClip: Codable {
             imageWidth: imageWidth,
             imageHeight: imageHeight,
             byteSize: byteSize,
-            copyCount: 1
+            copyCount: 1,
+            ocrText: ocrText
         )
     }
 }

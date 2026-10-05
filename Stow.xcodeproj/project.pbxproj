@@ -91,6 +91,38 @@
 		isa = PBXBuildFile;
 		fileRef = E81C2E88D4B65F0193C0AA10;
 		};
+		F81C2E88D4B65F0193C0AA01 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = F81C2E88D4B65F0193C0AA10;
+		};
+		F81C2E88D4B65F0193C0AA03 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = F81C2E88D4B65F0193C0AA11;
+		};
+		A91C2E88D4B65F0193C0AA01 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = A91C2E88D4B65F0193C0AA10;
+		};
+		B91C2E88D4B65F0193C0AA01 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B91C2E88D4B65F0193C0AA10;
+		};
+		C91C2E88D4B65F0193C0AA01 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = C91C2E88D4B65F0193C0AA10;
+		};
+		D91C2E88D4B65F0193C0AA01 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = D91C2E88D4B65F0193C0AA10;
+		};
+		A91C2E88D4B65F0193C0AA03 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = A91C2E88D4B65F0193C0AA11;
+		};
+		A91C2E88D4B65F0193C0AA02 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = A91C2E88D4B65F0193C0AA10;
+		};
 		B7BBE125935E05C303F585F4 /* PBXBuildFile */ = {
 		isa = PBXBuildFile;
 		fileRef = E0445452ACBBF615ABE3B7C4;
@@ -238,6 +270,10 @@
 		E81C2E88D4B65F0193C0AA02 /* PBXBuildFile */ = {
 		isa = PBXBuildFile;
 		fileRef = E81C2E88D4B65F0193C0AA10;
+		};
+		F81C2E88D4B65F0193C0AA02 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = F81C2E88D4B65F0193C0AA10;
 		};
 		5646F27869C0E2B3E3AA2BE8 /* PBXBuildFile */ = {
 		isa = PBXBuildFile;
@@ -418,6 +454,48 @@
 		isa = PBXFileReference;
 		lastKnownFileType = sourcecode.swift;
 		path = LocalArchive.swift;
+		sourceTree = "<group>";
+		};
+		F81C2E88D4B65F0193C0AA10 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ImageOCR.swift;
+		sourceTree = "<group>";
+		};
+		F81C2E88D4B65F0193C0AA11 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ImageOCRTests.swift;
+		sourceTree = "<group>";
+		};
+		A91C2E88D4B65F0193C0AA10 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SyncCrypto.swift;
+		sourceTree = "<group>";
+		};
+		A91C2E88D4B65F0193C0AA11 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SyncCryptoTests.swift;
+		sourceTree = "<group>";
+		};
+		B91C2E88D4B65F0193C0AA10 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SyncEngine.swift;
+		sourceTree = "<group>";
+		};
+		C91C2E88D4B65F0193C0AA10 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SyncKeychain.swift;
+		sourceTree = "<group>";
+		};
+		D91C2E88D4B65F0193C0AA10 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = SyncFolderAccess.swift;
 		sourceTree = "<group>";
 		};
 		E0445452ACBBF615ABE3B7C4 /* PBXFileReference */ = {
@@ -679,6 +757,8 @@
 				FA01DFEAAA19AF36CADF241D,
 				9777A3A45AB56D85BD6261B9,
 				E81C2E88D4B65F0193C0AA10,
+				F81C2E88D4B65F0193C0AA10,
+				A91C2E88D4B65F0193C0AA10,
 				E0445452ACBBF615ABE3B7C4,
 				BF6C23B5F5DE4F478127A032,
 		);
@@ -709,6 +789,9 @@
 				B02D1F55E8C29A3647D5BB21,
 				B81C2E88D4B65F0193C0AA10,
 				C81C2E88D4B65F0193C0AA10,
+				B91C2E88D4B65F0193C0AA10,
+				C91C2E88D4B65F0193C0AA10,
+				D91C2E88D4B65F0193C0AA10,
 		);
 		name = Stow;
 		path = Sources/Stow;
@@ -729,6 +812,8 @@
 				B81C2E88D4B65F0193C0AA11,
 				D81C2E88D4B65F0193C0AA11,
 				E81C2E88D4B65F0193C0AA11,
+				F81C2E88D4B65F0193C0AA11,
+				A91C2E88D4B65F0193C0AA11,
 				CA07719591C5A0AD274B9C35,
 				58458960448E4566C1D5EA2D,
 		);
@@ -873,6 +958,11 @@
 				FF693C5831CA17C6DB2F25CA,
 				45C37348C9DA97088B436D81,
 				E81C2E88D4B65F0193C0AA01,
+				F81C2E88D4B65F0193C0AA01,
+				A91C2E88D4B65F0193C0AA01,
+				B91C2E88D4B65F0193C0AA01,
+				C91C2E88D4B65F0193C0AA01,
+				D91C2E88D4B65F0193C0AA01,
 				B7BBE125935E05C303F585F4,
 				11819AF75BCCC7CDE38EBBC2,
 				DC7B12D2C1AC475C3FF38343,
@@ -917,9 +1007,13 @@
 				B81C2E88D4B65F0193C0AA03,
 				D81C2E88D4B65F0193C0AA03,
 				E81C2E88D4B65F0193C0AA03,
+				F81C2E88D4B65F0193C0AA03,
+				A91C2E88D4B65F0193C0AA03,
 				E0FC9B44A4FC318B7FCD3395,
 				0431C67A9A0D89A634CBE8F4,
 				E81C2E88D4B65F0193C0AA02,
+				F81C2E88D4B65F0193C0AA02,
+				A91C2E88D4B65F0193C0AA02,
 				5646F27869C0E2B3E3AA2BE8,
 				53E191E7A2D388B452E9F397,
 				BB0660DE2981FA77212CAF8D,

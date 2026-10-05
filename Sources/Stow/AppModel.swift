@@ -55,6 +55,7 @@ enum MenuBarState: Equatable {
 @Observable
 final class AppModel {
     let store: HistoryStore
+    private let syncEngine: SyncEngine
 
     var preferences: Preferences {
         didSet {
@@ -64,6 +65,10 @@ final class AppModel {
                 || oldValue.showShortcutFooter != preferences.showShortcutFooter
             let retentionChanged = oldValue.textRetentionDays != preferences.textRetentionDays
                 || oldValue.imageRetentionDays != preferences.imageRetentionDays
+            let syncChanged = oldValue.syncEnabled != preferences.syncEnabled
+                || oldValue.syncHistory != preferences.syncHistory
+                || oldValue.syncSnippets != preferences.syncSnippets
+                || oldValue.syncFolderBookmark != preferences.syncFolderBookmark
             preferences.save()
             if hotkeyChanged {
                 onHotkeyChange?()
@@ -73,6 +78,9 @@ final class AppModel {
             }
             if retentionChanged {
                 enforceStorageRules(force: true)
+            }
+            if syncChanged {
+                syncEngine.apply(preferences: preferences)
             }
             onChromeChange?()
         }
@@ -124,17 +132,40 @@ final class AppModel {
     var notePasteboardWrite: (@MainActor () -> Void)?
     var notice: Notice?
     private(set) var storageByteCount = 0
+    private(set) var syncStatus: SyncStatus = .idle
     private var noticeTask: Task<Void, Never>?
+    private var ocrTask: Task<Void, Never>?
     private var lastStorageEnforceAt: Date?
+    private var suppressSyncPush = false
 
     init(store: HistoryStore) {
         self.store = store
+        let engine = SyncEngine(store: store)
+        self.syncEngine = engine
         let loaded = Preferences.load()
         preferences = loaded
         activeHotkeyLabel = loaded.hotkeyLabel
+        engine.onStatusChange = { [weak self] status in
+            self?.syncStatus = status
+        }
+        engine.onLibraryMerged = { [weak self] in
+            guard let self else { return }
+            self.suppressSyncPush = true
+            self.refresh()
+            self.suppressSyncPush = false
+            self.scheduleOCRIndexing()
+            self.syncEngine.noteLocalChange(preferences: self.preferences)
+        }
         store.applyDataProtection()
         refresh()
         enforceStorageRules(force: true)
+        scheduleOCRIndexing()
+        engine.apply(preferences: loaded)
+        syncStatus = engine.status
+        // If this Mac was cleared but a sync package still exists, pull it back immediately.
+        if loaded.canEnableSync, history.count <= 1 {
+            restoreFromSyncFolder()
+        }
     }
 
     var showingFirstRun: Bool {
@@ -277,6 +308,9 @@ final class AppModel {
         }
         selection.formIntersection(Set(flattenedHistory.map(\.id) + orderedSnippets.map(\.id)))
         loadPreview()
+        if !suppressSyncPush {
+            syncEngine.noteLocalChange(preferences: preferences)
+        }
     }
 
     func prepareForOpen() {
@@ -335,6 +369,9 @@ final class AppModel {
             _ = try store.record(draft)
             refresh()
             onChromeChange?()
+            if draft.kind == .image, draft.ocrText == nil {
+                scheduleOCRIndexing()
+            }
             notify(
                 "Saved to Stow",
                 detail: ClipText.previewLine(from: draft.preview, limit: 72),
@@ -353,6 +390,9 @@ final class AppModel {
             refresh()
             selectedID = clip.id
             loadPreview()
+            if clip.kind == .image, clip.ocrText == nil {
+                scheduleOCRIndexing()
+            }
             notify("Kept the skipped copy", symbol: "checkmark.circle.fill")
         } catch {
             notify("Couldn't save that copy", symbol: "exclamationmark.circle")
@@ -880,6 +920,7 @@ final class AppModel {
             library = .history
             collectionFilter = .all
             refresh()
+            scheduleOCRIndexing()
             switch mode {
             case .merge:
                 if result.addedClips == 0 && result.addedSnippets == 0 && result.addedCollections == 0 {
@@ -935,6 +976,100 @@ final class AppModel {
                 ?? (error as? StoreError)?.description
                 ?? "Couldn't export that archive"
             notify(message, symbol: "exclamationmark.circle")
+        }
+    }
+
+    func chooseSyncFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.canCreateDirectories = true
+        panel.title = "Choose Sync Folder"
+        panel.message = "Pick a folder both Macs can see, such as a folder in iCloud Drive."
+        panel.prompt = "Choose"
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            let bookmark = try SyncFolderAccess.bookmark(for: url)
+            preferences.syncFolderBookmark = bookmark
+            preferences.syncFolderDisplayPath = SyncFolderAccess.displayPath(for: url)
+            notify("Sync folder set", detail: preferences.syncFolderDisplayPath, symbol: "folder")
+        } catch {
+            notify("Couldn't use that folder", symbol: "exclamationmark.circle")
+        }
+    }
+
+    func clearSyncFolder() {
+        preferences.syncFolderBookmark = nil
+        preferences.syncFolderDisplayPath = nil
+        if preferences.syncEnabled {
+            preferences.syncEnabled = false
+        }
+        notify("Sync folder cleared", symbol: "folder")
+    }
+
+    func setSyncPassphrase(_ passphrase: String) {
+        do {
+            try SyncKeychain.savePassphrase(passphrase)
+            syncEngine.apply(preferences: preferences)
+            notify("Sync passphrase saved", symbol: "key.fill")
+        } catch {
+            let message = (error as? SyncCryptoError)?.description
+                ?? "Couldn't save that passphrase"
+            notify(message, symbol: "exclamationmark.circle")
+        }
+    }
+
+    func clearSyncPassphrase() {
+        SyncKeychain.clearPassphrase()
+        if preferences.syncEnabled {
+            preferences.syncEnabled = false
+        }
+        syncEngine.apply(preferences: preferences)
+        notify("Sync passphrase cleared", symbol: "key")
+    }
+
+    func syncNow() {
+        Task { @MainActor in
+            await syncEngine.syncNow(preferences: preferences)
+            suppressSyncPush = true
+            refresh()
+            suppressSyncPush = false
+            if case .error(let message) = syncStatus {
+                notify(message, symbol: "exclamationmark.circle")
+            } else if case .lastSynced = syncStatus {
+                notify("Synced", detail: syncStatus.title, symbol: "arrow.triangle.2.circlepath")
+            }
+        }
+    }
+
+    /// Pulls `library.stowsync` into the local library even if the sync toggle is off.
+    func restoreFromSyncFolder() {
+        Task { @MainActor in
+            let result = await syncEngine.restore(preferences: preferences)
+            suppressSyncPush = true
+            refresh()
+            suppressSyncPush = false
+            if case .error(let message) = syncStatus {
+                notify(message, symbol: "exclamationmark.circle")
+                return
+            }
+            guard let result else {
+                notify("Couldn't restore from the sync folder", symbol: "exclamationmark.circle")
+                return
+            }
+            if result.addedClips == 0 && result.addedSnippets == 0 && result.addedCollections == 0 {
+                let detail = result.packageClips + result.packageSnippets == 0
+                    ? "The sync package looks empty"
+                    : "Already had everything from the package"
+                notify("Nothing new to restore", detail: detail, symbol: "tray")
+            } else {
+                notify(
+                    "Restored from sync",
+                    detail: "\(result.addedClips) clips · \(result.addedSnippets) snippets",
+                    symbol: "arrow.triangle.2.circlepath"
+                )
+            }
         }
     }
 
@@ -998,6 +1133,44 @@ final class AppModel {
         } catch {
             lastStorageEnforceAt = Date()
             return 0
+        }
+    }
+
+    /// Indexes text inside image clips on this Mac. Runs after ingest and at launch for older screenshots.
+    func scheduleOCRIndexing() {
+        ocrTask?.cancel()
+        ocrTask = Task { @MainActor [weak self] in
+            await self?.indexPendingOCR()
+        }
+    }
+
+    private func indexPendingOCR() async {
+        while !Task.isCancelled {
+            let pending = (try? store.imageHashesNeedingOCR(limit: 8)) ?? []
+            guard !pending.isEmpty else { return }
+            var indexedAny = false
+            for hash in pending {
+                if Task.isCancelled { return }
+                let url = store.url(forRelativePath: "images/\(hash).png")
+                let imageData = try? Data(contentsOf: url)
+                let recognized: String
+                if let imageData {
+                    recognized = await Task.detached(priority: .utility) {
+                        ImageOCR.recognizeText(in: imageData) ?? ""
+                    }.value
+                } else {
+                    recognized = ""
+                }
+                do {
+                    try store.updateOCRText(contentHash: hash, ocrText: recognized)
+                    indexedAny = true
+                } catch {
+                    continue
+                }
+            }
+            if indexedAny {
+                refresh()
+            }
         }
     }
 
@@ -1326,7 +1499,8 @@ final class AppModel {
                 imageWidth: nil,
                 imageHeight: nil,
                 byteSize: snippet.text.utf8.count,
-                copyCount: 1
+                copyCount: 1,
+                ocrText: nil
             )
         }
         if let selectedID,

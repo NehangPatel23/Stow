@@ -247,7 +247,8 @@ enum SmokeCheck {
             imageWidth: nil,
             imageHeight: nil,
             byteSize: 5,
-            createdAt: Date()
+            createdAt: Date(),
+            ocrText: nil
         )
         _ = try store.record(draft)
         let folded = try store.foldedHistory()

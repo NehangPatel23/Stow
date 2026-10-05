@@ -46,7 +46,7 @@ struct SettingsPage: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("Settings")
                     .font(.system(size: 16, weight: .semibold))
-                Text("Shortcut, storage, privacy, and how the window behaves.")
+                Text("Shortcut, storage, sync, privacy, and how the window behaves.")
                     .font(.system(size: 12))
                     .foregroundStyle(theme.secondary)
             }
@@ -88,12 +88,27 @@ struct SettingsView: View {
     @Environment(\.colorScheme) private var scheme
     @State private var ignoredType = ""
     @State private var recording = false
+    @State private var syncPassphrase = ""
+    @State private var showSyncPassphrase = false
+    @State private var passphraseSaved = SyncKeychain.hasPassphrase
     @FocusState private var ignoredFocused: Bool
 
     private var densityBinding: Binding<Bool> {
         Binding(
             get: { model.preferences.compactRows },
             set: { model.preferences.compactRows = $0 }
+        )
+    }
+
+    private var syncEnabledBinding: Binding<Bool> {
+        Binding(
+            get: { model.preferences.syncEnabled },
+            set: { newValue in
+                if newValue && !model.preferences.canEnableSync {
+                    return
+                }
+                model.preferences.syncEnabled = newValue
+            }
         )
     }
 
@@ -105,6 +120,7 @@ struct SettingsView: View {
                 windowSection(theme)
                 abbreviationsSection(theme)
                 storageSection(theme)
+                syncSection(theme)
                 privacySection(theme)
                 pasteboardSection(theme)
                 accessSection(theme)
@@ -361,13 +377,248 @@ struct SettingsView: View {
         }
     }
 
+    private func syncSection(_ theme: Theme) -> some View {
+        let syncOn = model.preferences.syncEnabled
+        let canSync = model.preferences.canEnableSync
+        let passphraseReady = !syncPassphrase.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        return settingsSection(
+            title: "Sync",
+            detail: "Off by default. Encrypted packages go in a folder you choose — often one in iCloud Drive. Secrets never sync.",
+            symbol: "arrow.triangle.2.circlepath",
+            theme: theme
+        ) {
+            VStack(spacing: 0) {
+                settingsRow(isActive: syncOn, theme: theme) {
+                    settingsLabel(
+                        title: "Sync across Macs",
+                        detail: "Turn on only after you choose a folder and set a passphrase.",
+                        theme: theme
+                    )
+                } trailing: {
+                    Toggle("Sync across Macs", isOn: syncEnabledBinding)
+                        .labelsHidden()
+                        .toggleStyle(.switch)
+                        .disabled(!canSync && !syncOn)
+                        .help(canSync
+                              ? "Sync encrypted history and snippets through the chosen folder"
+                              : "Choose a folder and set a passphrase first")
+                }
+
+                settingsDivider(theme)
+
+                settingsRow(isActive: true, theme: theme) {
+                    settingsLabel(
+                        title: "Sync folder",
+                        detail: model.preferences.syncFolderDisplayPath ?? "No folder chosen yet.",
+                        theme: theme
+                    )
+                } trailing: {
+                    HStack(spacing: 8) {
+                        settingsCapsuleButton("Choose…", accent: true, theme: theme) {
+                            model.chooseSyncFolder()
+                        }
+                        if model.preferences.syncFolderBookmark != nil {
+                            settingsCapsuleButton("Clear", accent: false, theme: theme) {
+                                model.clearSyncFolder()
+                            }
+                        }
+                    }
+                }
+
+                settingsDivider(theme)
+
+                settingsRow(isActive: true, theme: theme) {
+                    settingsLabel(
+                        title: "Passphrase",
+                        detail: passphraseSaved
+                            ? "Saved on this Mac. Use the same passphrase on your other Macs."
+                            : "Required on every Mac that shares the folder.",
+                        theme: theme
+                    )
+                } trailing: {
+                    HStack(spacing: 8) {
+                        HStack(spacing: 6) {
+                            Group {
+                                if showSyncPassphrase {
+                                    TextField("Passphrase", text: $syncPassphrase)
+                                } else {
+                                    SecureField("Passphrase", text: $syncPassphrase)
+                                }
+                            }
+                            .textFieldStyle(.plain)
+                            .frame(width: 120)
+                            Button {
+                                showSyncPassphrase.toggle()
+                            } label: {
+                                Image(systemName: showSyncPassphrase ? "eye.slash" : "eye")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(theme.secondary)
+                                    .frame(width: 22, height: 22)
+                            }
+                            .buttonStyle(.plain)
+                            .help(showSyncPassphrase ? "Hide passphrase" : "Show passphrase")
+                        }
+                        .padding(.leading, 10)
+                        .padding(.trailing, 6)
+                        .padding(.vertical, 5)
+                        .background(theme.chip, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                        settingsCapsuleButton(
+                            passphraseSaved ? "Update" : "Save",
+                            accent: true,
+                            isEnabled: passphraseReady,
+                            theme: theme
+                        ) {
+                            model.setSyncPassphrase(syncPassphrase)
+                            syncPassphrase = ""
+                            showSyncPassphrase = false
+                            passphraseSaved = SyncKeychain.hasPassphrase
+                        }
+                        if passphraseSaved {
+                            settingsCapsuleButton("Clear", accent: false, theme: theme) {
+                                model.clearSyncPassphrase()
+                                syncPassphrase = ""
+                                showSyncPassphrase = false
+                                passphraseSaved = SyncKeychain.hasPassphrase
+                            }
+                        }
+                    }
+                    .layoutPriority(1)
+                }
+
+                settingsDivider(theme)
+
+                settingsRow(isActive: syncOn && model.preferences.syncHistory, theme: theme) {
+                    settingsLabel(
+                        title: "Sync history",
+                        detail: "Clipboard history and images. Secret-like clips are left out.",
+                        theme: theme
+                    )
+                } trailing: {
+                    Toggle(
+                        "Sync history",
+                        isOn: Binding(
+                            get: { model.preferences.syncHistory },
+                            set: { model.preferences.syncHistory = $0 }
+                        )
+                    )
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!syncOn)
+                }
+
+                settingsDivider(theme)
+
+                settingsRow(isActive: syncOn && model.preferences.syncSnippets, theme: theme) {
+                    settingsLabel(
+                        title: "Sync snippets",
+                        detail: "Snippets and boards. Independent of history sync.",
+                        theme: theme
+                    )
+                } trailing: {
+                    Toggle(
+                        "Sync snippets",
+                        isOn: Binding(
+                            get: { model.preferences.syncSnippets },
+                            set: { model.preferences.syncSnippets = $0 }
+                        )
+                    )
+                    .labelsHidden()
+                    .toggleStyle(.switch)
+                    .disabled(!syncOn)
+                }
+
+                settingsDivider(theme)
+
+                settingsRow(isActive: canSync, theme: theme) {
+                    settingsLabel(
+                        title: "Status",
+                        detail: model.syncStatus.title,
+                        theme: theme
+                    )
+                } trailing: {
+                    HStack(spacing: 8) {
+                        settingsCapsuleButton(
+                            "Restore",
+                            accent: false,
+                            isEnabled: canSync,
+                            theme: theme
+                        ) {
+                            model.restoreFromSyncFolder()
+                        }
+                        settingsCapsuleButton(
+                            "Sync now",
+                            accent: true,
+                            isEnabled: canSync,
+                            theme: theme
+                        ) {
+                            model.syncNow()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private func settingsRow<Leading: View, Trailing: View>(
+        isActive: Bool = true,
+        theme: Theme,
+        @ViewBuilder leading: () -> Leading,
+        @ViewBuilder trailing: () -> Trailing
+    ) -> some View {
+        HStack(alignment: .center, spacing: 14) {
+            leading()
+            Spacer(minLength: 12)
+            trailing()
+        }
+        .padding(.vertical, 12)
+        .opacity(isActive ? 1 : 0.42)
+        .animation(.easeOut(duration: 0.15), value: isActive)
+    }
+
+    private func settingsLabel(title: String, detail: String, theme: Theme) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title)
+                .font(.system(size: 13, weight: .medium))
+            Text(detail)
+                .font(.system(size: 11))
+                .foregroundStyle(theme.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(3)
+        }
+        .multilineTextAlignment(.leading)
+    }
+
+    private func settingsCapsuleButton(
+        _ title: String,
+        accent: Bool,
+        isEnabled: Bool = true,
+        theme: Theme,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(accent ? theme.accent : theme.secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Capsule().fill(theme.chip))
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.42)
+        .animation(.easeOut(duration: 0.15), value: isEnabled)
+    }
+
     private func retentionPicker(
         title: String,
         detail: String,
         selection: Binding<Int>,
         theme: Theme
     ) -> some View {
-        HStack(alignment: .center, spacing: 14) {
+        let current = RetentionOption.allCases.first(where: { $0.days == selection.wrappedValue })?.title
+            ?? "Forever"
+        return HStack(alignment: .center, spacing: 14) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.system(size: 13, weight: .medium))
@@ -377,13 +628,26 @@ struct SettingsView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 12)
-            Picker(title, selection: selection) {
+            Menu {
                 ForEach(RetentionOption.allCases) { option in
-                    Text(option.title).tag(option.days)
+                    Button(option.title) {
+                        selection.wrappedValue = option.days
+                    }
                 }
+            } label: {
+                HStack(spacing: 5) {
+                    Text(current)
+                        .font(.system(size: 12, weight: .semibold))
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 9, weight: .semibold))
+                }
+                .foregroundStyle(theme.accent)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Capsule().fill(theme.chip))
             }
-            .labelsHidden()
-            .frame(maxWidth: 160)
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
         }
         .padding(.vertical, 12)
     }
@@ -591,6 +855,8 @@ struct SettingsView: View {
                 .toggleStyle(.switch)
         }
         .padding(.vertical, 12)
+        .opacity(isOn.wrappedValue ? 1 : 0.42)
+        .animation(.easeOut(duration: 0.15), value: isOn.wrappedValue)
     }
 
     private func settingsDivider(_ theme: Theme) -> some View {

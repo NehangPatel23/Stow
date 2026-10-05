@@ -97,7 +97,12 @@ struct SearchQuery: Equatable, Sendable {
             let haystack = (clip.sourceAppName + " " + clip.sourceBundleID).lowercased()
             if !haystack.contains(app.lowercased()) { return false }
         }
-        let searchable = [clip.preview, clip.text ?? "", clip.sourceAppName].joined(separator: "\n").lowercased()
+        let searchable = [
+            clip.preview,
+            clip.text ?? "",
+            clip.ocrText ?? "",
+            clip.sourceAppName,
+        ].joined(separator: "\n").lowercased()
         return terms.allSatisfy { searchable.contains($0.lowercased()) }
     }
 

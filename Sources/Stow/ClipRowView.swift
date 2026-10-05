@@ -15,7 +15,7 @@ struct ClipRowView: View {
             HStack(alignment: .top, spacing: 8) {
                 typeMark
                 VStack(alignment: .leading, spacing: 2) {
-                    highlighted(clip.preview)
+                    highlighted(rowTitle)
                         .font(.system(size: 13))
                         .lineLimit(1)
                     HStack(spacing: 4) {
@@ -113,7 +113,7 @@ struct ClipRowView: View {
         }
         .contextMenu { clipMenu }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(clip.kind.title), \(clip.preview), \(clip.sourceAppName)")
+        .accessibilityLabel("\(clip.kind.title), \(rowTitle), \(clip.sourceAppName)")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
@@ -164,6 +164,21 @@ struct ClipRowView: View {
 
     private var olderCopies: [Clip] {
         (model.copiesByHash[clip.contentHash] ?? []).filter { $0.id != clip.id }
+    }
+
+    /// When a search hits OCR inside an image, show that text instead of dimensions.
+    private var rowTitle: String {
+        guard clip.kind == .image,
+              let ocr = clip.ocrText?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !ocr.isEmpty,
+              !model.effectiveQuery.terms.isEmpty else {
+            return clip.preview
+        }
+        let haystack = ocr.lowercased()
+        guard model.effectiveQuery.terms.allSatisfy({ haystack.contains($0.lowercased()) }) else {
+            return clip.preview
+        }
+        return ClipText.previewLine(from: ocr)
     }
 
     private var typeMark: some View {

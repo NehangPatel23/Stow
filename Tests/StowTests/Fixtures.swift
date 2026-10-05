@@ -26,7 +26,8 @@ func makeDraft(
         imageWidth: nil,
         imageHeight: nil,
         byteSize: text.utf8.count,
-        createdAt: createdAt
+        createdAt: createdAt,
+        ocrText: nil
     )
 }
 
@@ -37,7 +38,8 @@ func makeClip(
     createdAt: Date = Date(),
     app: String = "Notes",
     bundle: String = "com.apple.Notes",
-    hash: String = "hash"
+    hash: String = "hash",
+    ocrText: String? = nil
 ) -> Clip {
     Clip(
         id: UUID(),
@@ -58,6 +60,7 @@ func makeClip(
         imageWidth: nil,
         imageHeight: nil,
         byteSize: text.utf8.count,
-        copyCount: 1
+        copyCount: 1,
+        ocrText: ocrText
     )
 }

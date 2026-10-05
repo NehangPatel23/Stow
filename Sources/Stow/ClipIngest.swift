@@ -113,7 +113,8 @@ enum ClipIngest {
             imageWidth: pixelWidth,
             imageHeight: pixelHeight,
             byteSize: storedPNG?.count ?? text?.utf8.count ?? filePaths.count,
-            createdAt: Date()
+            createdAt: Date(),
+            ocrText: nil
         )
     }
 

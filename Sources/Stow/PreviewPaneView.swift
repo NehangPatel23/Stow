@@ -81,6 +81,19 @@ struct PreviewPaneView: View {
             Text(imageCaption(clip))
                 .font(.system(size: 12))
                 .foregroundStyle(theme.secondary)
+            if let ocr = clip.ocrText?.trimmingCharacters(in: .whitespacesAndNewlines), !ocr.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Text in image")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(theme.secondary)
+                    Text(ocr)
+                        .font(.system(size: 13))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(10)
+                .background(RoundedRectangle(cornerRadius: 8).fill(theme.card))
+            }
         }
     }
 

@@ -29,6 +29,15 @@ struct Preferences: Codable, Equatable, Sendable {
     var hotkeyCarbonModifiers: UInt32 = 768
     var hotkeyLabel: String = "⌘⇧C"
 
+    /// Folder sync is off until the user enables it.
+    var syncEnabled: Bool = false
+    var syncHistory: Bool = true
+    var syncSnippets: Bool = true
+    /// Security-scoped bookmark for the chosen sync folder.
+    var syncFolderBookmark: Data? = nil
+    /// Display path shown in Settings (bookmark is the source of truth).
+    var syncFolderDisplayPath: String? = nil
+
     private static let defaultsKey = "Stow.Preferences"
 
     enum CodingKeys: String, CodingKey {
@@ -37,6 +46,7 @@ struct Preferences: Codable, Equatable, Sendable {
         case showShortcutFooter, keepPanelOpen, compactRows, hasSeenFirstRun
         case textRetentionDays, imageRetentionDays, abbreviationExpansionEnabled
         case hotkeyKeyCode, hotkeyCarbonModifiers, hotkeyLabel
+        case syncEnabled, syncHistory, syncSnippets, syncFolderBookmark, syncFolderDisplayPath
     }
 
     init() {}
@@ -65,12 +75,21 @@ struct Preferences: Codable, Equatable, Sendable {
         hotkeyKeyCode = try container.decodeIfPresent(UInt32.self, forKey: .hotkeyKeyCode) ?? 8
         hotkeyCarbonModifiers = try container.decodeIfPresent(UInt32.self, forKey: .hotkeyCarbonModifiers) ?? 768
         hotkeyLabel = try container.decodeIfPresent(String.self, forKey: .hotkeyLabel) ?? "⌘⇧C"
+        syncEnabled = try container.decodeIfPresent(Bool.self, forKey: .syncEnabled) ?? false
+        syncHistory = try container.decodeIfPresent(Bool.self, forKey: .syncHistory) ?? true
+        syncSnippets = try container.decodeIfPresent(Bool.self, forKey: .syncSnippets) ?? true
+        syncFolderBookmark = try container.decodeIfPresent(Data.self, forKey: .syncFolderBookmark)
+        syncFolderDisplayPath = try container.decodeIfPresent(String.self, forKey: .syncFolderDisplayPath)
     }
 
     private static let retentionChoices = [0, 1, 7, 14, 30, 90, 365]
 
     private static func normalizedRetention(_ days: Int) -> Int {
         retentionChoices.contains(days) ? days : 0
+    }
+
+    var canEnableSync: Bool {
+        syncFolderBookmark != nil && SyncKeychain.hasPassphrase
     }
 
     static func load(defaults: UserDefaults = .standard) -> Preferences {

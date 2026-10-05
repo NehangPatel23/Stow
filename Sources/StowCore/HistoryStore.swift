@@ -52,7 +52,8 @@ final class HistoryStore: @unchecked Sendable {
                 content_hash TEXT NOT NULL,
                 image_width INTEGER,
                 image_height INTEGER,
-                byte_size INTEGER NOT NULL
+                byte_size INTEGER NOT NULL,
+                ocr_text TEXT
             )
             """
         )
@@ -78,6 +79,7 @@ final class HistoryStore: @unchecked Sendable {
             )
             """
         )
+        try addClipOCRColumnIfNeeded()
         try addSnippetPinnedColumnIfNeeded()
         try addSnippetCollectionColumnsIfNeeded()
         try addSnippetAbbreviationColumnIfNeeded()
@@ -101,8 +103,8 @@ final class HistoryStore: @unchecked Sendable {
                 INSERT INTO clips (
                     id, created_at, pinned, source_app_name, source_bundle_id, kind, preview,
                     text, html, rtf, image_path, thumb_path, file_urls, color_hex, content_hash,
-                    image_width, image_height, byte_size
-                ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    image_width, image_height, byte_size, ocr_text
+                ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 bindings: { [self] statement in
                     bind(id.uuidString, at: 1, on: statement)
@@ -122,6 +124,7 @@ final class HistoryStore: @unchecked Sendable {
                     bindOptional(draft.imageWidth, at: 15, on: statement)
                     bindOptional(draft.imageHeight, at: 16, on: statement)
                     sqlite3_bind_int(statement, 17, Int32(draft.byteSize))
+                    bindOptional(draft.ocrText, at: 18, on: statement)
                 }
             )
             return Clip(
@@ -143,7 +146,8 @@ final class HistoryStore: @unchecked Sendable {
                 imageWidth: draft.imageWidth,
                 imageHeight: draft.imageHeight,
                 byteSize: draft.byteSize,
-                copyCount: 1
+                copyCount: 1,
+                ocrText: draft.ocrText
             )
         }
     }
@@ -251,6 +255,45 @@ final class HistoryStore: @unchecked Sendable {
                     bind(contentHash, at: 2, on: $0)
                 }
             )
+        }
+    }
+
+    /// Writes OCR for every row sharing this payload. Empty string marks "indexed, no text".
+    func updateOCRText(contentHash: String, ocrText: String) throws {
+        try lock.withLock {
+            try execute(
+                "UPDATE clips SET ocr_text = ? WHERE content_hash = ?",
+                bindings: { [self] in
+                    bind(ocrText, at: 1, on: $0)
+                    bind(contentHash, at: 2, on: $0)
+                }
+            )
+        }
+    }
+
+    /// Content hashes for image clips that still need on-device OCR.
+    func imageHashesNeedingOCR(limit: Int = 50) throws -> [String] {
+        try lock.withLock {
+            let statement = try prepare(
+                """
+                SELECT DISTINCT content_hash
+                FROM clips
+                WHERE kind = 'image'
+                  AND image_path IS NOT NULL
+                  AND ocr_text IS NULL
+                ORDER BY created_at DESC
+                LIMIT ?
+                """
+            )
+            defer { sqlite3_finalize(statement) }
+            sqlite3_bind_int(statement, 1, Int32(limit))
+            var hashes: [String] = []
+            while sqlite3_step(statement) == SQLITE_ROW {
+                if let hash = columnText(statement, 0), !hash.isEmpty {
+                    hashes.append(hash)
+                }
+            }
+            return hashes
         }
     }
 
@@ -780,12 +823,12 @@ final class HistoryStore: @unchecked Sendable {
 
     private static let listColumns = """
     id, created_at, pinned, source_app_name, source_bundle_id, kind, preview, text, html,
-    NULL, image_path, thumb_path, file_urls, color_hex, content_hash, image_width, image_height, byte_size
+    NULL, image_path, thumb_path, file_urls, color_hex, content_hash, image_width, image_height, byte_size, ocr_text
     """
 
     private static let fullColumns = """
     id, created_at, pinned, source_app_name, source_bundle_id, kind, preview, text, html,
-    rtf, image_path, thumb_path, file_urls, color_hex, content_hash, image_width, image_height, byte_size
+    rtf, image_path, thumb_path, file_urls, color_hex, content_hash, image_width, image_height, byte_size, ocr_text
     """
 
     private func insert(_ clip: Clip) throws {
@@ -794,8 +837,8 @@ final class HistoryStore: @unchecked Sendable {
             INSERT OR REPLACE INTO clips (
                 id, created_at, pinned, source_app_name, source_bundle_id, kind, preview,
                 text, html, rtf, image_path, thumb_path, file_urls, color_hex, content_hash,
-                image_width, image_height, byte_size
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                image_width, image_height, byte_size, ocr_text
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             bindings: { [self] statement in
                 bind(clip.id.uuidString, at: 1, on: statement)
@@ -816,6 +859,7 @@ final class HistoryStore: @unchecked Sendable {
                 bindOptional(clip.imageWidth, at: 16, on: statement)
                 bindOptional(clip.imageHeight, at: 17, on: statement)
                 sqlite3_bind_int(statement, 18, Int32(clip.byteSize))
+                bindOptional(clip.ocrText, at: 19, on: statement)
             }
         )
     }
@@ -975,6 +1019,12 @@ final class HistoryStore: @unchecked Sendable {
         return total
     }
 
+    private func addClipOCRColumnIfNeeded() throws {
+        let columns = try clipColumns()
+        guard !columns.contains("ocr_text") else { return }
+        try execute("ALTER TABLE clips ADD COLUMN ocr_text TEXT")
+    }
+
     private func addSnippetPinnedColumnIfNeeded() throws {
         let columns = try snippetColumns()
         guard !columns.contains("pinned") else { return }
@@ -1019,8 +1069,16 @@ final class HistoryStore: @unchecked Sendable {
         return normalized
     }
 
+    private func clipColumns() throws -> Set<String> {
+        try tableColumns("clips")
+    }
+
     private func snippetColumns() throws -> Set<String> {
-        let statement = try prepare("PRAGMA table_info(snippets)")
+        try tableColumns("snippets")
+    }
+
+    private func tableColumns(_ table: String) throws -> Set<String> {
+        let statement = try prepare("PRAGMA table_info(\(table))")
         defer { sqlite3_finalize(statement) }
         var columns = Set<String>()
         while sqlite3_step(statement) == SQLITE_ROW {
@@ -1119,7 +1177,8 @@ final class HistoryStore: @unchecked Sendable {
                     imageWidth: columnInt(statement, 15),
                     imageHeight: columnInt(statement, 16),
                     byteSize: Int(sqlite3_column_int(statement, 17)),
-                    copyCount: 1
+                    copyCount: 1,
+                    ocrText: columnText(statement, 18)
                 )
             )
         }

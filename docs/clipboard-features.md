@@ -14,7 +14,7 @@ Update the Done column when you check boxes.
 | --- | --- | ---: | ---: |
 | Match Maccy | Behaviors the first paste loop still has to have | 7 | 7 |
 | First version | Build before daily paste feels right | 15 | 15 |
-| Later wave | Add after the first version is trustworthy | 11 | 8 |
+| Later wave | Add after the first version is trustworthy | 11 | 10 |
 | Further ideas | After history, preview, and paste beat Maccy | 26 | 1 |
 
 ## Match Maccy first
@@ -44,7 +44,7 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 
 - [x] **Structured search** — First. Filter chips for type and pinned items, plus operators such as `type:image`, `app:Safari`, `from:today`, `board:Support`, and `abbr:addr`. Matches are highlighted in the row.
 - [x] **Duplicate folding** — First. The same text copied five times appears once, with a count. Opening it shows the recent copies if you need an older one.
-- [ ] **On-device OCR** — Later. Text inside screenshots is indexed on the Mac, so a search for an error message finds the image that contains it.
+- [x] **On-device OCR** — Later. Text inside screenshots is indexed on the Mac, so a search for an error message finds the image that contains it.
 
 ### Paste it
 
@@ -77,7 +77,7 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 ### Carry it
 
 - [x] **Local archive** — Later. Export and import a file you choose. Export can leave clips out; import can add new items only or replace everything. History does not leave the Mac unless you save that file.
-- [ ] **Opt-in sync** — Later. Encrypted sync across your own Macs is off until you enable it. Snippets and history can sync separately. Items flagged as secrets never sync.
+- [x] **Opt-in sync** — Later. Encrypted sync across your own Macs is off until you enable it. Snippets and history can sync separately. Items flagged as secrets never sync.
 - [ ] **Universal Clipboard and Shortcuts** — Later. A toggle includes or ignores copies arriving from an iPhone. Shortcuts actions cover latest clip, search, and save as snippet.
 
 ## How the window should feel
@@ -92,7 +92,7 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 
 Ship a trustworthy history before snippets, OCR, or sync. The first version is the panel, preview, type recognition, filters, visible actions, paste-target awareness, a separate snippets list, undo, secret skip, and app exclusions.
 
-Clip transforms, multi-paste, collections, fill-in templates, a pinned compact panel, storage rules, optional abbreviations, and a local archive (selective export, merge or replace import) are in the app. Still in that wave: OCR, optional sync, and Universal Clipboard with Shortcuts.
+Clip transforms, multi-paste, collections, fill-in templates, a pinned compact panel, storage rules, optional abbreviations, a local archive (selective export, merge or replace import), on-device OCR for text inside screenshots, and opt-in encrypted folder sync are in the app. Still in that wave: Universal Clipboard with Shortcuts.
 
 ## Further ideas
 

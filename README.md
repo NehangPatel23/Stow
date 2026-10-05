@@ -21,7 +21,7 @@
   <img src="https://img.shields.io/badge/platform-macOS-0ea5e9?style=flat-square" alt="Platform: macOS" />
   <img src="https://img.shields.io/badge/history-on_this_Mac-14b8a6?style=flat-square" alt="History stays on this Mac" />
   <img src="https://img.shields.io/badge/first_version-15_of_15-8b5cf6?style=flat-square" alt="First version: 15 of 15" />
-  <img src="https://img.shields.io/badge/later_wave-8_of_11-8b5cf6?style=flat-square" alt="Later wave: 8 of 11" />
+  <img src="https://img.shields.io/badge/later_wave-10_of_11-8b5cf6?style=flat-square" alt="Later wave: 10 of 11" />
 </p>
 
 ---
@@ -45,28 +45,28 @@ Honest snapshot against [`docs/clipboard-features.md`](./docs/clipboard-features
 - **Dock and menu-bar app** — library window, ⌘⇧C quick panel, local SQLite history, and paste back into the previous app. Password-manager and concealed pasteboard types are ignored.
 - **First version** — preview, type recognition, search, duplicate folding, snippets with the same type filters, undo on the toast, secret skip, app exclusions, and a first-run splash that explains the shortcut and Accessibility. Fifteen of fifteen.
 - **Match Maccy** — seven of seven, including pin, pause, ignore-next-copy, and number keys.
-- **Later wave, started** — clip transforms, multi-paste, snippet collections, fill-in templates, a pinned panel with compact rows, storage rules, optional abbreviations, and a local archive. Eight of eleven.
-- **Tests** — history, search, classification, transforms, colors, secret detection, syntax highlighting, paste targets, pasteboard policy, snippet templates, abbreviations, storage rules, and local archive.
+- **Later wave, started** — clip transforms, multi-paste, snippet collections, fill-in templates, a pinned panel with compact rows, storage rules, optional abbreviations, a local archive, on-device OCR, and opt-in encrypted folder sync. Ten of eleven.
+- **Tests** — history, search, classification, transforms, colors, secret detection, syntax highlighting, paste targets, pasteboard policy, snippet templates, abbreviations, storage rules, local archive, image OCR, and sync crypto.
 
 ### Not in this version
 
-OCR, opt-in sync, Universal Clipboard, Shortcuts, and a Maccy import stay unchecked. The other later-wave items above are already in the app.
+Universal Clipboard, Shortcuts, and a Maccy import stay unchecked. The other later-wave items above are already in the app.
 
 ---
 
 ## What's next
 
-The first version and most of the later wave are in the app. What remains in [`docs/clipboard-features.md`](./docs/clipboard-features.md) waits until daily use feels solid. OCR and sync stay off until you ask for them.
+The first version and most of the later wave are in the app. What remains in [`docs/clipboard-features.md`](./docs/clipboard-features.md) waits until daily use feels solid. Sync stays off until you enable it and choose a folder.
 
 | Wave | Focus |
 | --- | --- |
 | **Match Maccy** | Hotkey and menu-bar icon, search-as-you-type, number keys, pin, delete and clear, pause and ignore-next-copy, concealed pasteboard types |
 | **First version** | Panel, preview, type recognition, filters, shortcut footer and context menu, paste-target awareness, a separate snippets list, undo on the toast, secret skip, app exclusions, source and time, duplicate folding, drag-out images and files, paused icon, first-run splash |
-| **Later, in the app** | Clip transforms and multi-paste, snippet boards, `{{field}}` fill-in templates, keep-open pin, compact rows, storage rules, opt-in abbreviations, local archive with selective export and merge import |
-| **Later, still open** | OCR, optional sync, Universal Clipboard and Shortcuts |
+| **Later, in the app** | Clip transforms and multi-paste, snippet boards, `{{field}}` fill-in templates, keep-open pin, compact rows, storage rules, opt-in abbreviations, local archive with selective export and merge import, on-device OCR for screenshots, opt-in encrypted folder sync |
+| **Later, still open** | Universal Clipboard and Shortcuts |
 | **Further** | Slots, edit-before-paste (Edit Clip, which updates the stored clip, is already in the app), copy bursts, per-app defaults, recording-aware privacy, a one-time Maccy history import |
 
-The next later-wave item is on-device OCR. Sync and Shortcuts stay after that.
+The next later-wave item is Universal Clipboard and Shortcuts.
 
 ---
 
@@ -77,14 +77,14 @@ Full wording and checkboxes live in the catalog. This is the map.
 | Area | Shipped | Still later |
 | --- | --- | --- |
 | **See it** | Preview pane, type recognition (text, rich text, code, link, email, color, image, file), drag-out thumbnails, source app and Today / Yesterday / Older | — |
-| **Find it** | Type and pin chips on history and snippets, operators like `type:image`, `from:today`, `board:Support`, and `abbr:addr`, duplicate folding | On-device OCR for text inside screenshots |
+| **Find it** | Type and pin chips on history and snippets, operators like `type:image`, `from:today`, `board:Support`, and `abbr:addr`, duplicate folding, on-device OCR for text inside screenshots | — |
 | **Paste it** | Return copies. Option-Return pastes. Shift-Option-Return pastes plain text. Terminals get plain text. A secure field is copied, not typed into. Right-click can edit the stored clip | — |
 | **Transforms** | HTML to Markdown, pretty JSON, unwrap lines, and strip tracking parameters. Each copies a new version and leaves the stored clip alone | — |
 | **Multi-paste** | Several clips paste in the order they were copied, joined with a newline, a comma, or a separator you type | — |
 | **Reuse it** | Snippets live apart from history. Boards group them. `{{name}}` fields open a fill-in form before paste. Marked abbreviations expand while typing | — |
 | **Privacy** | App exclusions, secret skip, a menu-bar icon that shows pause, Mac data protection, separate text and image expiry, storage readout and trim | — |
 | **Window** | Library window plus a quick panel, pin to keep it open while pasting, compact or comfortable rows, one undo toast, first-run splash, hideable shortcut footer | — |
-| **Carry it** | Export and import a `.stowarchive` file you choose. Export can leave clips out; import can add new items only or replace everything | Opt-in encrypted sync, Universal Clipboard toggle, Shortcuts actions |
+| **Carry it** | Export and import a `.stowarchive` file you choose. Export can leave clips out; import can add new items only or replace everything. Opt-in encrypted sync through a folder you choose (history and snippets separately; secrets never sync) | Universal Clipboard toggle, Shortcuts actions |
 
 ### How the window should feel
 
@@ -144,8 +144,8 @@ Specific, and current:
 - **Not notarized.** This is a local build. macOS may ask you to allow it the first time you open it.
 - **Large copies are trimmed.** Text is stored up to one million characters. An image over 12 MB is kept at a reduced size.
 - **No import path from Maccy yet.** "Import a Maccy history" is listed under Further ideas.
-- **Sync is off.** History stays on this Mac unless you export an archive or enable a later opt-in sync.
-- **No OCR yet.** Searching text inside screenshots is still later-wave work.
+- **Sync is off by default.** Enable it in Settings, choose a shared folder, and set the same passphrase on each Mac. History stays local until you do.
+- **OCR is local and best-effort.** Text inside new image clips is indexed on the Mac in the background; older screenshots are backfilled on launch.
 
 ---
 

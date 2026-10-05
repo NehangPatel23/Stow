@@ -30,6 +30,7 @@ final class LocalArchiveTests: XCTestCase {
         var image = makeDraft(text: "shot", kind: .image, createdAt: Date(timeIntervalSince1970: 2_000), hash: ContentHash.image(bytes))
         image.imagePNG = bytes
         image.thumbnailPNG = Data([0x01, 0x02])
+        image.ocrText = "screenshot error text"
         _ = try store.record(image)
 
         let archiveURL = FileManager.default.temporaryDirectory
@@ -53,6 +54,7 @@ final class LocalArchiveTests: XCTestCase {
         let history = try store.foldedHistory()
         XCTAssertEqual(Set(history.map(\.preview)), ["keep-me", "shot"])
         XCTAssertTrue(history.contains(where: { $0.preview == "keep-me" && $0.pinned }))
+        XCTAssertEqual(history.first(where: { $0.preview == "shot" })?.ocrText, "screenshot error text")
 
         let snippets = try store.snippets()
         XCTAssertEqual(snippets.count, 1)

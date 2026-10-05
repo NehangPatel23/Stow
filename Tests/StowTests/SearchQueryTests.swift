@@ -59,4 +59,14 @@ final class SearchQueryTests: XCTestCase {
         XCTAssertTrue(SearchQuery.parse("addr").matches(marked))
         XCTAssertFalse(SearchQuery.parse("addr").matches(plain))
     }
+
+    func testTermsMatchImageOCRText() {
+        let clip = makeClip(
+            text: "1024 × 768 · 40 KB",
+            kind: .image,
+            ocrText: "Build failed: missing module StowCore"
+        )
+        XCTAssertTrue(SearchQuery.parse("StowCore").matches(clip, now: Date()))
+        XCTAssertFalse(SearchQuery.parse("StowCore").matches(makeClip(kind: .image), now: Date()))
+    }
 }
