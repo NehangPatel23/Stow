@@ -15,7 +15,7 @@ Update the Done column when you check boxes.
 | Match Maccy | Behaviors the first paste loop still has to have | 7 | 7 |
 | First version | Build before daily paste feels right | 15 | 15 |
 | Later wave | Add after the first version is trustworthy | 11 | 11 |
-| Further ideas | After history, preview, and paste beat Maccy | 26 | 2 |
+| Further ideas | After history, preview, and paste beat Maccy | 26 | 5 |
 
 ## Match Maccy first
 
@@ -104,7 +104,7 @@ These wait until history, preview, and paste already feel better than Maccy. Che
 - [x] **One-shot paste.** Paste an older clip once and leave the system clipboard on whatever you copied last.
 - [x] **Named slots.** Keep a few clips in slots, like registers, and paste a slot with its own shortcut while the panel stays closed.
 - [x] **Menu of recent items.** The menu-bar icon opens the last several clips for a click, so a mouse path never needs the full panel.
-- [ ] **Sort by use.** A Frequent view ranks clips by how often you paste them, separate from the order you copied them.
+- [x] **Sort by use.** A Frequent view ranks clips by how often you paste them, separate from the order you copied them.
 
 </details>
 

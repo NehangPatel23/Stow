@@ -39,7 +39,9 @@ func makeClip(
     app: String = "Notes",
     bundle: String = "com.apple.Notes",
     hash: String = "hash",
-    ocrText: String? = nil
+    ocrText: String? = nil,
+    pasteCount: Int = 0,
+    lastPastedAt: Date? = nil
 ) -> Clip {
     Clip(
         id: UUID(),
@@ -61,6 +63,8 @@ func makeClip(
         imageHeight: nil,
         byteSize: text.utf8.count,
         copyCount: 1,
-        ocrText: ocrText
+        ocrText: ocrText,
+        pasteCount: pasteCount,
+        lastPastedAt: lastPastedAt
     )
 }

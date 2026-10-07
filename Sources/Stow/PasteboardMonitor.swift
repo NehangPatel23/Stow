@@ -6,6 +6,8 @@ final class PasteboardMonitor {
     private let pasteboard = NSPasteboard.general
     private var changeCount: Int
     private var timer: Timer?
+    private var localPasteMonitor: Any?
+    private var globalPasteMonitor: Any?
 
     init(model: AppModel) {
         self.model = model
@@ -21,11 +23,38 @@ final class PasteboardMonitor {
         }
         RunLoop.main.add(timer, forMode: .common)
         self.timer = timer
+        startPasteUseMonitors()
     }
 
     func stop() {
         timer?.invalidate()
         timer = nil
+        if let localPasteMonitor {
+            NSEvent.removeMonitor(localPasteMonitor)
+            self.localPasteMonitor = nil
+        }
+        if let globalPasteMonitor {
+            NSEvent.removeMonitor(globalPasteMonitor)
+            self.globalPasteMonitor = nil
+        }
+    }
+
+    /// Counts ⌘V of a clip Stow put on the clipboard (Return then paste in another app).
+    private func startPasteUseMonitors() {
+        let handle: (NSEvent) -> Void = { [weak self] event in
+            guard let self else { return }
+            let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+            guard flags.contains(.command),
+                  !flags.contains(.option),
+                  !flags.contains(.control),
+                  event.keyCode == KeyCode.v else { return }
+            self.model.noteCommandVPaste()
+        }
+        localPasteMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            handle(event)
+            return event
+        }
+        globalPasteMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown, handler: handle)
     }
 
     func noteOwnWrite() {

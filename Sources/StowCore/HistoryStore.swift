@@ -53,7 +53,9 @@ final class HistoryStore: @unchecked Sendable {
                 image_width INTEGER,
                 image_height INTEGER,
                 byte_size INTEGER NOT NULL,
-                ocr_text TEXT
+                ocr_text TEXT,
+                paste_count INTEGER NOT NULL DEFAULT 0,
+                last_pasted_at REAL
             )
             """
         )
@@ -80,6 +82,7 @@ final class HistoryStore: @unchecked Sendable {
             """
         )
         try addClipOCRColumnIfNeeded()
+        try addClipPasteColumnsIfNeeded()
         try addSnippetPinnedColumnIfNeeded()
         try addSnippetCollectionColumnsIfNeeded()
         try addSnippetAbbreviationColumnIfNeeded()
@@ -103,8 +106,8 @@ final class HistoryStore: @unchecked Sendable {
                 INSERT INTO clips (
                     id, created_at, pinned, source_app_name, source_bundle_id, kind, preview,
                     text, html, rtf, image_path, thumb_path, file_urls, color_hex, content_hash,
-                    image_width, image_height, byte_size, ocr_text
-                ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    image_width, image_height, byte_size, ocr_text, paste_count, last_pasted_at
+                ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL)
                 """,
                 bindings: { [self] statement in
                     bind(id.uuidString, at: 1, on: statement)
@@ -147,7 +150,9 @@ final class HistoryStore: @unchecked Sendable {
                 imageHeight: draft.imageHeight,
                 byteSize: draft.byteSize,
                 copyCount: 1,
-                ocrText: draft.ocrText
+                ocrText: draft.ocrText,
+                pasteCount: 0,
+                lastPastedAt: nil
             )
         }
     }
@@ -178,8 +183,29 @@ final class HistoryStore: @unchecked Sendable {
                 let group = groups[hash] ?? []
                 newest.copyCount = group.count
                 newest.pinned = group.contains(where: \.pinned)
+                // Rows in a fold share the same paste_count (recordPaste updates every copy).
+                newest.pasteCount = group.map(\.pasteCount).max() ?? 0
+                newest.lastPastedAt = group.compactMap(\.lastPastedAt).max()
                 return newest
             }
+        }
+    }
+
+    /// Increments paste usage for every stored copy of this payload.
+    func recordPaste(contentHash: String, at date: Date = Date()) throws {
+        try lock.withLock {
+            try execute(
+                """
+                UPDATE clips
+                SET paste_count = paste_count + 1,
+                    last_pasted_at = ?
+                WHERE content_hash = ?
+                """,
+                bindings: { [self] statement in
+                    sqlite3_bind_double(statement, 1, date.timeIntervalSince1970)
+                    bind(contentHash, at: 2, on: statement)
+                }
+            )
         }
     }
 
@@ -433,8 +459,14 @@ final class HistoryStore: @unchecked Sendable {
 
                 var addedClips = 0
                 for clip in clips {
-                    guard !existingClipIDs.contains(clip.id),
-                          !existingHashes.contains(clip.contentHash) else { continue }
+                    if existingClipIDs.contains(clip.id) || existingHashes.contains(clip.contentHash) {
+                        try mergePasteStatsLocked(
+                            contentHash: clip.contentHash,
+                            pasteCount: clip.pasteCount,
+                            lastPastedAt: clip.lastPastedAt
+                        )
+                        continue
+                    }
                     try insert(clip)
                     existingClipIDs.insert(clip.id)
                     existingHashes.insert(clip.contentHash)
@@ -823,12 +855,14 @@ final class HistoryStore: @unchecked Sendable {
 
     private static let listColumns = """
     id, created_at, pinned, source_app_name, source_bundle_id, kind, preview, text, html,
-    NULL, image_path, thumb_path, file_urls, color_hex, content_hash, image_width, image_height, byte_size, ocr_text
+    NULL, image_path, thumb_path, file_urls, color_hex, content_hash, image_width, image_height, byte_size, ocr_text,
+    paste_count, last_pasted_at
     """
 
     private static let fullColumns = """
     id, created_at, pinned, source_app_name, source_bundle_id, kind, preview, text, html,
-    rtf, image_path, thumb_path, file_urls, color_hex, content_hash, image_width, image_height, byte_size, ocr_text
+    rtf, image_path, thumb_path, file_urls, color_hex, content_hash, image_width, image_height, byte_size, ocr_text,
+    paste_count, last_pasted_at
     """
 
     private func insert(_ clip: Clip) throws {
@@ -837,8 +871,8 @@ final class HistoryStore: @unchecked Sendable {
             INSERT OR REPLACE INTO clips (
                 id, created_at, pinned, source_app_name, source_bundle_id, kind, preview,
                 text, html, rtf, image_path, thumb_path, file_urls, color_hex, content_hash,
-                image_width, image_height, byte_size, ocr_text
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                image_width, image_height, byte_size, ocr_text, paste_count, last_pasted_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             bindings: { [self] statement in
                 bind(clip.id.uuidString, at: 1, on: statement)
@@ -860,6 +894,49 @@ final class HistoryStore: @unchecked Sendable {
                 bindOptional(clip.imageHeight, at: 17, on: statement)
                 sqlite3_bind_int(statement, 18, Int32(clip.byteSize))
                 bindOptional(clip.ocrText, at: 19, on: statement)
+                sqlite3_bind_int(statement, 20, Int32(clip.pasteCount))
+                if let lastPastedAt = clip.lastPastedAt {
+                    sqlite3_bind_double(statement, 21, lastPastedAt.timeIntervalSince1970)
+                } else {
+                    sqlite3_bind_null(statement, 21)
+                }
+            }
+        )
+    }
+
+    /// Keeps the higher paste count (and newer last-pasted time) when an import/sync collides.
+    private func mergePasteStatsLocked(
+        contentHash: String,
+        pasteCount: Int,
+        lastPastedAt: Date?
+    ) throws {
+        guard pasteCount > 0 || lastPastedAt != nil else { return }
+        let rows = try fetch(
+            "SELECT \(Self.listColumns) FROM clips WHERE content_hash = ?",
+            bindings: { [self] in bind(contentHash, at: 1, on: $0) },
+            includeRTF: false
+        )
+        guard !rows.isEmpty else { return }
+        let existingCount = rows.map(\.pasteCount).max() ?? 0
+        let existingLast = rows.compactMap(\.lastPastedAt).max()
+        let nextCount = max(existingCount, pasteCount)
+        let nextLast = [existingLast, lastPastedAt].compactMap { $0 }.max()
+        guard nextCount != existingCount || nextLast != existingLast else { return }
+        try execute(
+            """
+            UPDATE clips
+            SET paste_count = ?,
+                last_pasted_at = ?
+            WHERE content_hash = ?
+            """,
+            bindings: { [self] statement in
+                sqlite3_bind_int(statement, 1, Int32(nextCount))
+                if let nextLast {
+                    sqlite3_bind_double(statement, 2, nextLast.timeIntervalSince1970)
+                } else {
+                    sqlite3_bind_null(statement, 2)
+                }
+                bind(contentHash, at: 3, on: statement)
             }
         )
     }
@@ -1025,6 +1102,16 @@ final class HistoryStore: @unchecked Sendable {
         try execute("ALTER TABLE clips ADD COLUMN ocr_text TEXT")
     }
 
+    private func addClipPasteColumnsIfNeeded() throws {
+        let columns = try clipColumns()
+        if !columns.contains("paste_count") {
+            try execute("ALTER TABLE clips ADD COLUMN paste_count INTEGER NOT NULL DEFAULT 0")
+        }
+        if !columns.contains("last_pasted_at") {
+            try execute("ALTER TABLE clips ADD COLUMN last_pasted_at REAL")
+        }
+    }
+
     private func addSnippetPinnedColumnIfNeeded() throws {
         let columns = try snippetColumns()
         guard !columns.contains("pinned") else { return }
@@ -1178,7 +1265,9 @@ final class HistoryStore: @unchecked Sendable {
                     imageHeight: columnInt(statement, 16),
                     byteSize: Int(sqlite3_column_int(statement, 17)),
                     copyCount: 1,
-                    ocrText: columnText(statement, 18)
+                    ocrText: columnText(statement, 18),
+                    pasteCount: Int(sqlite3_column_int(statement, 19)),
+                    lastPastedAt: columnDate(statement, 20)
                 )
             )
         }
@@ -1277,6 +1366,11 @@ final class HistoryStore: @unchecked Sendable {
     private func columnInt(_ statement: OpaquePointer, _ index: Int32) -> Int? {
         if sqlite3_column_type(statement, index) == SQLITE_NULL { return nil }
         return Int(sqlite3_column_int(statement, index))
+    }
+
+    private func columnDate(_ statement: OpaquePointer, _ index: Int32) -> Date? {
+        if sqlite3_column_type(statement, index) == SQLITE_NULL { return nil }
+        return Date(timeIntervalSince1970: sqlite3_column_double(statement, index))
     }
 
     private func encode(_ urls: [String]) -> String {

@@ -14,8 +14,8 @@ enum KeyCode {
     static let s: UInt16 = 1
     static let z: UInt16 = 6
 
-    /// Physical ANSI number-row key codes. They are not sequential.
+    /// Physical ANSI number-row key codes. They are not sequential. `0` selects the 10th row.
     static let digits: [UInt16: Int] = [
-        18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9,
+        18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9, 29: 0,
     ]
 }

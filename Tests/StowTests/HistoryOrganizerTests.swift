@@ -17,4 +17,25 @@ final class HistoryOrganizerTests: XCTestCase {
         XCTAssertEqual(sections.map(\.title), ["Pinned", "Today", "Yesterday"])
         XCTAssertEqual(sections[0].clips.map(\.text), ["pin"])
     }
+
+    func testFrequentSectionsRankByPasteCountWithPinnedFirst() {
+        let older = Date(timeIntervalSince1970: 1_000)
+        let newer = Date(timeIntervalSince1970: 2_000)
+        let clips = [
+            makeClip(text: "unused", createdAt: newer, hash: "u", pasteCount: 0),
+            makeClip(text: "common", createdAt: older, hash: "c", pasteCount: 3, lastPastedAt: older),
+            makeClip(text: "pin-low", pinned: true, createdAt: older, hash: "p", pasteCount: 1),
+            makeClip(
+                text: "recent-use",
+                createdAt: older,
+                hash: "r",
+                pasteCount: 3,
+                lastPastedAt: newer
+            ),
+        ]
+        let sections = HistoryOrganizer.frequentSections(clips: clips)
+        XCTAssertEqual(sections.map(\.title), ["Pinned", "Frequent"])
+        XCTAssertEqual(sections[0].clips.map(\.text), ["pin-low"])
+        XCTAssertEqual(sections[1].clips.map(\.text), ["recent-use", "common", "unused"])
+    }
 }

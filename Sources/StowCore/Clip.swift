@@ -24,6 +24,10 @@ struct Clip: Identifiable, Equatable, Sendable {
     var copyCount: Int
     /// On-device OCR text for image clips. `nil` means not indexed yet; empty means indexed with no text.
     var ocrText: String?
+    /// How often this payload has been pasted from Stow (shared across folded copies).
+    var pasteCount: Int = 0
+    /// Most recent paste time for this payload, if any.
+    var lastPastedAt: Date? = nil
 }
 
 struct ClipDraft: Equatable, Sendable {

@@ -25,7 +25,37 @@ enum HistoryOrganizer {
         return sections
     }
 
+    /// Pinned first, then a single Frequent section, both ranked by paste count.
+    static func frequentSections(clips: [Clip]) -> [HistorySection] {
+        let pinned = clips.filter(\.pinned).sorted(by: byPasteFrequency)
+        let rest = clips.filter { !$0.pinned }.sorted(by: byPasteFrequency)
+        var sections: [HistorySection] = []
+        if !pinned.isEmpty {
+            sections.append(HistorySection(id: "pinned", title: "Pinned", clips: pinned))
+        }
+        if !rest.isEmpty {
+            sections.append(HistorySection(id: "frequent", title: "Frequent", clips: rest))
+        }
+        return sections
+    }
+
     static func flattened(_ sections: [HistorySection]) -> [Clip] {
         sections.flatMap(\.clips)
+    }
+
+    private static func byPasteFrequency(_ lhs: Clip, _ rhs: Clip) -> Bool {
+        if lhs.pasteCount != rhs.pasteCount {
+            return lhs.pasteCount > rhs.pasteCount
+        }
+        switch (lhs.lastPastedAt, rhs.lastPastedAt) {
+        case let (left?, right?) where left != right:
+            return left > right
+        case (_?, nil):
+            return true
+        case (nil, _?):
+            return false
+        default:
+            return lhs.createdAt > rhs.createdAt
+        }
     }
 }

@@ -102,6 +102,10 @@ struct PanelRootView: View {
             model.reconcileSelection()
             relayout()
         }
+        .onChange(of: model.chipFrequent) { _, _ in
+            model.reconcileSelection()
+            relayout()
+        }
         .onChange(of: model.library) { _, _ in
             model.reconcileSelection()
             relayout()
@@ -226,9 +230,15 @@ struct PanelRootView: View {
     private func chips(_ theme: Theme) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                chip("All", symbol: "square.grid.2x2", active: model.chipKind == nil && !model.chipPinned, theme: theme) {
+                chip(
+                    "All",
+                    symbol: "square.grid.2x2",
+                    active: model.chipKind == nil && !model.chipPinned && !model.chipFrequent,
+                    theme: theme
+                ) {
                     model.chipKind = nil
                     model.chipPinned = false
+                    model.chipFrequent = false
                 }
                 ForEach(ClipKind.allCases, id: \.self) { kind in
                     chip(kind.title, symbol: kind.symbolName, active: model.chipKind == kind, theme: theme) {
@@ -237,6 +247,9 @@ struct PanelRootView: View {
                 }
                 chip("Pinned", symbol: "pin", active: model.chipPinned, theme: theme) {
                     model.chipPinned.toggle()
+                }
+                chip("Frequent", symbol: "chart.bar", active: model.chipFrequent, theme: theme) {
+                    model.chipFrequent.toggle()
                 }
             }
             .padding(.vertical, 1)

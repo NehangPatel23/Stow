@@ -90,6 +90,8 @@ final class AppModel {
     var query = ""
     var chipKind: ClipKind?
     var chipPinned = false
+    /// When true, history lists by paste frequency instead of copy time.
+    var chipFrequent = false
     var collectionFilter: CollectionFilter = .all
     private(set) var history: [Clip] = []
     private(set) var snippets: [Snippet] = []
@@ -152,6 +154,10 @@ final class AppModel {
     private var ocrTask: Task<Void, Never>?
     private var lastStorageEnforceAt: Date?
     private var suppressSyncPush = false
+    /// History payload currently on the system clipboard because Stow copied or pasted it.
+    private var clipboardOriginHash: String?
+    /// Stow's own ⌘V (Option-Return) must not count twice.
+    private var suppressNextCommandVUse = false
 
     init(store: HistoryStore) {
         self.store = store
@@ -223,7 +229,10 @@ final class AppModel {
     }
 
     var historySections: [HistorySection] {
-        HistoryOrganizer.sections(clips: visibleHistory, now: Date())
+        if chipFrequent {
+            return HistoryOrganizer.frequentSections(clips: visibleHistory)
+        }
+        return HistoryOrganizer.sections(clips: visibleHistory, now: Date())
     }
 
     var flattenedHistory: [Clip] {
@@ -333,6 +342,7 @@ final class AppModel {
         query = ""
         chipKind = nil
         chipPinned = false
+        chipFrequent = false
         collectionFilter = .all
         expandedHashes = []
         refresh()
@@ -374,6 +384,9 @@ final class AppModel {
     }
 
     func ingest(draft: ClipDraft, secret: SecretDetector.Reason?) {
+        if draft.contentHash != clipboardOriginHash {
+            clipboardOriginHash = nil
+        }
         if let secret {
             skipped = SkippedCapture(draft: draft, reason: secret)
             notify("Skipped a \(secret.title)", detail: "Keep it from the menu if you want it stored.", symbol: "eye.slash")
@@ -547,10 +560,18 @@ final class AppModel {
             notify("Select a clip", symbol: "arrow.down.doc")
             return
         }
+        let hashes = library == .history ? selectionContentHashes() : []
         let restore = beginOneShotPaste(forced: oneShot)
         let joined = pieces.joined(separator: separator)
         PasteService.writeText(joined)
         notePasteboardWrite?()
+        for hash in hashes {
+            noteHistoryPaste(contentHash: hash)
+        }
+        clipboardOriginHash = nil
+        if !hashes.isEmpty {
+            refresh()
+        }
         deliverToPreviousApp(
             message: pieces.count == 1 ? "Pasted" : "Pasted \(pieces.count) clips",
             restore: restore
@@ -578,6 +599,17 @@ final class AppModel {
             .map(\.text)
     }
 
+    private func selectionContentHashes() -> [String] {
+        let chosen = selection.isEmpty ? Set(selectedID.map { [$0] } ?? []) : selection
+        var seen = Set<String>()
+        var hashes: [String] = []
+        for clip in flattenedHistory where chosen.contains(clip.id) {
+            guard seen.insert(clip.contentHash).inserted else { continue }
+            hashes.append(clip.contentHash)
+        }
+        return hashes
+    }
+
     private func deliverToPreviousApp(message: String, restore: PasteboardSnapshot? = nil) {
         let keepOpen = preferences.keepPanelOpen
         if !keepOpen {
@@ -594,7 +626,7 @@ final class AppModel {
             if NSWorkspace.shared.frontmostApplication?.processIdentifier != target.processIdentifier {
                 self.stepAside?(target, keepOpen)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    PasteService.sendCommandV()
+                    self.sendPasteKeystroke()
                     self.scheduleClipboardRestore(restore)
                     if keepOpen {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
@@ -603,7 +635,7 @@ final class AppModel {
                     }
                 }
             } else {
-                PasteService.sendCommandV()
+                self.sendPasteKeystroke()
                 self.scheduleClipboardRestore(restore)
                 if keepOpen {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
@@ -612,6 +644,11 @@ final class AppModel {
                 }
             }
         }
+    }
+
+    private func sendPasteKeystroke() {
+        suppressNextCommandVUse = true
+        PasteService.sendCommandV()
     }
 
     /// Snapshot the current clipboard before Stow overwrites it for a one-shot paste.
@@ -627,6 +664,7 @@ final class AppModel {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) {
             _ = PasteService.restore(snapshot)
             self.notePasteboardWrite?()
+            self.clipboardOriginHash = nil
         }
     }
 
@@ -664,7 +702,7 @@ final class AppModel {
     }
 
     func selectShortcut(_ number: Int) {
-        let index = number - 1
+        let index = number == 0 ? 9 : number - 1
         switch library {
         case .history:
             let items = flattenedHistory
@@ -743,6 +781,7 @@ final class AppModel {
             notify("Nothing to copy", symbol: "exclamationmark.circle")
             return
         }
+        rememberClipboardOrigin()
         notify("Copied", symbol: "doc.on.doc")
         if !preferences.keepPanelOpen {
             closePanel?(true)
@@ -770,7 +809,7 @@ final class AppModel {
             return
         }
         let full = materialized(clip)
-        pasteClip(full, plain: requestedPlain, oneShot: oneShot)
+        pasteClip(full, plain: requestedPlain, oneShot: oneShot, trackUse: library == .history)
     }
 
     /// Paste a history clip chosen from the menu-bar menu without opening a window.
@@ -782,7 +821,7 @@ final class AppModel {
             return
         }
         let full = (try? store.payload(id: clip.id)) ?? clip
-        pasteClip(full, plain: false)
+        pasteClip(full, plain: false, trackUse: true)
     }
 
     /// Assign the selected history clip (or snippet text) to a named slot.
@@ -829,7 +868,7 @@ final class AppModel {
            front.bundleIdentifier != Bundle.main.bundleIdentifier {
             notePreviousApp(front)
         }
-        pasteClip(payload.asClip(), plain: false, imageData: payload.imagePNG)
+        pasteClip(payload.asClip(), plain: false, imageData: payload.imagePNG, trackUse: false)
     }
 
     func completeTemplateFill(_ filled: String) {
@@ -840,6 +879,7 @@ final class AppModel {
         let restore = beginOneShotPaste(forced: oneShot)
         PasteService.writeText(filled)
         notePasteboardWrite?()
+        clipboardOriginHash = nil
         deliverToPreviousApp(
             message: plain ? "Pasted as plain text" : "Pasted",
             restore: restore
@@ -855,7 +895,8 @@ final class AppModel {
         _ full: Clip,
         plain requestedPlain: Bool,
         oneShot: Bool? = nil,
-        imageData: Data? = nil
+        imageData: Data? = nil,
+        trackUse: Bool = false
     ) {
         let target = previousApp
         let plain = requestedPlain || full.kind == .code || PasteTarget.prefersPlainText(
@@ -873,22 +914,56 @@ final class AppModel {
 
         let restore = beginOneShotPaste(forced: oneShot)
         commitWrite(full, plain: plain, imageData: imageData)
+        if trackUse {
+            noteHistoryPaste(contentHash: full.contentHash)
+            clipboardOriginHash = full.contentHash
+            refresh()
+        } else {
+            clipboardOriginHash = nil
+        }
         deliverToPreviousApp(
             message: plain ? "Pasted as plain text" : "Pasted",
             restore: restore
         )
     }
 
+    private func noteHistoryPaste(contentHash: String) {
+        guard !contentHash.isEmpty else { return }
+        try? store.recordPaste(contentHash: contentHash)
+    }
+
+    /// ⌘V in another app counts as a use when Stow put that clip on the clipboard.
+    func noteCommandVPaste() {
+        if suppressNextCommandVUse {
+            suppressNextCommandVUse = false
+            return
+        }
+        if NSApp.isActive { return }
+        guard let clipboardOriginHash else { return }
+        noteHistoryPaste(contentHash: clipboardOriginHash)
+        refresh()
+    }
+
+    private func rememberClipboardOrigin() {
+        if library == .history, let hash = selectedClip()?.contentHash, !hash.isEmpty {
+            clipboardOriginHash = hash
+        } else {
+            clipboardOriginHash = nil
+        }
+    }
+
     func copyTransform(_ transform: ClipTransform, text: String, html: String?) {
         guard let output = transform.output(text: text, html: html) else { return }
         PasteService.writeText(output)
         notePasteboardWrite?()
+        clipboardOriginHash = nil
         notify("Copied \(transform.title)", symbol: transform.symbolName)
     }
 
     func copyColorFormat(_ text: String) {
         PasteService.writeText(text)
         notePasteboardWrite?()
+        clipboardOriginHash = nil
         notify("Copied \(text)", symbol: "doc.on.doc")
     }
 
@@ -1574,12 +1649,12 @@ final class AppModel {
     }
 
     func shortcutIndex(for clip: Clip) -> Int? {
-        guard let index = flattenedHistory.firstIndex(where: { $0.id == clip.id }), index < 9 else { return nil }
+        guard let index = flattenedHistory.firstIndex(where: { $0.id == clip.id }) else { return nil }
         return index + 1
     }
 
     func shortcutIndex(for snippet: Snippet) -> Int? {
-        guard query.isEmpty, let index = orderedSnippets.firstIndex(where: { $0.id == snippet.id }), index < 9 else {
+        guard query.isEmpty, let index = orderedSnippets.firstIndex(where: { $0.id == snippet.id }) else {
             return nil
         }
         return index + 1

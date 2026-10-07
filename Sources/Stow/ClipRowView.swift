@@ -22,6 +22,10 @@ struct ClipRowView: View {
                         Text(clip.sourceAppName)
                         Text("·")
                         Text(timeLabel(clip.createdAt))
+                        if model.chipFrequent, clip.pasteCount > 0 {
+                            Text("·")
+                            Text(clip.pasteCount == 1 ? "1 paste" : "\(clip.pasteCount) pastes")
+                        }
                         if clip.copyCount > 1 {
                             Text("·")
                             Button {

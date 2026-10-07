@@ -184,6 +184,48 @@ final class HistoryStoreTests: XCTestCase {
         XCTAssertNil(try store.snippets().first?.normalizedAbbreviation)
     }
 
+    func testRecordPasteIncrementsByHashAndFoldingKeepsSharedCount() throws {
+        let hash = ContentHash.text("paste-me")
+        _ = try store.record(makeDraft(text: "paste-me", createdAt: Date(timeIntervalSince1970: 1_000)))
+        _ = try store.record(makeDraft(text: "paste-me", createdAt: Date(timeIntervalSince1970: 2_000)))
+
+        let before = try store.foldedHistory().first { $0.contentHash == hash }
+        XCTAssertEqual(before?.pasteCount, 0)
+        XCTAssertNil(before?.lastPastedAt)
+
+        let firstPaste = Date(timeIntervalSince1970: 3_000)
+        try store.recordPaste(contentHash: hash, at: firstPaste)
+        try store.recordPaste(contentHash: hash, at: Date(timeIntervalSince1970: 4_000))
+
+        let folded = try store.foldedHistory().first { $0.contentHash == hash }
+        XCTAssertEqual(folded?.pasteCount, 2)
+        XCTAssertEqual(folded?.lastPastedAt, Date(timeIntervalSince1970: 4_000))
+        XCTAssertEqual(folded?.copyCount, 2)
+
+        let copies = try store.copies(contentHash: hash)
+        XCTAssertTrue(copies.allSatisfy { $0.pasteCount == 2 })
+    }
+
+    func testMergeLibraryKeepsHigherPasteCountOnCollision() throws {
+        let hash = ContentHash.text("shared")
+        _ = try store.record(makeDraft(text: "shared", createdAt: Date(timeIntervalSince1970: 1_000)))
+        try store.recordPaste(contentHash: hash, at: Date(timeIntervalSince1970: 2_000))
+
+        var incoming = makeClip(
+            text: "shared",
+            createdAt: Date(timeIntervalSince1970: 1_500),
+            hash: hash,
+            pasteCount: 5,
+            lastPastedAt: Date(timeIntervalSince1970: 9_000)
+        )
+        incoming.id = UUID()
+        _ = try store.mergeLibrary(clips: [incoming], snippets: [], collections: [])
+
+        let folded = try store.foldedHistory().first { $0.contentHash == hash }
+        XCTAssertEqual(folded?.pasteCount, 5)
+        XCTAssertEqual(folded?.lastPastedAt, Date(timeIntervalSince1970: 9_000))
+    }
+
     func testStorageByteCountAndOrphanReap() throws {
         let before = store.storageByteCount()
         XCTAssertGreaterThan(before, 0)

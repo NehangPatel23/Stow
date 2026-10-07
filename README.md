@@ -63,7 +63,7 @@ The first version and later wave are in the app. What remains in [`docs/clipboar
 | **Match Maccy** | Hotkey and menu-bar icon, search-as-you-type, number keys, pin, delete and clear, pause and ignore-next-copy, concealed pasteboard types |
 | **First version** | Panel, preview, type recognition, filters, shortcut footer and context menu, paste-target awareness, a separate snippets list, undo on the toast, secret skip, app exclusions, source and time, duplicate folding, drag-out images and files, paused icon, first-run splash |
 | **Later wave** | Clip transforms and multi-paste, snippet boards, `{{field}}` fill-in templates, keep-open pin, compact rows, storage rules, opt-in abbreviations, local archive, on-device OCR, opt-in encrypted folder sync, Universal Clipboard toggle, Shortcuts (latest clip, search, save as snippet) |
-| **Further** | One-shot paste, named slots (⌃⌥1–5), and menu of recent items (in the app). Edit-before-paste (Edit Clip updates the stored clip), copy bursts, per-app defaults, recording-aware privacy, a one-time Maccy history import |
+| **Further** | One-shot paste, named slots (⌃⌥1–5), menu of recent items, and Frequent (sort by paste count) are in the app. Still open: edit-before-paste, copy bursts, per-app defaults, recording-aware privacy, a one-time Maccy history import |
 
 Daily use and the further-ideas list are next — not another later-wave checkbox.
 
@@ -76,7 +76,7 @@ Full wording and checkboxes live in the catalog. This is the map.
 | Area | Shipped | Still later |
 | --- | --- | --- |
 | **See it** | Preview pane, type recognition (text, rich text, code, link, email, color, image, file), drag-out thumbnails, source app and Today / Yesterday / Older | — |
-| **Find it** | Type and pin chips on history and snippets, operators like `type:image`, `from:today`, `board:Support`, and `abbr:addr`, duplicate folding, on-device OCR for text inside screenshots | — |
+| **Find it** | Type, pin, and Frequent chips on history; type and pin chips on snippets; operators like `type:image`, `from:today`, `board:Support`, and `abbr:addr`; duplicate folding; on-device OCR for text inside screenshots | — |
 | **Paste it** | Return copies. Option-Return pastes. Shift-Option-Return pastes plain text. Command-Option-Return pastes once and restores the previous clipboard. Named slots (⌃⌥1–5) paste a saved register with the panel closed. Terminals get plain text. A secure field is copied, not typed into. Right-click can edit the stored clip | — |
 | **Transforms** | HTML to Markdown, pretty JSON, unwrap lines, and strip tracking parameters. Each copies a new version and leaves the stored clip alone | — |
 | **Multi-paste** | Several clips paste in the order they were copied, joined with a newline, a comma, or a separator you type | — |
