@@ -90,4 +90,46 @@ final class ClipTransformsTests: XCTestCase {
         )
         XCTAssertTrue(ClipLineOps.canSplit("a\nb"))
     }
+
+    func testLineToolChangeCase() {
+        XCTAssertEqual(ClipLineTool.upperCase.output(text: "Hello"), "HELLO")
+        XCTAssertNil(ClipLineTool.upperCase.output(text: "HELLO"))
+        XCTAssertEqual(ClipLineTool.lowerCase.output(text: "Hello"), "hello")
+        XCTAssertNil(ClipLineTool.lowerCase.output(text: "hello"))
+        XCTAssertEqual(ClipLineTool.titleCase.output(text: "hello world"), "Hello World")
+        XCTAssertNil(ClipLineTool.titleCase.output(text: "Hello World"))
+    }
+
+    func testLineToolSortLines() {
+        XCTAssertEqual(ClipLineTool.sortLines.output(text: "c\na\nb"), "a\nb\nc")
+        XCTAssertNil(ClipLineTool.sortLines.output(text: "a\nb\nc"))
+        XCTAssertNil(ClipLineTool.sortLines.output(text: "only"))
+        XCTAssertEqual(ClipLineTool.sortLines.output(text: "b\r\n\r\na"), "a\nb")
+    }
+
+    func testLineToolDropDuplicates() {
+        XCTAssertEqual(ClipLineTool.dropDuplicates.output(text: "a\nb\na\nc"), "a\nb\nc")
+        XCTAssertNil(ClipLineTool.dropDuplicates.output(text: "a\nb\nc"))
+        XCTAssertNil(ClipLineTool.dropDuplicates.output(text: "a"))
+    }
+
+    func testLineToolTrimWhitespace() {
+        XCTAssertEqual(ClipLineTool.trimWhitespace.output(text: "  a  \n  b  "), "a\nb")
+        XCTAssertNil(ClipLineTool.trimWhitespace.output(text: "a\nb"))
+    }
+
+    func testLineToolJoinComma() {
+        XCTAssertEqual(ClipLineTool.joinComma.output(text: "a\nb\nc"), "a, b, c")
+        XCTAssertEqual(ClipLineTool.joinComma.output(text: "a\n\n\nb"), "a, b")
+        XCTAssertNil(ClipLineTool.joinComma.output(text: "only"))
+    }
+
+    func testLineToolAvailability() {
+        let single = ClipLineTool.available(text: "Hello")
+        XCTAssertTrue(single.contains(.upperCase))
+        XCTAssertTrue(single.contains(.lowerCase))
+        XCTAssertFalse(single.contains(.sortLines))
+        XCTAssertFalse(single.contains(.joinComma))
+        XCTAssertTrue(ClipLineTool.available(text: "b\na").contains(.sortLines))
+    }
 }

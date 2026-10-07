@@ -157,6 +157,18 @@ struct ClipRowView: View {
                     model.splitSelectedIntoLines()
                 }
             }
+            let lineSource = clip.text ?? clip.preview
+            let lineTools = ClipLineTool.available(text: lineSource)
+            if !lineTools.isEmpty {
+                Menu("Line tools") {
+                    ForEach(lineTools) { tool in
+                        Button(tool.title) {
+                            model.select(clip.id)
+                            model.copyLineTool(tool, text: lineSource)
+                        }
+                    }
+                }
+            }
             Button(clip.pinned ? "Unpin" : "Pin") {
                 model.select(clip.id)
                 model.togglePin()

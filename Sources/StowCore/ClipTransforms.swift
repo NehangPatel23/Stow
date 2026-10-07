@@ -180,18 +180,110 @@ enum ClipLineOps {
 
     /// Non-empty lines after normalizing CRLF. `nil` when fewer than two lines remain.
     static func splitLines(_ text: String) -> [String]? {
-        let normalized = text
-            .replacingOccurrences(of: "\r\n", with: "\n")
-            .replacingOccurrences(of: "\r", with: "\n")
-        let lines = normalized
-            .components(separatedBy: "\n")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
+        let lines = nonEmptyLines(in: text)
         guard lines.count >= 2 else { return nil }
         return lines
     }
 
     static func canSplit(_ text: String) -> Bool {
         splitLines(text) != nil
+    }
+
+    static func normalizeNewlines(_ text: String) -> String {
+        text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+    }
+
+    static func nonEmptyLines(in text: String) -> [String] {
+        normalizeNewlines(text)
+            .components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+    }
+}
+
+/// Explicit line rewrites that copy a new string. The stored clip stays as it was.
+enum ClipLineTool: String, CaseIterable, Identifiable, Sendable {
+    case upperCase
+    case lowerCase
+    case titleCase
+    case sortLines
+    case dropDuplicates
+    case trimWhitespace
+    case joinComma
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .upperCase: "Uppercase"
+        case .lowerCase: "Lowercase"
+        case .titleCase: "Title Case"
+        case .sortLines: "Sort lines"
+        case .dropDuplicates: "Drop duplicates"
+        case .trimWhitespace: "Trim whitespace"
+        case .joinComma: "Join with commas"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .upperCase: "textformat.size.larger"
+        case .lowerCase: "textformat.size.smaller"
+        case .titleCase: "textformat"
+        case .sortLines: "arrow.up.arrow.down"
+        case .dropDuplicates: "rectangle.on.rectangle"
+        case .trimWhitespace: "scissors"
+        case .joinComma: "text.append"
+        }
+    }
+
+    static func available(text: String) -> [ClipLineTool] {
+        allCases.filter { $0.output(text: text) != nil }
+    }
+
+    func output(text: String) -> String? {
+        switch self {
+        case .upperCase:
+            let result = text.uppercased()
+            return result == text ? nil : result
+        case .lowerCase:
+            let result = text.lowercased()
+            return result == text ? nil : result
+        case .titleCase:
+            let result = text.localizedCapitalized
+            return result == text ? nil : result
+        case .sortLines:
+            let lines = ClipLineOps.nonEmptyLines(in: text)
+            guard lines.count >= 2 else { return nil }
+            let sorted = lines.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
+            guard sorted != lines else { return nil }
+            return sorted.joined(separator: "\n")
+        case .dropDuplicates:
+            let lines = ClipLineOps.nonEmptyLines(in: text)
+            guard lines.count >= 2 else { return nil }
+            var seen = Set<String>()
+            var unique: [String] = []
+            for line in lines {
+                if seen.insert(line).inserted {
+                    unique.append(line)
+                }
+            }
+            guard unique.count < lines.count else { return nil }
+            return unique.joined(separator: "\n")
+        case .trimWhitespace:
+            let normalized = ClipLineOps.normalizeNewlines(text)
+            let trimmed = normalized
+                .components(separatedBy: "\n")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
+                .joined(separator: "\n")
+            guard trimmed != normalized else { return nil }
+            return trimmed
+        case .joinComma:
+            let lines = ClipLineOps.nonEmptyLines(in: text)
+            guard lines.count >= 2 else { return nil }
+            return lines.joined(separator: ", ")
+        }
     }
 }

@@ -1025,6 +1025,14 @@ final class AppModel {
         notify("Copied \(transform.title)", symbol: transform.symbolName)
     }
 
+    func copyLineTool(_ tool: ClipLineTool, text: String) {
+        guard let output = tool.output(text: text) else { return }
+        PasteService.writeText(output)
+        notePasteboardWrite?()
+        clipboardOriginHash = nil
+        notify("Copied \(tool.title)", symbol: tool.symbolName)
+    }
+
     /// Turn a multi-line history clip into one new row per non-empty line. The original stays.
     var canSplitSelectedIntoLines: Bool {
         guard library == .history else { return false }

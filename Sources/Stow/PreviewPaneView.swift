@@ -343,8 +343,9 @@ struct PreviewPaneView: View {
     @ViewBuilder
     private func transformRow(text: String, html: String?, allowSplit: Bool = false) -> some View {
         let actions = ClipTransform.available(text: text, html: html)
+        let lineTools = ClipLineTool.available(text: text)
         let showSplit = allowSplit && ClipLineOps.canSplit(text)
-        if !actions.isEmpty || showSplit {
+        if !actions.isEmpty || !lineTools.isEmpty || showSplit {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     if showSplit {
@@ -359,6 +360,19 @@ struct PreviewPaneView: View {
                         }
                         .buttonStyle(.plain)
                         .help("Turn each line into its own history clip. The original stays as it is.")
+                    }
+                    ForEach(lineTools) { tool in
+                        Button {
+                            model.copyLineTool(tool, text: text)
+                        } label: {
+                            Label(tool.title, systemImage: tool.symbolName)
+                                .font(.system(size: 11, weight: .medium))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 5)
+                                .background(Capsule().fill(theme.chip))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Copy \(tool.title). The saved clip stays as it is.")
                     }
                     ForEach(actions) { transform in
                         Button {
