@@ -143,6 +143,11 @@ struct ClipRowView: View {
                 model.select(clip.id)
                 model.copySelected()
             }
+            if PreviewPasteDraft.supports(clip.kind) {
+                Button("Edit before Paste") {
+                    model.beginEditBeforePaste(clip)
+                }
+            }
             Button("Edit Clip") {
                 model.beginEditing(clip)
             }
@@ -317,6 +322,12 @@ struct SnippetRowView: View {
             Button("Copy") {
                 model.selectOnly(snippet.id)
                 model.copySelected()
+            }
+            if PreviewPasteDraft.supports(snippet.kind) {
+                Button("Edit before Paste") {
+                    model.selectOnly(snippet.id)
+                    model.beginEditBeforePaste()
+                }
             }
             Button("Edit Snippet…") {
                 model.selectOnly(snippet.id)

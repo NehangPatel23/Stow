@@ -2,8 +2,9 @@ import AppKit
 import SwiftUI
 
 struct PreviewPaneView: View {
-    var model: AppModel
+    @Bindable var model: AppModel
     var theme: Theme
+    @FocusState private var draftFocused: Bool
 
     var body: some View {
         Group {
@@ -28,43 +29,93 @@ struct PreviewPaneView: View {
             }
         }
         .padding(16)
+        .onChange(of: model.previewEditFocusToken) { _, _ in
+            draftFocused = true
+        }
     }
 
     @ViewBuilder
     private func clipPreview(_ clip: Clip) -> some View {
+        let draftActive = model.isEditingBeforePaste
+        let bodyText = draftActive ? (model.previewPasteDraft ?? "") : (clip.text ?? clip.preview)
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Text(clip.kind.title)
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(theme.secondary)
                 Spacer()
+                if PreviewPasteDraft.supports(clip.kind) {
+                    editBeforePasteControls(for: clip)
+                }
                 Text("\(clip.sourceAppName) · \(clip.createdAt.formatted(date: .abbreviated, time: .shortened))")
                     .font(.system(size: 11))
                     .foregroundStyle(theme.secondary)
             }
-            transformRow(text: clip.text ?? clip.preview, html: clip.html)
-            switch clip.kind {
-            case .image:
-                imagePreview(clip)
-            case .file:
-                filePreview(clip)
-            case .color:
-                colorPreview(clip)
-            case .code:
-                codePreview(clip.text ?? "")
-            case .richText:
-                if let rtf = clip.rtf {
-                    RichTextPreview(rtf: rtf)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                } else {
-                    textPreview(clip.text ?? clip.preview, kind: .richText, title: nil)
+            if draftActive {
+                Text("Paste uses this text. The saved clip stays as it is.")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(theme.accent)
+            }
+            transformRow(text: bodyText, html: draftActive ? nil : clip.html)
+            if draftActive {
+                draftEditor(monospaced: clip.kind == .code)
+            } else {
+                switch clip.kind {
+                case .image:
+                    imagePreview(clip)
+                case .file:
+                    filePreview(clip)
+                case .color:
+                    colorPreview(clip)
+                case .code:
+                    codePreview(clip.text ?? "")
+                case .richText:
+                    if let rtf = clip.rtf {
+                        RichTextPreview(rtf: rtf)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                    } else {
+                        textPreview(clip.text ?? clip.preview, kind: .richText, title: nil)
+                    }
+                default:
+                    textPreview(clip.text ?? clip.preview, kind: clip.kind, title: nil)
                 }
-            default:
-                textPreview(clip.text ?? clip.preview, kind: clip.kind, title: nil)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private func editBeforePasteControls(for clip: Clip) -> some View {
+        Group {
+            if model.isEditingBeforePaste {
+                Button("Revert") {
+                    model.cancelEditBeforePaste()
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("Discard preview edits")
+            } else {
+                Button("Edit for Paste") {
+                    model.beginEditBeforePaste(clip)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                .help("Change the preview, then paste. The saved clip stays as it is.")
+            }
+        }
+    }
+
+    private func draftEditor(monospaced: Bool) -> some View {
+        TextEditor(text: Binding(
+            get: { model.previewPasteDraft ?? "" },
+            set: { model.updatePreviewPasteDraft($0) }
+        ))
+        .font(.system(size: 13, design: monospaced ? .monospaced : .default))
+        .scrollContentBackground(.hidden)
+        .padding(8)
+        .background(RoundedRectangle(cornerRadius: 8).fill(theme.card))
+        .focused($draftFocused)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func imagePreview(_ clip: Clip) -> some View {
@@ -199,38 +250,66 @@ struct PreviewPaneView: View {
     }
 
     private func snippetPreview(_ snippet: Snippet) -> some View {
-        let fields = snippet.templateFields
-        return ScrollView {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text(snippet.title).font(.system(size: 13, weight: .semibold))
-                    Spacer()
-                    Button("Edit") {
-                        model.beginEditingSnippet(snippet)
+        let draftActive = model.isEditingBeforePaste
+        let bodyText = draftActive ? (model.previewPasteDraft ?? "") : snippet.text
+        let fields = draftActive ? [] : snippet.templateFields
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(snippet.title).font(.system(size: 13, weight: .semibold))
+                Spacer()
+                if PreviewPasteDraft.supports(snippet.kind) {
+                    if draftActive {
+                        Button("Revert") {
+                            model.cancelEditBeforePaste()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    } else {
+                        Button("Edit for Paste") {
+                            model.beginEditBeforePaste()
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .help("Change the preview, then paste. The saved snippet stays as it is.")
                     }
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
                 }
-                if let abbr = snippet.normalizedAbbreviation {
-                    Text("Abbreviation \(abbr) · type it, then space or return")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(theme.accent)
+                Button("Edit") {
+                    model.cancelEditBeforePaste()
+                    model.beginEditingSnippet(snippet)
                 }
-                transformRow(text: snippet.text, html: nil)
-                if !fields.isEmpty {
-                    Text("Fill-in fields: \(fields.map(\.label).joined(separator: ", "))")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(theme.secondary)
-                    Button("Fill and Paste") {
-                        model.pasteSelected(plain: false)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.small)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+            }
+            if draftActive {
+                Text("Paste uses this text. The saved snippet stays as it is.")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(theme.accent)
+            }
+            if let abbr = snippet.normalizedAbbreviation, !draftActive {
+                Text("Abbreviation \(abbr) · type it, then space or return")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(theme.accent)
+            }
+            transformRow(text: bodyText, html: nil)
+            if !fields.isEmpty {
+                Text("Fill-in fields: \(fields.map(\.label).joined(separator: ", "))")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(theme.secondary)
+                Button("Fill and Paste") {
+                    model.pasteSelected(plain: false)
                 }
-                Text(snippet.text.isEmpty ? "Empty snippet" : snippet.text)
-                    .font(.system(size: 13))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .textSelection(.enabled)
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+            }
+            if draftActive {
+                draftEditor(monospaced: snippet.kind == .code)
+            } else {
+                ScrollView {
+                    Text(snippet.text.isEmpty ? "Empty snippet" : snippet.text)
+                        .font(.system(size: 13))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled)
+                }
             }
         }
     }

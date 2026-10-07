@@ -39,6 +39,35 @@ final class ClipTransformsTests: XCTestCase {
         XCTAssertEqual(ClipTransform.stripTracking.output(text: url, html: nil), "https://example.com/path?id=4")
     }
 
+    func testPreviewPasteDraftLeavesIdenticalTextUnchanged() {
+        var clip = makeClip(text: "hello", hash: "kept")
+        clip.html = "<p>hello</p>"
+        let applied = PreviewPasteDraft.applying("hello", to: clip)
+        XCTAssertEqual(applied.html, "<p>hello</p>")
+        XCTAssertEqual(applied.contentHash, "kept")
+    }
+
+    func testPreviewPasteDraftClearsRichFormatsAndKeepsHash() {
+        var clip = makeClip(text: "hello", hash: "kept")
+        clip.html = "<p>hello</p>"
+        clip.rtf = Data([0x01])
+        let applied = PreviewPasteDraft.applying("hello world", to: clip)
+        XCTAssertEqual(applied.text, "hello world")
+        XCTAssertNil(applied.html)
+        XCTAssertNil(applied.rtf)
+        XCTAssertEqual(applied.contentHash, "kept")
+        XCTAssertEqual(applied.preview, "hello world")
+    }
+
+    func testPreviewPasteDraftSupportsTextKindsOnly() {
+        XCTAssertTrue(PreviewPasteDraft.supports(.text))
+        XCTAssertTrue(PreviewPasteDraft.supports(.code))
+        XCTAssertTrue(PreviewPasteDraft.supports(.richText))
+        XCTAssertFalse(PreviewPasteDraft.supports(.image))
+        XCTAssertFalse(PreviewPasteDraft.supports(.file))
+        XCTAssertFalse(PreviewPasteDraft.supports(.color))
+    }
+
     func testPlainTextOffersNothing() {
         XCTAssertTrue(ClipTransform.available(text: "Hello", html: nil).isEmpty)
     }

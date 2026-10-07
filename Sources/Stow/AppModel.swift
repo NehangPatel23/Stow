@@ -86,7 +86,13 @@ final class AppModel {
         }
     }
 
-    var library: Library = .history
+    var library: Library = .history {
+        didSet {
+            if oldValue != library {
+                cancelEditBeforePaste()
+            }
+        }
+    }
     var query = ""
     var chipKind: ClipKind?
     var chipPinned = false
@@ -109,6 +115,11 @@ final class AppModel {
     var showsSettings = false
     var clipBeingEdited: Clip?
     var snippetBeingEdited: Snippet?
+    /// Session-only preview text for paste/copy. Does not update the stored clip.
+    var previewPasteDraft: String?
+    /// Clip or snippet id the draft belongs to.
+    private var previewPasteDraftID: UUID?
+    var previewEditFocusToken = 0
     var templateFill: TemplateFillRequest?
     /// Carries an explicit one-shot choice across the template fill sheet.
     private var pendingTemplateOneShot: Bool?
@@ -345,6 +356,7 @@ final class AppModel {
         chipFrequent = false
         collectionFilter = .all
         expandedHashes = []
+        cancelEditBeforePaste()
         refresh()
         if let selectedID, !containsSelection(selectedID) {
             self.selectedID = nil
@@ -352,6 +364,55 @@ final class AppModel {
         }
         loadPreview()
         focusToken += 1
+    }
+
+    var isEditingBeforePaste: Bool { previewPasteDraft != nil }
+
+    var canEditBeforePaste: Bool {
+        guard let clip = selectedClip() else { return false }
+        return PreviewPasteDraft.supports(materialized(clip).kind)
+    }
+
+    func beginEditBeforePaste(_ clip: Clip? = nil) {
+        let target = clip.map { materialized($0) } ?? (selectedClip().map(materialized))
+        guard let target else {
+            notify("Select a clip", symbol: "arrow.down.doc")
+            return
+        }
+        guard PreviewPasteDraft.supports(target.kind) else {
+            notify("That clip can't be edited for paste", symbol: "exclamationmark.circle")
+            return
+        }
+        if clip != nil {
+            select(target.id)
+        }
+        let seed: String
+        if let rtf = target.rtf,
+           let attributed = NSAttributedString(rtf: rtf, documentAttributes: nil) {
+            seed = attributed.string
+        } else {
+            seed = target.text ?? target.preview
+        }
+        previewPasteDraftID = target.id
+        previewPasteDraft = seed
+        previewEditFocusToken += 1
+    }
+
+    func updatePreviewPasteDraft(_ text: String) {
+        guard previewPasteDraft != nil else { return }
+        previewPasteDraft = text
+    }
+
+    func cancelEditBeforePaste() {
+        previewPasteDraft = nil
+        previewPasteDraftID = nil
+    }
+
+    private func clearPreviewPasteDraftIfSelectionChanged() {
+        guard let draftID = previewPasteDraftID else { return }
+        if selectedID != draftID {
+            cancelEditBeforePaste()
+        }
     }
 
     func notePreviousApp(_ app: NSRunningApplication?) {
@@ -670,6 +731,7 @@ final class AppModel {
 
     func select(_ id: UUID) {
         selectedID = id
+        clearPreviewPasteDraftIfSelectionChanged()
         loadPreview()
     }
 
@@ -725,6 +787,7 @@ final class AppModel {
     }
 
     func beginEditing(_ clip: Clip) {
+        cancelEditBeforePaste()
         select(clip.id)
         clipBeingEdited = materialized(clip)
     }
@@ -789,7 +852,9 @@ final class AppModel {
     }
 
     func pasteSelected(plain requestedPlain: Bool, oneShot: Bool? = nil) {
-        if library == .snippets, let snippet = selectedSnippet() {
+        if !isEditingBeforePaste,
+           library == .snippets,
+           let snippet = selectedSnippet() {
             let fields = snippet.templateFields
             if !fields.isEmpty {
                 pendingTemplateOneShot = oneShot
@@ -808,7 +873,7 @@ final class AppModel {
             notify("Select a clip", symbol: "arrow.down.doc")
             return
         }
-        let full = materialized(clip)
+        let full = clipForClipboard(materialized(clip))
         pasteClip(full, plain: requestedPlain, oneShot: oneShot, trackUse: library == .history)
     }
 
@@ -1404,6 +1469,7 @@ final class AppModel {
     }
 
     func beginEditingSnippet(_ snippet: Snippet? = nil) {
+        cancelEditBeforePaste()
         let target = snippet ?? selectedSnippet()
         guard let target else { return }
         snippetBeingEdited = target
@@ -1707,8 +1773,18 @@ final class AppModel {
 
     private func writeSelection(plain: Bool) -> Bool {
         guard let clip = selectedClip() else { return false }
-        commitWrite(materialized(clip), plain: plain || clip.kind == .code)
+        let full = clipForClipboard(materialized(clip))
+        commitWrite(full, plain: plain || full.kind == .code)
         return true
+    }
+
+    /// Applies a preview paste draft when present. Never updates the store.
+    private func clipForClipboard(_ clip: Clip) -> Clip {
+        guard let draft = previewPasteDraft,
+              previewPasteDraftID == clip.id || previewPasteDraftID == selectedID else {
+            return clip
+        }
+        return PreviewPasteDraft.applying(draft, to: clip)
     }
 
     private func commitWrite(_ clip: Clip, plain: Bool, imageData: Data? = nil) {

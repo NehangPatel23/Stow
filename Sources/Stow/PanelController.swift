@@ -319,8 +319,13 @@ final class PanelController: NSObject, NSWindowDelegate {
         let command = flags.contains(.command)
         let option = flags.contains(.option)
         let shift = flags.contains(.shift)
+        let editingPreview = model.isEditingBeforePaste
 
         if key == KeyCode.escape {
+            if editingPreview {
+                model.cancelEditBeforePaste()
+                return true
+            }
             if quick {
                 closeQuick(returnFocus: true)
             } else if !model.query.isEmpty {
@@ -329,6 +334,7 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
         if key == KeyCode.up {
+            if editingPreview { return false }
             if command && option {
                 model.reorderSelectedSnippet(by: -1)
             } else {
@@ -337,6 +343,7 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
         if key == KeyCode.down {
+            if editingPreview { return false }
             if command && option {
                 model.reorderSelectedSnippet(by: 1)
             } else {
@@ -356,6 +363,8 @@ final class PanelController: NSObject, NSWindowDelegate {
                 return true
             }
             if command { return false }
+            // While editing the preview, Return inserts a newline instead of copying.
+            if editingPreview { return false }
             model.copySelected()
             return true
         }
@@ -372,13 +381,17 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
         if key == KeyCode.delete || key == KeyCode.forwardDelete {
+            if editingPreview { return false }
             if command || model.query.isEmpty {
                 model.deleteSelected()
                 return true
             }
             return false
         }
-        if model.query.isEmpty, let number = KeyCode.digits[key], flags.isDisjoint(with: [.command, .control]) {
+        if !editingPreview,
+           model.query.isEmpty,
+           let number = KeyCode.digits[key],
+           flags.isDisjoint(with: [.command, .control]) {
             model.selectShortcut(number)
             if option && shift {
                 model.pasteSelected(plain: true)
@@ -390,7 +403,9 @@ final class PanelController: NSObject, NSWindowDelegate {
             return true
         }
         // Number-row paste-once: hold Control with Option (and optional Shift for plain).
-        if model.query.isEmpty, let number = KeyCode.digits[key],
+        if !editingPreview,
+           model.query.isEmpty,
+           let number = KeyCode.digits[key],
            flags.contains(.control), flags.contains(.option),
            flags.isDisjoint(with: [.command]) {
             model.selectShortcut(number)

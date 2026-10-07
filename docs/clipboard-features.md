@@ -15,7 +15,7 @@ Update the Done column when you check boxes.
 | Match Maccy | Behaviors the first paste loop still has to have | 7 | 7 |
 | First version | Build before daily paste feels right | 15 | 15 |
 | Later wave | Add after the first version is trustworthy | 11 | 11 |
-| Further ideas | After history, preview, and paste beat Maccy | 26 | 5 |
+| Further ideas | After history, preview, and paste beat Maccy | 26 | 6 |
 
 ## Match Maccy first
 
@@ -86,7 +86,7 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 | --- | --- |
 | Open | Stow is a Dock app and a menu-bar app. The menu bar opens recent clips; More clips… opens the library near the size of the screen. ⌘⇧C toggles a quick panel. Search is focused. Nothing is selected until you click a clip. |
 | Read | Each row shows a type mark, a preview, then the source app and time. The preview pane shows the whole clip, including images and readable rich text. |
-| Act | Return copies. Option-Return pastes into the previous app. Shift-Option-Return pastes plain text. The footer lists those shortcuts. Right-click adds Edit Clip or Edit Snippet, Save as Snippet on history, and Delete. |
+| Act | Return copies. Option-Return pastes into the previous app. Shift-Option-Return pastes plain text. The footer lists those shortcuts. Right-click adds Edit before Paste, Edit Clip or Edit Snippet, Save as Snippet on history, and Delete. |
 
 ## Build order
 
@@ -111,7 +111,7 @@ These wait until history, preview, and paste already feel better than Maccy. Che
 <details>
 <summary>Edit (7)</summary>
 
-- [ ] **Edit before paste.** Change the text in the preview, then paste that version. The original history row stays as it was. Edit Clip, which is already in the app, is different: it updates the stored clip.
+- [x] **Edit before paste.** Change the text in the preview, then paste that version. The original history row stays as it was. Edit Clip, which is already in the app, is different: it updates the stored clip.
 - [ ] **Split lines.** Turn a multi-line copy into one clip per line, so a pasted list can be used one entry at a time.
 - [ ] **Line tools.** Change case, sort lines, drop duplicate lines, trim whitespace, or turn lines into a comma-separated list.
 - [ ] **Length in the preview.** Show characters, words, and lines on text clips. Writers can check a passage without pasting it into a counter.
