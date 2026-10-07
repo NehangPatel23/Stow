@@ -172,3 +172,26 @@ enum ClipTransform: String, CaseIterable, Identifiable, Sendable {
         return text
     }
 }
+
+/// Explicit line edits that produce new history rows. Separate from `ClipTransform`, which only copies.
+enum ClipLineOps {
+    static let title = "Split lines"
+    static let symbolName = "rectangle.split.1x2"
+
+    /// Non-empty lines after normalizing CRLF. `nil` when fewer than two lines remain.
+    static func splitLines(_ text: String) -> [String]? {
+        let normalized = text
+            .replacingOccurrences(of: "\r\n", with: "\n")
+            .replacingOccurrences(of: "\r", with: "\n")
+        let lines = normalized
+            .components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        guard lines.count >= 2 else { return nil }
+        return lines
+    }
+
+    static func canSplit(_ text: String) -> Bool {
+        splitLines(text) != nil
+    }
+}

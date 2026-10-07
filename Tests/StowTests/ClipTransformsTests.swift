@@ -71,4 +71,23 @@ final class ClipTransformsTests: XCTestCase {
     func testPlainTextOffersNothing() {
         XCTAssertTrue(ClipTransform.available(text: "Hello", html: nil).isEmpty)
     }
+
+    func testSplitLinesRequiresTwoNonEmptyLines() {
+        XCTAssertNil(ClipLineOps.splitLines("Hello"))
+        XCTAssertNil(ClipLineOps.splitLines("Hello\n"))
+        XCTAssertNil(ClipLineOps.splitLines("\n\n"))
+        XCTAssertFalse(ClipLineOps.canSplit("one line"))
+    }
+
+    func testSplitLinesDropsBlanksAndNormalizesCRLF() {
+        XCTAssertEqual(
+            ClipLineOps.splitLines("alpha\r\n\r\nbeta\ngamma\n"),
+            ["alpha", "beta", "gamma"]
+        )
+        XCTAssertEqual(
+            ClipLineOps.splitLines("  one  \n  two  "),
+            ["one", "two"]
+        )
+        XCTAssertTrue(ClipLineOps.canSplit("a\nb"))
+    }
 }

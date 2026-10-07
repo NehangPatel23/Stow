@@ -15,7 +15,7 @@ Update the Done column when you check boxes.
 | Match Maccy | Behaviors the first paste loop still has to have | 7 | 7 |
 | First version | Build before daily paste feels right | 15 | 15 |
 | Later wave | Add after the first version is trustworthy | 11 | 11 |
-| Further ideas | After history, preview, and paste beat Maccy | 26 | 6 |
+| Further ideas | After history, preview, and paste beat Maccy | 26 | 7 |
 
 ## Match Maccy first
 
@@ -112,7 +112,7 @@ These wait until history, preview, and paste already feel better than Maccy. Che
 <summary>Edit (7)</summary>
 
 - [x] **Edit before paste.** Change the text in the preview, then paste that version. The original history row stays as it was. Edit Clip, which is already in the app, is different: it updates the stored clip.
-- [ ] **Split lines.** Turn a multi-line copy into one clip per line, so a pasted list can be used one entry at a time.
+- [x] **Split lines.** Turn a multi-line copy into one clip per line, so a pasted list can be used one entry at a time.
 - [ ] **Line tools.** Change case, sort lines, drop duplicate lines, trim whitespace, or turn lines into a comma-separated list.
 - [ ] **Length in the preview.** Show characters, words, and lines on text clips. Writers can check a passage without pasting it into a counter.
 - [ ] **Do the obvious thing.** A link can open, an email can start a message, an address can open in Maps, and a date can become a calendar event.

@@ -151,6 +151,12 @@ struct ClipRowView: View {
             Button("Edit Clip") {
                 model.beginEditing(clip)
             }
+            if ClipLineOps.canSplit(clip.text ?? clip.preview) {
+                Button("Split lines") {
+                    model.select(clip.id)
+                    model.splitSelectedIntoLines()
+                }
+            }
             Button(clip.pinned ? "Unpin" : "Pin") {
                 model.select(clip.id)
                 model.togglePin()

@@ -22,6 +22,7 @@
   <img src="https://img.shields.io/badge/history-on_this_Mac-14b8a6?style=flat-square" alt="History stays on this Mac" />
   <img src="https://img.shields.io/badge/first_version-15_of_15-8b5cf6?style=flat-square" alt="First version: 15 of 15" />
   <img src="https://img.shields.io/badge/later_wave-11_of_11-8b5cf6?style=flat-square" alt="Later wave: 11 of 11" />
+  <img src="https://img.shields.io/badge/further_ideas-7_of_26-8b5cf6?style=flat-square" alt="Further ideas: 7 of 26" />
 </p>
 
 ---
@@ -46,7 +47,7 @@ Honest snapshot against [`docs/clipboard-features.md`](./docs/clipboard-features
 - **First version** — preview, type recognition, search, duplicate folding, snippets with the same type filters, undo on the toast, secret skip, app exclusions, and a first-run splash that explains the shortcut and Accessibility. Fifteen of fifteen.
 - **Match Maccy** — seven of seven, including pin, pause, ignore-next-copy, and number keys.
 - **Later wave** — clip transforms, multi-paste, snippet collections, fill-in templates, a pinned panel with compact rows, storage rules, optional abbreviations, a local archive, on-device OCR, opt-in encrypted folder sync, Universal Clipboard toggle, and Shortcuts actions. Eleven of eleven.
-- **Tests** — history, search, classification, transforms, colors, secret detection, syntax highlighting, paste targets, pasteboard policy, snippet templates, abbreviations, storage rules, local archive, image OCR, and sync crypto.
+- **Tests** — history, search, classification, transforms, line split, colors, secret detection, syntax highlighting, paste targets, pasteboard policy, snippet templates, abbreviations, storage rules, local archive, image OCR, and sync crypto.
 
 ### Not in this version
 
@@ -63,7 +64,7 @@ The first version and later wave are in the app. What remains in [`docs/clipboar
 | **Match Maccy** | Hotkey and menu-bar icon, search-as-you-type, number keys, pin, delete and clear, pause and ignore-next-copy, concealed pasteboard types |
 | **First version** | Panel, preview, type recognition, filters, shortcut footer and context menu, paste-target awareness, a separate snippets list, undo on the toast, secret skip, app exclusions, source and time, duplicate folding, drag-out images and files, paused icon, first-run splash |
 | **Later wave** | Clip transforms and multi-paste, snippet boards, `{{field}}` fill-in templates, keep-open pin, compact rows, storage rules, opt-in abbreviations, local archive, on-device OCR, opt-in encrypted folder sync, Universal Clipboard toggle, Shortcuts (latest clip, search, save as snippet) |
-| **Further** | One-shot paste, named slots (⌃⌥1–5), menu of recent items, Frequent, and edit-before-paste are in the app. Still open: copy bursts, per-app defaults, recording-aware privacy, a one-time Maccy history import |
+| **Further** | One-shot paste, named slots (⌃⌥1–5), menu of recent items, Frequent, edit-before-paste, and split lines are in the app. Still open: line tools, copy bursts, per-app defaults, recording-aware privacy, a one-time Maccy history import |
 
 Daily use and the further-ideas list are next — not another later-wave checkbox.
 
@@ -77,7 +78,7 @@ Full wording and checkboxes live in the catalog. This is the map.
 | --- | --- | --- |
 | **See it** | Preview pane, type recognition (text, rich text, code, link, email, color, image, file), drag-out thumbnails, source app and Today / Yesterday / Older | — |
 | **Find it** | Type, pin, and Frequent chips on history; type and pin chips on snippets; operators like `type:image`, `from:today`, `board:Support`, and `abbr:addr`; duplicate folding; on-device OCR for text inside screenshots | — |
-| **Paste it** | Return copies. Option-Return pastes. Shift-Option-Return pastes plain text. Command-Option-Return pastes once and restores the previous clipboard. Named slots (⌃⌥1–5) paste a saved register with the panel closed. Terminals get plain text. A secure field is copied, not typed into. Edit for Paste changes the preview only; Edit Clip updates the stored clip | — |
+| **Paste it** | Return copies. Option-Return pastes. Shift-Option-Return pastes plain text. Command-Option-Return pastes once and restores the previous clipboard. Named slots (⌃⌥1–5) paste a saved register with the panel closed. Terminals get plain text. A secure field is copied, not typed into. Edit for Paste changes the preview only; Edit Clip updates the stored clip. Split lines turns a multi-line clip into one history row per line and leaves the original | — |
 | **Transforms** | HTML to Markdown, pretty JSON, unwrap lines, and strip tracking parameters. Each copies a new version and leaves the stored clip alone | — |
 | **Multi-paste** | Several clips paste in the order they were copied, joined with a newline, a comma, or a separator you type | — |
 | **Reuse it** | Snippets live apart from history. Boards group them. `{{name}}` fields open a fill-in form before paste. Marked abbreviations expand while typing | — |

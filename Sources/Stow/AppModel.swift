@@ -1025,6 +1025,84 @@ final class AppModel {
         notify("Copied \(transform.title)", symbol: transform.symbolName)
     }
 
+    /// Turn a multi-line history clip into one new row per non-empty line. The original stays.
+    var canSplitSelectedIntoLines: Bool {
+        guard library == .history else { return false }
+        return ClipLineOps.canSplit(splitSourceText)
+    }
+
+    func splitSelectedIntoLines() {
+        guard library == .history, let clip = selectedHistoryClip() else { return }
+        guard let lines = ClipLineOps.splitLines(splitSourceText) else { return }
+        let now = Date()
+        var recorded = 0
+        var skippedSecrets = 0
+        do {
+            for (index, line) in lines.enumerated() {
+                if SecretDetector.detect(in: line) != nil {
+                    skippedSecrets += 1
+                    continue
+                }
+                let kind = ClipClassifier.classify(
+                    text: line,
+                    html: nil,
+                    hasRTF: false,
+                    hasImage: false,
+                    fileURLs: []
+                )
+                let draft = ClipDraft(
+                    sourceAppName: clip.sourceAppName,
+                    sourceBundleID: clip.sourceBundleID,
+                    kind: kind,
+                    preview: ClipText.previewLine(from: line),
+                    text: line,
+                    html: nil,
+                    rtf: nil,
+                    imagePNG: nil,
+                    thumbnailPNG: nil,
+                    fileURLs: [],
+                    colorHex: kind == .color ? ColorValue.parse(line)?.hex : nil,
+                    contentHash: ContentHash.text(line),
+                    imageWidth: nil,
+                    imageHeight: nil,
+                    byteSize: line.utf8.count,
+                    createdAt: now.addingTimeInterval(TimeInterval(-index) * 0.001),
+                    ocrText: nil
+                )
+                _ = try store.record(draft)
+                recorded += 1
+            }
+            refresh()
+            if recorded == 0 {
+                notify(
+                    "Couldn't split those lines",
+                    detail: skippedSecrets > 0 ? "Each line looked like a secret." : nil,
+                    symbol: "exclamationmark.circle"
+                )
+                return
+            }
+            var detail: String? = "The original clip stays as it is."
+            if skippedSecrets > 0 {
+                detail = "Skipped \(skippedSecrets) secret-looking \(skippedSecrets == 1 ? "line" : "lines"). The original clip stays."
+            }
+            notify(
+                "Split into \(recorded) \(recorded == 1 ? "clip" : "clips")",
+                detail: detail,
+                symbol: ClipLineOps.symbolName
+            )
+        } catch {
+            notify("Couldn't split those lines", symbol: "exclamationmark.circle")
+        }
+    }
+
+    private var splitSourceText: String {
+        if isEditingBeforePaste, let draft = previewPasteDraft {
+            return draft
+        }
+        guard let clip = selectedHistoryClip() else { return "" }
+        return clip.text ?? clip.preview
+    }
+
     func copyColorFormat(_ text: String) {
         PasteService.writeText(text)
         notePasteboardWrite?()

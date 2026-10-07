@@ -56,7 +56,7 @@ struct PreviewPaneView: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(theme.accent)
             }
-            transformRow(text: bodyText, html: draftActive ? nil : clip.html)
+            transformRow(text: bodyText, html: draftActive ? nil : clip.html, allowSplit: true)
             if draftActive {
                 draftEditor(monospaced: clip.kind == .code)
             } else {
@@ -341,11 +341,25 @@ struct PreviewPaneView: View {
     }
 
     @ViewBuilder
-    private func transformRow(text: String, html: String?) -> some View {
+    private func transformRow(text: String, html: String?, allowSplit: Bool = false) -> some View {
         let actions = ClipTransform.available(text: text, html: html)
-        if !actions.isEmpty {
+        let showSplit = allowSplit && ClipLineOps.canSplit(text)
+        if !actions.isEmpty || showSplit {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
+                    if showSplit {
+                        Button {
+                            model.splitSelectedIntoLines()
+                        } label: {
+                            Label(ClipLineOps.title, systemImage: ClipLineOps.symbolName)
+                                .font(.system(size: 11, weight: .medium))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 5)
+                                .background(Capsule().fill(theme.chip))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Turn each line into its own history clip. The original stays as it is.")
+                    }
                     ForEach(actions) { transform in
                         Button {
                             model.copyTransform(transform, text: text, html: html)
