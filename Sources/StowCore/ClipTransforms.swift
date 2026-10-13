@@ -287,3 +287,224 @@ enum ClipLineTool: String, CaseIterable, Identifiable, Sendable {
         }
     }
 }
+
+/// Open the clip in another app when the content is clearly a link, email, address, or date.
+enum ObviousAction: Equatable, Sendable, Identifiable {
+    case openURL(URL)
+    case composeEmail(String)
+    case openInMaps(String)
+    case addToCalendar(start: Date, end: Date?, title: String?)
+
+    var id: String {
+        switch self {
+        case .openURL(let url): "url:\(url.absoluteString)"
+        case .composeEmail(let email): "email:\(email)"
+        case .openInMaps(let query): "maps:\(query)"
+        case .addToCalendar(let start, let end, let title):
+            "cal:\(start.timeIntervalSince1970):\(end?.timeIntervalSince1970 ?? 0):\(title ?? "")"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .openURL: "Open Link"
+        case .composeEmail: "Send Email"
+        case .openInMaps: "Open in Maps"
+        case .addToCalendar: "Add to Calendar"
+        }
+    }
+
+    var symbolName: String {
+        switch self {
+        case .openURL: "link"
+        case .composeEmail: "envelope"
+        case .openInMaps: "map"
+        case .addToCalendar: "calendar.badge.plus"
+        }
+    }
+
+    /// URL for actions that open directly. Calendar uses a temporary `.ics` instead.
+    var urlToOpen: URL? {
+        switch self {
+        case .openURL(let url):
+            return url
+        case .composeEmail(let email):
+            var components = URLComponents()
+            components.scheme = "mailto"
+            components.path = email
+            return components.url
+        case .openInMaps(let query):
+            var components = URLComponents(string: "https://maps.apple.com/")
+            components?.queryItems = [URLQueryItem(name: "q", value: query)]
+            return components?.url
+        case .addToCalendar:
+            return nil
+        }
+    }
+
+    /// Calendar invitation body for `addToCalendar`. Other cases return `nil`.
+    func calendarICS() -> String? {
+        guard case .addToCalendar(let start, let end, let title) = self else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone.current
+        formatter.dateFormat = "yyyyMMdd'T'HHmmss"
+        let stamp = formatter.string(from: Date())
+        let dtStart = formatter.string(from: start)
+        let dtEnd = formatter.string(from: end ?? start.addingTimeInterval(3600))
+        let trimmedTitle = title?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let summary = Self.escapeICS(trimmedTitle.isEmpty ? "Clipboard event" : trimmedTitle)
+        let uid = "stow-\(Int(start.timeIntervalSince1970))@local"
+        return [
+            "BEGIN:VCALENDAR",
+            "VERSION:2.0",
+            "PRODID:-//Stow//EN",
+            "BEGIN:VEVENT",
+            "UID:\(uid)",
+            "DTSTAMP:\(stamp)",
+            "DTSTART:\(dtStart)",
+            "DTEND:\(dtEnd)",
+            "SUMMARY:\(summary)",
+            "END:VEVENT",
+            "END:VCALENDAR",
+        ].joined(separator: "\r\n") + "\r\n"
+    }
+
+    private static func escapeICS(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: ";", with: "\\;")
+            .replacingOccurrences(of: ",", with: "\\,")
+            .replacingOccurrences(of: "\n", with: "\\n")
+    }
+}
+
+enum ObviousActionDetector {
+    /// Skip long prose so incidental dates and street names do not steal the row.
+    static let maxScanLength = 500
+    static let maxScanLines = 6
+
+    static func detect(in text: String, kind: ClipKind? = nil) -> ObviousAction? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+
+        if ClipClassifier.isEmail(trimmed) {
+            return .composeEmail(trimmed)
+        }
+        if ClipClassifier.isLink(trimmed), let url = normalizeLink(trimmed) {
+            return .openURL(url)
+        }
+
+        if let kind {
+            switch kind {
+            case .image, .file, .color, .code:
+                return nil
+            case .email, .link, .text, .richText:
+                break
+            }
+        }
+
+        guard trimmed.count <= maxScanLength else { return nil }
+        let lines = ClipLineOps.normalizeNewlines(trimmed).components(separatedBy: "\n")
+        guard lines.count <= maxScanLines else { return nil }
+
+        return detectWithDataDetector(in: trimmed)
+    }
+
+    static func normalizeLink(_ text: String) -> URL? {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.lowercased().hasPrefix("www.") {
+            return URL(string: "https://\(trimmed)")
+        }
+        return URL(string: trimmed)
+    }
+
+    private static func detectWithDataDetector(in text: String) -> ObviousAction? {
+        let types: NSTextCheckingResult.CheckingType = [.link, .address, .date]
+        guard let detector = try? NSDataDetector(types: types.rawValue) else { return nil }
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        let matches = detector.matches(in: text, options: [], range: range)
+        guard !matches.isEmpty else { return nil }
+
+        let ranked = matches.sorted { lhs, rhs in
+            let leftPriority = priority(for: lhs)
+            let rightPriority = priority(for: rhs)
+            if leftPriority != rightPriority { return leftPriority < rightPriority }
+            return lhs.range.length > rhs.range.length
+        }
+
+        for match in ranked where isPrimaryMatch(match, in: text) {
+            if let action = action(from: match, in: text) {
+                return action
+            }
+        }
+        return nil
+    }
+
+    private static func priority(for match: NSTextCheckingResult) -> Int {
+        if match.resultType.contains(.link) { return 0 }
+        if match.resultType.contains(.address) { return 1 }
+        if match.resultType.contains(.date) { return 2 }
+        return 9
+    }
+
+    private static func isPrimaryMatch(_ match: NSTextCheckingResult, in text: String) -> Bool {
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count > 0 else { return false }
+        let coverage = Double(match.range.length) / Double((text as NSString).length)
+        if coverage >= 0.55 { return true }
+        // Short clips: a clear address or date phrase is enough.
+        return trimmed.count <= 120 && match.range.length >= 6
+    }
+
+    private static func action(from match: NSTextCheckingResult, in text: String) -> ObviousAction? {
+        if match.resultType.contains(.link), let url = match.url {
+            let scheme = url.scheme?.lowercased()
+            if scheme == "mailto" {
+                let raw = url.absoluteString
+                let prefix = "mailto:"
+                let emailPart = raw.lowercased().hasPrefix(prefix)
+                    ? String(raw.dropFirst(prefix.count))
+                    : (url.path.isEmpty ? "" : url.path)
+                let email = emailPart.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: true)
+                    .first
+                    .map(String.init)?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                guard !email.isEmpty else { return nil }
+                return .composeEmail(email)
+            }
+            if scheme == "http" || scheme == "https" || scheme == "maps" {
+                return .openURL(url)
+            }
+            return nil
+        }
+
+        if match.resultType.contains(.address),
+           let range = Range(match.range, in: text) {
+            let query = String(text[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !query.isEmpty else { return nil }
+            return .openInMaps(query)
+        }
+
+        if match.resultType.contains(.date),
+           let start = match.date {
+            let end: Date?
+            if match.duration > 0 {
+                end = start.addingTimeInterval(match.duration)
+            } else {
+                end = nil
+            }
+            let title: String?
+            if let range = Range(match.range, in: text) {
+                let phrase = String(text[range]).trimmingCharacters(in: .whitespacesAndNewlines)
+                title = phrase.count <= 80 ? phrase : nil
+            } else {
+                title = nil
+            }
+            return .addToCalendar(start: start, end: end, title: title)
+        }
+
+        return nil
+    }
+}
+

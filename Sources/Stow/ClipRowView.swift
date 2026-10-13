@@ -158,6 +158,12 @@ struct ClipRowView: View {
                 }
             }
             let lineSource = clip.text ?? clip.preview
+            if let obvious = ObviousActionDetector.detect(in: lineSource, kind: clip.kind) {
+                Button(obvious.title) {
+                    model.select(clip.id)
+                    model.performObviousAction(obvious)
+                }
+            }
             let lineTools = ClipLineTool.available(text: lineSource)
             if !lineTools.isEmpty {
                 Menu("Line tools") {
@@ -345,6 +351,12 @@ struct SnippetRowView: View {
                 Button("Edit before Paste") {
                     model.selectOnly(snippet.id)
                     model.beginEditBeforePaste()
+                }
+            }
+            if let obvious = ObviousActionDetector.detect(in: snippet.text, kind: snippet.kind) {
+                Button(obvious.title) {
+                    model.selectOnly(snippet.id)
+                    model.performObviousAction(obvious)
                 }
             }
             Button("Edit Snippet…") {

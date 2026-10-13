@@ -1033,6 +1033,26 @@ final class AppModel {
         notify("Copied \(tool.title)", symbol: tool.symbolName)
     }
 
+    func performObviousAction(_ action: ObviousAction) {
+        switch action {
+        case .openURL, .composeEmail, .openInMaps:
+            guard let url = action.urlToOpen else { return }
+            NSWorkspace.shared.open(url)
+            notify(action.title, symbol: action.symbolName)
+        case .addToCalendar:
+            guard let ics = action.calendarICS() else { return }
+            let url = FileManager.default.temporaryDirectory
+                .appendingPathComponent("Stow-\(UUID().uuidString).ics")
+            do {
+                try ics.write(to: url, atomically: true, encoding: .utf8)
+                NSWorkspace.shared.open(url)
+                notify(action.title, symbol: action.symbolName)
+            } catch {
+                notify("Could not open Calendar", detail: error.localizedDescription, symbol: "exclamationmark.triangle.fill")
+            }
+        }
+    }
+
     /// Turn a multi-line history clip into one new row per non-empty line. The original stays.
     var canSplitSelectedIntoLines: Bool {
         guard library == .history else { return false }

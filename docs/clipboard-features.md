@@ -15,7 +15,7 @@ Update the Done column when you check boxes.
 | Match Maccy | Behaviors the first paste loop still has to have | 7 | 7 |
 | First version | Build before daily paste feels right | 15 | 15 |
 | Later wave | Add after the first version is trustworthy | 11 | 11 |
-| Further ideas | After history, preview, and paste beat Maccy | 26 | 9 |
+| Further ideas | After history, preview, and paste beat Maccy | 26 | 10 |
 
 ## Match Maccy first
 
@@ -86,7 +86,7 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 | --- | --- |
 | Open | Stow is a Dock app and a menu-bar app. The menu bar opens recent clips; More clips… opens the library near the size of the screen. ⌘⇧C toggles a quick panel. Search is focused. Nothing is selected until you click a clip. |
 | Read | Each row shows a type mark, a preview, then the source app and time. The preview pane shows the whole clip, including images and readable rich text. Text clips and snippets show characters, words, and lines under the transforms row. |
-| Act | Return copies. Option-Return pastes into the previous app. Shift-Option-Return pastes plain text. The footer lists those shortcuts. Right-click adds Edit before Paste, Edit Clip or Edit Snippet, Save as Snippet on history, and Delete. |
+| Act | Return copies. Option-Return pastes into the previous app. Shift-Option-Return pastes plain text. The footer lists those shortcuts. Right-click adds Edit before Paste, Edit Clip or Edit Snippet, Save as Snippet on history, and Delete. When the clip is a link, email, address, or date, Open Link, Send Email, Open in Maps, or Add to Calendar appears in the preview and the menu. |
 
 ## Build order
 
@@ -94,11 +94,11 @@ Ship a trustworthy history before snippets, OCR, or sync. The first version is t
 
 The later wave is in the app: clip transforms, multi-paste, collections, fill-in templates, a pinned compact panel, storage rules, optional abbreviations, a local archive, on-device OCR, opt-in encrypted folder sync, a Universal Clipboard toggle, and Shortcuts actions for latest clip, search, and save as snippet.
 
-Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, and skip-our-own-copies. Nine of twenty-six.
+Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, and skip-our-own-copies. Ten of twenty-six.
 
 ## Further ideas
 
-These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Edit item is **Do the obvious thing**.
+These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Edit item is **Keep the page URL**.
 
 <details>
 <summary>Slots (4)</summary>
@@ -117,7 +117,7 @@ These wait until history, preview, and paste already feel better than Maccy. Che
 - [x] **Split lines.** Turn a multi-line copy into one clip per line, so a pasted list can be used one entry at a time.
 - [x] **Line tools.** Change case, sort lines, drop duplicate lines, trim whitespace, or turn lines into a comma-separated list.
 - [x] **Length in the preview.** Show characters, words, and lines on text clips and snippets. The caption sits under the transforms row and updates while Edit for Paste is open. Writers can check a passage without pasting it into a counter.
-- [ ] **Do the obvious thing.** A link can open, an email can start a message, an address can open in Maps, and a date can become a calendar event.
+- [x] **Do the obvious thing.** A link can open, an email can start a message, an address can open in Maps, and a date can become a calendar event. The action appears as a capsule in the preview and on the right-click menu.
 - [ ] **Keep the page URL.** When a browser copied both the selection and the page URL, store both. One action pastes the selection as a Markdown link.
 - [ ] **Inline result.** A copied sum, currency amount, or simple unit conversion shows the result in the preview. The stored clip stays the original text.
 

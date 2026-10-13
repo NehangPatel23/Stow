@@ -159,4 +159,57 @@ final class ClipTransformsTests: XCTestCase {
         XCTAssertEqual(TextLength.stats(for: "one   two\tthree").words, 3)
         XCTAssertEqual(TextLength.stats(for: "👨‍👩‍👧").characters, 1)
     }
+
+    func testObviousActionEmailAndLink() {
+        XCTAssertEqual(
+            ObviousActionDetector.detect(in: "hello@example.com", kind: .email),
+            .composeEmail("hello@example.com")
+        )
+        guard case .openURL(let https)? = ObviousActionDetector.detect(in: "https://example.com/path", kind: .link) else {
+            return XCTFail("expected openURL for https link")
+        }
+        XCTAssertEqual(https.absoluteString, "https://example.com/path")
+        guard case .openURL(let www)? = ObviousActionDetector.detect(in: "www.example.com", kind: .link) else {
+            return XCTFail("expected openURL for www link")
+        }
+        XCTAssertEqual(www.absoluteString, "https://www.example.com")
+    }
+
+    func testObviousActionURLHelpers() {
+        let email = ObviousAction.composeEmail("a@b.co")
+        XCTAssertEqual(email.urlToOpen?.absoluteString, "mailto:a@b.co")
+        let maps = ObviousAction.openInMaps("1 Infinite Loop, Cupertino, CA")
+        XCTAssertEqual(maps.urlToOpen?.host, "maps.apple.com")
+        XCTAssertTrue(maps.urlToOpen?.query?.contains("q=") == true)
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let cal = ObviousAction.addToCalendar(start: start, end: start.addingTimeInterval(3600), title: "Demo, test")
+        let ics = cal.calendarICS()
+        XCTAssertNotNil(ics)
+        XCTAssertTrue(ics?.contains("BEGIN:VEVENT") == true)
+        XCTAssertTrue(ics?.contains("SUMMARY:Demo\\, test") == true)
+        XCTAssertNil(email.calendarICS())
+    }
+
+    func testObviousActionSkipsCodeAndLongProse() {
+        XCTAssertNil(ObviousActionDetector.detect(in: "March 15, 2026 at 3:00 PM", kind: .code))
+        let prose = String(repeating: "tomorrow at 3pm is fine. ", count: 40)
+        XCTAssertNil(ObviousActionDetector.detect(in: prose, kind: .text))
+    }
+
+    func testObviousActionAddressAndDate() {
+        let address = "1 Infinite Loop, Cupertino, CA 95014"
+        guard case .openInMaps(let query)? = ObviousActionDetector.detect(in: address, kind: .text) else {
+            return XCTFail("expected Open in Maps for address")
+        }
+        XCTAssertTrue(query.contains("Cupertino"))
+
+        let dateText = "March 15, 2026 at 3:00 PM"
+        guard case .addToCalendar(let start, _, _)? = ObviousActionDetector.detect(in: dateText, kind: .text) else {
+            return XCTFail("expected Add to Calendar for date")
+        }
+        let components = Calendar.current.dateComponents([.year, .month, .day], from: start)
+        XCTAssertEqual(components.year, 2026)
+        XCTAssertEqual(components.month, 3)
+        XCTAssertEqual(components.day, 15)
+    }
 }

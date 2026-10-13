@@ -56,7 +56,7 @@ struct PreviewPaneView: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(theme.accent)
             }
-            transformRow(text: bodyText, html: draftActive ? nil : clip.html, allowSplit: true)
+            transformRow(text: bodyText, html: draftActive ? nil : clip.html, allowSplit: true, kind: clip.kind)
             if PreviewPasteDraft.supports(clip.kind) {
                 Text(TextLength.caption(for: bodyText))
                     .font(.system(size: 12))
@@ -295,7 +295,7 @@ struct PreviewPaneView: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(theme.accent)
             }
-            transformRow(text: bodyText, html: nil)
+            transformRow(text: bodyText, html: nil, kind: snippet.kind)
             if PreviewPasteDraft.supports(snippet.kind) {
                 Text(TextLength.caption(for: bodyText))
                     .font(.system(size: 12))
@@ -330,7 +330,7 @@ struct PreviewPaneView: View {
             VStack(alignment: .leading, spacing: 8) {
                 if let title {
                     Text(title).font(.system(size: 13, weight: .semibold))
-                    transformRow(text: text, html: nil)
+                    transformRow(text: text, html: nil, kind: kind)
                 }
                 if !fields.isEmpty {
                     Text("Fill-in fields: \(fields.map(\.label).joined(separator: ", "))")
@@ -351,13 +351,27 @@ struct PreviewPaneView: View {
     }
 
     @ViewBuilder
-    private func transformRow(text: String, html: String?, allowSplit: Bool = false) -> some View {
+    private func transformRow(text: String, html: String?, allowSplit: Bool = false, kind: ClipKind? = nil) -> some View {
         let actions = ClipTransform.available(text: text, html: html)
         let lineTools = ClipLineTool.available(text: text)
         let showSplit = allowSplit && ClipLineOps.canSplit(text)
-        if !actions.isEmpty || !lineTools.isEmpty || showSplit {
+        let obvious = ObviousActionDetector.detect(in: text, kind: kind)
+        if !actions.isEmpty || !lineTools.isEmpty || showSplit || obvious != nil {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
+                    if let obvious {
+                        Button {
+                            model.performObviousAction(obvious)
+                        } label: {
+                            Label(obvious.title, systemImage: obvious.symbolName)
+                                .font(.system(size: 11, weight: .medium))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 5)
+                                .background(Capsule().fill(theme.chip))
+                        }
+                        .buttonStyle(.plain)
+                        .help(obvious.title)
+                    }
                     if showSplit {
                         Button {
                             model.splitSelectedIntoLines()
