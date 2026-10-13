@@ -132,4 +132,31 @@ final class ClipTransformsTests: XCTestCase {
         XCTAssertFalse(single.contains(.joinComma))
         XCTAssertTrue(ClipLineTool.available(text: "b\na").contains(.sortLines))
     }
+
+    func testTextLengthEmpty() {
+        XCTAssertEqual(TextLength.stats(for: ""), TextLength.Stats(characters: 0, words: 0, lines: 0))
+        XCTAssertEqual(TextLength.caption(for: ""), "0 characters · 0 words · 0 lines")
+    }
+
+    func testTextLengthSingleWord() {
+        XCTAssertEqual(TextLength.stats(for: "Hello"), TextLength.Stats(characters: 5, words: 1, lines: 1))
+        XCTAssertEqual(TextLength.caption(for: "Hello"), "5 characters · 1 word · 1 line")
+    }
+
+    func testTextLengthWordsAndLines() {
+        let text = "Hello world\nsecond line"
+        XCTAssertEqual(TextLength.stats(for: text), TextLength.Stats(characters: 23, words: 4, lines: 2))
+        XCTAssertEqual(TextLength.caption(for: text), "23 characters · 4 words · 2 lines")
+    }
+
+    func testTextLengthTrailingNewlineAndCRLF() {
+        XCTAssertEqual(TextLength.stats(for: "Hello\n").lines, 2)
+        XCTAssertEqual(TextLength.stats(for: "a\r\nb\r\nc").lines, 3)
+    }
+
+    func testTextLengthWhitespaceAndGraphemes() {
+        XCTAssertEqual(TextLength.stats(for: "  \n\t  ").words, 0)
+        XCTAssertEqual(TextLength.stats(for: "one   two\tthree").words, 3)
+        XCTAssertEqual(TextLength.stats(for: "👨‍👩‍👧").characters, 1)
+    }
 }

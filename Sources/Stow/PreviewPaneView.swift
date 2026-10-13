@@ -57,6 +57,11 @@ struct PreviewPaneView: View {
                     .foregroundStyle(theme.accent)
             }
             transformRow(text: bodyText, html: draftActive ? nil : clip.html, allowSplit: true)
+            if PreviewPasteDraft.supports(clip.kind) {
+                Text(TextLength.caption(for: bodyText))
+                    .font(.system(size: 12))
+                    .foregroundStyle(theme.secondary)
+            }
             if draftActive {
                 draftEditor(monospaced: clip.kind == .code)
             } else {
@@ -291,6 +296,11 @@ struct PreviewPaneView: View {
                     .foregroundStyle(theme.accent)
             }
             transformRow(text: bodyText, html: nil)
+            if PreviewPasteDraft.supports(snippet.kind) {
+                Text(TextLength.caption(for: bodyText))
+                    .font(.system(size: 12))
+                    .foregroundStyle(theme.secondary)
+            }
             if !fields.isEmpty {
                 Text("Fill-in fields: \(fields.map(\.label).joined(separator: ", "))")
                     .font(.system(size: 11, weight: .medium))

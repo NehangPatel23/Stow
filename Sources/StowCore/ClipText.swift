@@ -18,6 +18,44 @@ enum ClipText {
     }
 }
 
+/// Character, word, and line counts for text shown in the preview pane.
+enum TextLength {
+    struct Stats: Equatable, Sendable {
+        var characters: Int
+        var words: Int
+        var lines: Int
+    }
+
+    static func stats(for text: String) -> Stats {
+        let characters = text.count
+        let words = text
+            .split(whereSeparator: \.isWhitespace)
+            .count
+        let lines: Int
+        if text.isEmpty {
+            lines = 0
+        } else {
+            lines = ClipLineOps.normalizeNewlines(text)
+                .components(separatedBy: "\n")
+                .count
+        }
+        return Stats(characters: characters, words: words, lines: lines)
+    }
+
+    static func caption(for text: String) -> String {
+        let value = stats(for: text)
+        return [
+            unit(value.characters, "character", "characters"),
+            unit(value.words, "word", "words"),
+            unit(value.lines, "line", "lines"),
+        ].joined(separator: " · ")
+    }
+
+    private static func unit(_ count: Int, _ singular: String, _ plural: String) -> String {
+        "\(count) \(count == 1 ? singular : plural)"
+    }
+}
+
 /// Ephemeral preview edits for paste/copy. Never writes to the history store.
 enum PreviewPasteDraft {
     static func supports(_ kind: ClipKind) -> Bool {
