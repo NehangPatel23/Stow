@@ -76,6 +76,12 @@ struct PreviewPaneView: View {
                     .font(.system(size: 12))
                     .foregroundStyle(theme.secondary)
             }
+            if let inline = InlineResult.detect(in: bodyText, kind: clip.kind) {
+                Text(inline.caption)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(theme.accent)
+                    .help("Calculated from the copied text. The saved clip stays as it is.")
+            }
             if draftActive {
                 draftEditor(monospaced: clip.kind == .code)
             } else {
@@ -314,6 +320,12 @@ struct PreviewPaneView: View {
                 Text(TextLength.caption(for: bodyText))
                     .font(.system(size: 12))
                     .foregroundStyle(theme.secondary)
+            }
+            if let inline = InlineResult.detect(in: bodyText, kind: snippet.kind) {
+                Text(inline.caption)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(theme.accent)
+                    .help("Calculated from the snippet text. The saved snippet stays as it is.")
             }
             if !fields.isEmpty {
                 Text("Fill-in fields: \(fields.map(\.label).joined(separator: ", "))")

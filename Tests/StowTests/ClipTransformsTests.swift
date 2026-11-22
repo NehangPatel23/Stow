@@ -270,4 +270,40 @@ final class ClipTransformsTests: XCTestCase {
         XCTAssertNil(PageURL.markdownLink(text: "   ", pageURL: "https://example.com"))
         XCTAssertNil(PageURL.markdownLink(text: "title", pageURL: "not a url"))
     }
+
+    func testInlineResultExpression() {
+        XCTAssertEqual(InlineResult.detect(in: "2+2", kind: .text)?.caption, "= 4")
+        XCTAssertEqual(InlineResult.detect(in: "10 * 3 + 5", kind: .text)?.caption, "= 35")
+        XCTAssertEqual(InlineResult.detect(in: "(2+3)*4", kind: .text)?.caption, "= 20")
+        XCTAssertEqual(InlineResult.detect(in: "50% * 200", kind: .text)?.caption, "= 100")
+        XCTAssertEqual(InlineResult.detect(in: "100/4", kind: .text)?.caption, "= 25")
+    }
+
+    func testInlineResultColumnSum() {
+        XCTAssertEqual(InlineResult.detect(in: "10\n20\n30", kind: .text)?.caption, "= 60")
+        XCTAssertEqual(InlineResult.detect(in: "1.5\n2.5", kind: .text)?.caption, "= 4")
+        XCTAssertEqual(InlineResult.detect(in: "1,000\n250", kind: .text)?.caption, "= 1250")
+    }
+
+    func testInlineResultCurrency() {
+        XCTAssertEqual(InlineResult.detect(in: "$10 + $7.25", kind: .text)?.caption, "= $17.25")
+        XCTAssertEqual(InlineResult.detect(in: "$1234.5", kind: .text)?.caption, "= $1,234.50")
+        XCTAssertEqual(InlineResult.detect(in: "€12 + €8", kind: .text)?.caption, "= €20.00")
+    }
+
+    func testInlineResultUnitConversion() {
+        XCTAssertEqual(InlineResult.detect(in: "72 F to C", kind: .text)?.caption, "= 22.2222 °C")
+        XCTAssertEqual(InlineResult.detect(in: "100 C to F", kind: .text)?.caption, "= 212 °F")
+        XCTAssertEqual(InlineResult.detect(in: "5 km to mi", kind: .text)?.caption, "= 3.1069 mi")
+        XCTAssertEqual(InlineResult.detect(in: "10 kg in lb", kind: .text)?.caption, "= 22.0462 lb")
+    }
+
+    func testInlineResultSkipsProseCodeAndNonText() {
+        XCTAssertNil(InlineResult.detect(in: "Please add 2+2 to the doc", kind: .text))
+        XCTAssertNil(InlineResult.detect(in: "2+2", kind: .code))
+        XCTAssertNil(InlineResult.detect(in: "72 F to C", kind: .link))
+        XCTAssertNil(InlineResult.detect(in: "hello", kind: .text))
+        XCTAssertNil(InlineResult.detect(in: "-3", kind: .text))
+        XCTAssertNil(InlineResult.detect(in: "$10 and tax", kind: .text))
+    }
 }
