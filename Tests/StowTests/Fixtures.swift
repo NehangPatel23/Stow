@@ -8,7 +8,8 @@ func makeDraft(
     bundle: String = "com.apple.Notes",
     createdAt: Date = Date(),
     hash: String? = nil,
-    pinnedIgnored: Bool = false
+    pinnedIgnored: Bool = false,
+    pageURL: String? = nil
 ) -> ClipDraft {
     ClipDraft(
         sourceAppName: app,
@@ -27,7 +28,8 @@ func makeDraft(
         imageHeight: nil,
         byteSize: text.utf8.count,
         createdAt: createdAt,
-        ocrText: nil
+        ocrText: nil,
+        pageURL: pageURL
     )
 }
 
@@ -41,7 +43,8 @@ func makeClip(
     hash: String = "hash",
     ocrText: String? = nil,
     pasteCount: Int = 0,
-    lastPastedAt: Date? = nil
+    lastPastedAt: Date? = nil,
+    pageURL: String? = nil
 ) -> Clip {
     Clip(
         id: UUID(),
@@ -65,6 +68,7 @@ func makeClip(
         copyCount: 1,
         ocrText: ocrText,
         pasteCount: pasteCount,
-        lastPastedAt: lastPastedAt
+        lastPastedAt: lastPastedAt,
+        pageURL: pageURL
     )
 }

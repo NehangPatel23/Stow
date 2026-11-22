@@ -28,6 +28,8 @@ struct Clip: Identifiable, Equatable, Sendable {
     var pasteCount: Int = 0
     /// Most recent paste time for this payload, if any.
     var lastPastedAt: Date? = nil
+    /// Page URL from a browser dual-copy (selection + tab URL). Not part of contentHash.
+    var pageURL: String? = nil
 }
 
 struct ClipDraft: Equatable, Sendable {
@@ -49,4 +51,6 @@ struct ClipDraft: Equatable, Sendable {
     var createdAt: Date
     /// Optional precomputed OCR. Usually filled after record, not during ingest.
     var ocrText: String? = nil
+    /// Page URL from a browser dual-copy (selection + tab URL).
+    var pageURL: String? = nil
 }

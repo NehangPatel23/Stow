@@ -56,7 +56,21 @@ struct PreviewPaneView: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(theme.accent)
             }
-            transformRow(text: bodyText, html: draftActive ? nil : clip.html, allowSplit: true, kind: clip.kind)
+            transformRow(
+                text: bodyText,
+                html: draftActive ? nil : clip.html,
+                allowSplit: true,
+                kind: clip.kind,
+                pageURL: clip.pageURL
+            )
+            if let pageURL = clip.pageURL {
+                Text(pageURL)
+                    .font(.system(size: 12))
+                    .foregroundStyle(theme.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .help("Page URL kept with this clip")
+            }
             if PreviewPasteDraft.supports(clip.kind) {
                 Text(TextLength.caption(for: bodyText))
                     .font(.system(size: 12))
@@ -351,14 +365,34 @@ struct PreviewPaneView: View {
     }
 
     @ViewBuilder
-    private func transformRow(text: String, html: String?, allowSplit: Bool = false, kind: ClipKind? = nil) -> some View {
+    private func transformRow(
+        text: String,
+        html: String?,
+        allowSplit: Bool = false,
+        kind: ClipKind? = nil,
+        pageURL: String? = nil
+    ) -> some View {
         let actions = ClipTransform.available(text: text, html: html)
         let lineTools = ClipLineTool.available(text: text)
         let showSplit = allowSplit && ClipLineOps.canSplit(text)
         let obvious = ObviousActionDetector.detect(in: text, kind: kind)
-        if !actions.isEmpty || !lineTools.isEmpty || showSplit || obvious != nil {
+        let markdown = pageURL.flatMap { PageURL.markdownLink(text: text, pageURL: $0) }
+        if !actions.isEmpty || !lineTools.isEmpty || showSplit || obvious != nil || markdown != nil {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
+                    if markdown != nil, let pageURL {
+                        Button {
+                            model.pasteAsMarkdownLink(text: text, pageURL: pageURL)
+                        } label: {
+                            Label(PageURL.title, systemImage: PageURL.symbolName)
+                                .font(.system(size: 11, weight: .medium))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 5)
+                                .background(Capsule().fill(theme.chip))
+                        }
+                        .buttonStyle(.plain)
+                        .help("Paste the selection as a Markdown link to the page URL")
+                    }
                     if let obvious {
                         Button {
                             model.performObviousAction(obvious)

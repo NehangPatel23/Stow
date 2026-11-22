@@ -39,6 +39,7 @@ struct SlotPayload: Codable, Equatable, Sendable {
     var imageHeight: Int?
     var byteSize: Int
     var assignedAt: Date
+    var pageURL: String? = nil
 
     static func from(clip: Clip, imagePNG: Data?) -> SlotPayload {
         SlotPayload(
@@ -55,7 +56,8 @@ struct SlotPayload: Codable, Equatable, Sendable {
             imageWidth: clip.imageWidth,
             imageHeight: clip.imageHeight,
             byteSize: clip.byteSize,
-            assignedAt: Date()
+            assignedAt: Date(),
+            pageURL: clip.pageURL
         )
     }
 
@@ -80,7 +82,8 @@ struct SlotPayload: Codable, Equatable, Sendable {
             imageHeight: imageHeight,
             byteSize: byteSize,
             copyCount: 1,
-            ocrText: nil
+            ocrText: nil,
+            pageURL: pageURL
         )
     }
 }

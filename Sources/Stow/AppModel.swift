@@ -1033,6 +1033,22 @@ final class AppModel {
         notify("Copied \(tool.title)", symbol: tool.symbolName)
     }
 
+    /// Paste `[selection](pageURL)` into the previous app. History paste counts still apply.
+    func pasteAsMarkdownLink(text: String, pageURL: String, oneShot: Bool? = nil) {
+        guard let markdown = PageURL.markdownLink(text: text, pageURL: pageURL) else { return }
+        let restore = beginOneShotPaste(forced: oneShot)
+        PasteService.writeText(markdown)
+        notePasteboardWrite?()
+        if library == .history, let hash = selectedHistoryClip()?.contentHash, !hash.isEmpty {
+            noteHistoryPaste(contentHash: hash)
+            clipboardOriginHash = hash
+            refresh()
+        } else {
+            clipboardOriginHash = nil
+        }
+        deliverToPreviousApp(message: "Pasted Markdown link", restore: restore)
+    }
+
     func performObviousAction(_ action: ObviousAction) {
         switch action {
         case .openURL, .composeEmail, .openInMaps:

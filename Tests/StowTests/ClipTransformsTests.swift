@@ -212,4 +212,62 @@ final class ClipTransformsTests: XCTestCase {
         XCTAssertEqual(components.month, 3)
         XCTAssertEqual(components.day, 15)
     }
+
+    func testPageURLResolveFromBrowserAndChromium() {
+        XCTAssertEqual(
+            PageURL.resolve(
+                selection: "a quote",
+                publicURLs: ["https://example.com/page"],
+                chromiumURL: nil,
+                bundleID: "com.apple.Safari"
+            ),
+            "https://example.com/page"
+        )
+        XCTAssertEqual(
+            PageURL.resolve(
+                selection: "a quote",
+                publicURLs: ["https://href.example/"],
+                chromiumURL: "https://tab.example/article",
+                bundleID: "com.google.Chrome"
+            ),
+            "https://tab.example/article"
+        )
+        XCTAssertNil(
+            PageURL.resolve(
+                selection: "a quote",
+                publicURLs: ["https://example.com/page"],
+                chromiumURL: nil,
+                bundleID: "com.apple.Notes"
+            )
+        )
+        XCTAssertNil(
+            PageURL.resolve(
+                selection: "https://example.com/page",
+                publicURLs: ["https://example.com/page"],
+                chromiumURL: nil,
+                bundleID: "com.apple.Safari"
+            )
+        )
+        XCTAssertNil(
+            PageURL.resolve(
+                selection: nil,
+                publicURLs: ["https://example.com/page"],
+                chromiumURL: nil,
+                bundleID: "com.apple.Safari"
+            )
+        )
+    }
+
+    func testPageURLMarkdownLink() {
+        XCTAssertEqual(
+            PageURL.markdownLink(text: "Hello [world]", pageURL: "https://example.com/a"),
+            "[Hello \\[world\\]](https://example.com/a)"
+        )
+        XCTAssertEqual(
+            PageURL.markdownLink(text: "  title  ", pageURL: "www.example.com"),
+            "[title](https://www.example.com)"
+        )
+        XCTAssertNil(PageURL.markdownLink(text: "   ", pageURL: "https://example.com"))
+        XCTAssertNil(PageURL.markdownLink(text: "title", pageURL: "not a url"))
+    }
 }

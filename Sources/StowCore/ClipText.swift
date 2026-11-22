@@ -56,6 +56,91 @@ enum TextLength {
     }
 }
 
+/// Browser page URL kept beside a selection, plus Markdown-link paste.
+enum PageURL {
+    static let title = "Paste as Markdown Link"
+    static let symbolName = "link.badge.plus"
+    /// Chromium family pasteboard type for the tab URL when the selection is separate.
+    static let chromiumSourceType = "org.chromium.source-url"
+
+    static func resolve(
+        selection: String?,
+        publicURLs: [String],
+        chromiumURL: String?,
+        bundleID: String
+    ) -> String? {
+        guard let selection, !ClipText.isBlank(selection) else { return nil }
+        let trimmed = selection.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if let chromium = normalize(chromiumURL), !matches(chromium, trimmed) {
+            return chromium
+        }
+
+        guard isBrowser(bundleID) else { return nil }
+        for raw in publicURLs {
+            guard let url = normalize(raw), !matches(url, trimmed) else { continue }
+            return url
+        }
+        return nil
+    }
+
+    static func normalize(_ raw: String?) -> String? {
+        guard var value = raw?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty else {
+            return nil
+        }
+        if value.lowercased().hasPrefix("www.") {
+            value = "https://\(value)"
+        }
+        guard let url = URL(string: value),
+              let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https",
+              url.host != nil else {
+            return nil
+        }
+        return url.absoluteString
+    }
+
+    static func isBrowser(_ bundleID: String) -> Bool {
+        let id = bundleID.lowercased()
+        let prefixes = [
+            "com.apple.safari",
+            "com.google.chrome",
+            "com.microsoft.edgemac",
+            "com.brave.browser",
+            "org.mozilla.firefox",
+            "com.operasoftware.opera",
+            "com.vivaldi.vivaldi",
+            "company.thebrowser.browser",
+            "com.sigmaos.sigmaos",
+            "com.kagi.kagibrowser",
+        ]
+        return prefixes.contains { id.hasPrefix($0) }
+    }
+
+    static func markdownLink(text: String, pageURL: String) -> String? {
+        let title = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty, let url = normalize(pageURL) else { return nil }
+        return "[\(escapeMarkdownLabel(title))](\(url))"
+    }
+
+    private static func matches(_ url: String, _ text: String) -> Bool {
+        let left = url.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let right = text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if left == right { return true }
+        if let normalizedText = normalize(text) {
+            return normalizedText.lowercased() == left
+        }
+        return false
+    }
+
+    private static func escapeMarkdownLabel(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "[", with: "\\[")
+            .replacingOccurrences(of: "]", with: "\\]")
+    }
+}
+
 /// Ephemeral preview edits for paste/copy. Never writes to the history store.
 enum PreviewPasteDraft {
     static func supports(_ kind: ClipKind) -> Bool {

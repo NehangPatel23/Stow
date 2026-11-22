@@ -13,6 +13,10 @@ enum ClipIngest {
         var png: Data?
         var filePaths: [String] = []
 
+        var publicURLs: [String] = []
+        var chromiumURL: String?
+        let chromiumType = NSPasteboard.PasteboardType(PageURL.chromiumSourceType)
+
         for item in items {
             if text == nil, let value = item.string(forType: .string), !ClipText.isBlank(value) {
                 text = value
@@ -31,9 +35,16 @@ enum ClipIngest {
             if let file = filePath(from: item) {
                 filePaths.append(file)
             }
-            if text == nil, let url = item.string(forType: .URL), !ClipText.isBlank(url) {
-                text = url
+            if let url = item.string(forType: .URL), !ClipText.isBlank(url) {
+                publicURLs.append(url)
             }
+            if chromiumURL == nil, let url = item.string(forType: chromiumType), !ClipText.isBlank(url) {
+                chromiumURL = url
+            }
+        }
+
+        if text == nil, let url = publicURLs.first {
+            text = url
         }
 
         if ClipText.isBlank(text), let rtf, let attributed = NSAttributedString(rtf: rtf, documentAttributes: nil) {
@@ -97,9 +108,17 @@ enum ClipIngest {
             hash = ContentHash.text(text ?? "")
         }
 
+        let bundleID = source?.bundleIdentifier ?? ""
+        let pageURL = PageURL.resolve(
+            selection: text,
+            publicURLs: publicURLs,
+            chromiumURL: chromiumURL,
+            bundleID: bundleID
+        )
+
         return ClipDraft(
             sourceAppName: source?.localizedName ?? "Unknown",
-            sourceBundleID: source?.bundleIdentifier ?? "",
+            sourceBundleID: bundleID,
             kind: kind,
             preview: preview,
             text: text,
@@ -114,7 +133,8 @@ enum ClipIngest {
             imageHeight: pixelHeight,
             byteSize: storedPNG?.count ?? text?.utf8.count ?? filePaths.count,
             createdAt: Date(),
-            ocrText: nil
+            ocrText: nil,
+            pageURL: pageURL
         )
     }
 

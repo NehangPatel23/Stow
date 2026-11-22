@@ -158,6 +158,13 @@ struct ClipRowView: View {
                 }
             }
             let lineSource = clip.text ?? clip.preview
+            if let pageURL = clip.pageURL,
+               PageURL.markdownLink(text: lineSource, pageURL: pageURL) != nil {
+                Button(PageURL.title) {
+                    model.select(clip.id)
+                    model.pasteAsMarkdownLink(text: lineSource, pageURL: pageURL)
+                }
+            }
             if let obvious = ObviousActionDetector.detect(in: lineSource, kind: clip.kind) {
                 Button(obvious.title) {
                     model.select(clip.id)

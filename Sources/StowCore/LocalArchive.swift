@@ -267,6 +267,7 @@ private struct ArchiveClip: Codable {
     var ocrText: String?
     var pasteCount: Int?
     var lastPastedAt: Date?
+    var pageURL: String?
 
     init(clip: Clip) {
         id = clip.id
@@ -290,6 +291,7 @@ private struct ArchiveClip: Codable {
         ocrText = clip.ocrText
         pasteCount = clip.pasteCount
         lastPastedAt = clip.lastPastedAt
+        pageURL = clip.pageURL
     }
 
     func makeClip() throws -> Clip {
@@ -318,7 +320,8 @@ private struct ArchiveClip: Codable {
             copyCount: 1,
             ocrText: ocrText,
             pasteCount: pasteCount ?? 0,
-            lastPastedAt: lastPastedAt
+            lastPastedAt: lastPastedAt,
+            pageURL: pageURL
         )
     }
 }

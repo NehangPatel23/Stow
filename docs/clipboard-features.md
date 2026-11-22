@@ -15,7 +15,7 @@ Update the Done column when you check boxes.
 | Match Maccy | Behaviors the first paste loop still has to have | 7 | 7 |
 | First version | Build before daily paste feels right | 15 | 15 |
 | Later wave | Add after the first version is trustworthy | 11 | 11 |
-| Further ideas | After history, preview, and paste beat Maccy | 26 | 10 |
+| Further ideas | After history, preview, and paste beat Maccy | 26 | 11 |
 
 ## Match Maccy first
 
@@ -94,11 +94,11 @@ Ship a trustworthy history before snippets, OCR, or sync. The first version is t
 
 The later wave is in the app: clip transforms, multi-paste, collections, fill-in templates, a pinned compact panel, storage rules, optional abbreviations, a local archive, on-device OCR, opt-in encrypted folder sync, a Universal Clipboard toggle, and Shortcuts actions for latest clip, search, and save as snippet.
 
-Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, and skip-our-own-copies. Ten of twenty-six.
+Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, and skip-our-own-copies. Eleven of twenty-six.
 
 ## Further ideas
 
-These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Edit item is **Keep the page URL**.
+These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Edit item is **Inline result**.
 
 <details>
 <summary>Slots (4)</summary>
@@ -118,7 +118,7 @@ These wait until history, preview, and paste already feel better than Maccy. Che
 - [x] **Line tools.** Change case, sort lines, drop duplicate lines, trim whitespace, or turn lines into a comma-separated list.
 - [x] **Length in the preview.** Show characters, words, and lines on text clips and snippets. The caption sits under the transforms row and updates while Edit for Paste is open. Writers can check a passage without pasting it into a counter.
 - [x] **Do the obvious thing.** A link can open, an email can start a message, an address can open in Maps, and a date can become a calendar event. The action appears as a capsule in the preview and on the right-click menu.
-- [ ] **Keep the page URL.** When a browser copied both the selection and the page URL, store both. One action pastes the selection as a Markdown link.
+- [x] **Keep the page URL.** When a browser copied both the selection and the page URL, store both. One action pastes the selection as a Markdown link. Chromium source-url and Safari/Chrome `public.url` dual-copies are kept; the preview shows the URL and Paste as Markdown Link.
 - [ ] **Inline result.** A copied sum, currency amount, or simple unit conversion shows the result in the preview. The stored clip stays the original text.
 
 </details>

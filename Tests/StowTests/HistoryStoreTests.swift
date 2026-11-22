@@ -30,6 +30,35 @@ final class HistoryStoreTests: XCTestCase {
         XCTAssertEqual(copies.map(\.sourceAppName), ["Safari", "Mail"])
     }
 
+    func testPageURLRoundTripAndFoldKeepsNewest() throws {
+        let older = Date(timeIntervalSince1970: 1_000)
+        let newer = Date(timeIntervalSince1970: 2_000)
+        _ = try store.record(
+            makeDraft(
+                text: "quote",
+                app: "Safari",
+                bundle: "com.apple.Safari",
+                createdAt: older,
+                pageURL: "https://example.com/old"
+            )
+        )
+        _ = try store.record(
+            makeDraft(
+                text: "quote",
+                app: "Safari",
+                bundle: "com.apple.Safari",
+                createdAt: newer,
+                pageURL: "https://example.com/new"
+            )
+        )
+
+        let visible = try store.foldedHistory()
+        XCTAssertEqual(visible.count, 1)
+        XCTAssertEqual(visible[0].pageURL, "https://example.com/new")
+        let full = try store.payload(id: visible[0].id)
+        XCTAssertEqual(full?.pageURL, "https://example.com/new")
+    }
+
     func testPinClearAndSnippetSurvival() throws {
         _ = try store.record(makeDraft(text: "keep"))
         _ = try store.record(makeDraft(text: "drop"))
