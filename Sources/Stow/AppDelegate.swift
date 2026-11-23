@@ -58,8 +58,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return true
         }
-        model.onChromeChange = { [weak status] in
+        model.onChromeChange = { [weak status, weak model] in
             status?.refresh()
+            if let model {
+                WidgetSnapshotPublisher.publish(from: model)
+            }
         }
         model.onHotkeyChange = { [weak self] in
             self?.registerHotkey()
@@ -123,6 +126,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: StowIntentSupport.libraryDidChangeNotification,
             object: nil
         )
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(pauseChangedFromWidget(_:)),
+            name: StowAppGroup.pauseDidChangeNotification,
+            object: nil
+        )
     }
 
     @objc private func frontAppChanged(_ notification: Notification) {
@@ -132,6 +141,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func libraryChangedFromIntent(_ notification: Notification) {
         model?.refresh()
+    }
+
+    @objc private func pauseChangedFromWidget(_ notification: Notification) {
+        model?.applyExternalPauseFromWidget()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

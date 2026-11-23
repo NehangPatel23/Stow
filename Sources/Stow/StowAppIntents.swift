@@ -187,5 +187,15 @@ struct StowAppShortcuts: AppShortcutsProvider {
             shortTitle: "Save Snippet",
             systemImageName: "text.badge.plus"
         )
+        AppShortcut(
+            intent: ToggleRecordingIntent(),
+            phrases: [
+                "Pause \(.applicationName)",
+                "Resume \(.applicationName)",
+                "Toggle recording in \(.applicationName)",
+            ],
+            shortTitle: "Toggle Recording",
+            systemImageName: "pause.circle"
+        )
     }
 }

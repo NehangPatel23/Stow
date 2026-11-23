@@ -427,6 +427,52 @@
 		isa = PBXBuildFile;
 		fileRef = A56426BC918B403F8BB6BB01;
 		};
+
+		C51C55F1B7984E36A173E901 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B51C55F1B7984E36A173E901;
+		};
+		C51C55F1B7984E36A173E902 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B51C55F1B7984E36A173E902;
+		};
+		C51C55F1B7984E36A173E903 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B51C55F1B7984E36A173E903;
+		};
+		C51C55F1B7984E36A173E904 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B51C55F1B7984E36A173E901;
+		};
+		C51C55F1B7984E36A173E905 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B51C55F1B7984E36A173E904;
+		};
+		C51C55F1B7984E36A173E906 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B51C55F1B7984E36A173E901;
+		};
+		C51C55F1B7984E36A173E907 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = DED64117227BF1A4801944AA;
+		};
+		C51C55F1B7984E36A173E908 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B51C55F1B7984E36A173E903;
+		};
+		C51C55F1B7984E36A173E909 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B51C55F1B7984E36A173E905;
+		};
+		C51C55F1B7984E36A173E90A /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B51C55F1B7984E36A173E906;
+		};
+		D51C55F1B7984E36A173E909 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = B61C55F1B7984E36A173E910;
+		settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); };
+		};
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -930,6 +976,62 @@
 		path = SelectionChipPolicyTests.swift;
 		sourceTree = "<group>";
 		};
+
+		B51C55F1B7984E36A173E901 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = WidgetBridge.swift;
+		sourceTree = "<group>";
+		};
+		B51C55F1B7984E36A173E902 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = WidgetSnapshotPublisher.swift;
+		sourceTree = "<group>";
+		};
+		B51C55F1B7984E36A173E903 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = StowWidgetIntents.swift;
+		sourceTree = "<group>";
+		};
+		B51C55F1B7984E36A173E904 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = WidgetBridgeTests.swift;
+		sourceTree = "<group>";
+		};
+		B51C55F1B7984E36A173E905 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = StowWidgetBundle.swift;
+		sourceTree = "<group>";
+		};
+		B51C55F1B7984E36A173E906 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = StowSnippetsWidget.swift;
+		sourceTree = "<group>";
+		};
+		B51C55F1B7984E36A173E907 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text.plist.xml;
+		path = Info.plist;
+		sourceTree = "<group>";
+		};
+		B51C55F1B7984E36A173E908 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = text.plist.entitlements;
+		path = StowWidget.entitlements;
+		sourceTree = "<group>";
+		};
+		B61C55F1B7984E36A173E910 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		explicitFileType = "wrapper.app-extension";
+		includeInIndex = 0;
+		path = StowWidget.appex;
+		sourceTree = BUILT_PRODUCTS_DIR;
+		};
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -946,6 +1048,13 @@
 		buildActionMask = 2147483647;
 		files = (
 
+		);
+		runOnlyForDeploymentPostprocessing = 0;
+		};
+		D51C55F1B7984E36A173E902 /* PBXFrameworksBuildPhase */ = {
+		isa = PBXFrameworksBuildPhase;
+		buildActionMask = 2147483647;
+		files = (
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -967,6 +1076,7 @@
 				BC8E964F5A3C459088229D5E,
 				051C55F1B7984E36A173E9C5,
 				A51C55F1B7984E36A173E901,
+				B51C55F1B7984E36A173E901,
 				BB71A3C02C5455B3E36B5640,
 				6745D666DDC13D9262441C9F,
 				26AFEA612D0A9F861BDD7A27,
@@ -999,6 +1109,8 @@
 				E75329BD6DC64DBEA90834C6,
 				F75329BD6DC64DBEA9083401,
 				F75329BD6DC64DBEA9083402,
+				B51C55F1B7984E36A173E902,
+				B51C55F1B7984E36A173E903,
 				4BACAE29352BF62D87B20E69,
 				B81C2E88D4B65F0193C0AA20,
 				5CBE27053B1B8960F11C5172,
@@ -1035,6 +1147,7 @@
 				111E072106144B8DB4BE5A60,
 				956426BC918B403F8BB6BB81,
 				A56426BC918B403F8BB6BB01,
+				B51C55F1B7984E36A173E904,
 				6A0235AAEF48118CE6F54DDF,
 				276739D5590AA35A23B6086F,
 				7859B409C26784E30012964A,
@@ -1070,6 +1183,7 @@
 		children = (
 				B6CDB6E5D160E013280D3C68,
 				A8D8270AA6DB8732282C9541,
+				B61C55F1B7984E36A173E910,
 		);
 		name = Products;
 		sourceTree = "<group>";
@@ -1081,8 +1195,21 @@
 				CF8D0BD4B75E8C2C174692A5,
 				EEFE21A1443933CA4DE017DA,
 				47A5B9F2961DC17B7FF68791,
+				D51C55F1B7984E36A173E90C,
 				00C45FD35CB0F9C5F764F070,
 		);
+		sourceTree = "<group>";
+		};
+		D51C55F1B7984E36A173E90C /* PBXGroup */ = {
+		isa = PBXGroup;
+		children = (
+				B51C55F1B7984E36A173E905,
+				B51C55F1B7984E36A173E906,
+				B51C55F1B7984E36A173E907,
+				B51C55F1B7984E36A173E908,
+		);
+		name = StowWidget;
+		path = StowWidget;
 		sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -1095,10 +1222,12 @@
 				507A349611DBB42F9CF9069B,
 				DC5E72DCDAFA3A0962FBEC53,
 				948756E4B49084A627CA0B9A,
+				D51C55F1B7984E36A173E908,
 		);
 		buildRules = (
 		);
 		dependencies = (
+				D51C55F1B7984E36A173E90A,
 		);
 		name = Stow;
 		productName = Stow;
@@ -1121,7 +1250,43 @@
 		productReference = A8D8270AA6DB8732282C9541;
 		productType = "com.apple.product-type.bundle.unit-test";
 		};
+		D51C55F1B7984E36A173E904 /* PBXNativeTarget */ = {
+		isa = PBXNativeTarget;
+		buildConfigurationList = D51C55F1B7984E36A173E905;
+		buildPhases = (
+				D51C55F1B7984E36A173E901,
+				D51C55F1B7984E36A173E902,
+				D51C55F1B7984E36A173E903,
+		);
+		buildRules = (
+		);
+		dependencies = (
+		);
+		name = StowWidget;
+		productName = StowWidget;
+		productReference = B61C55F1B7984E36A173E910;
+		productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
+
+
+/* Begin PBXContainerItemProxy section */
+		D51C55F1B7984E36A173E90B /* PBXContainerItemProxy */ = {
+		isa = PBXContainerItemProxy;
+		containerPortal = 98F54143AB4E86B28C3AFEE0;
+		proxyType = 1;
+		remoteGlobalIDString = D51C55F1B7984E36A173E904;
+		remoteInfo = StowWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXTargetDependency section */
+		D51C55F1B7984E36A173E90A /* PBXTargetDependency */ = {
+		isa = PBXTargetDependency;
+		target = D51C55F1B7984E36A173E904;
+		targetProxy = D51C55F1B7984E36A173E90B;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXProject section */
 		98F54143AB4E86B28C3AFEE0 /* PBXProject */ = {
@@ -1134,6 +1299,9 @@
 					CreatedOnToolsVersion = 27.0;
 				};
 				EA5815D3D83100CE3F564964 = {
+					CreatedOnToolsVersion = 27.0;
+				};
+				D51C55F1B7984E36A173E904 = {
 					CreatedOnToolsVersion = 27.0;
 				};
 			};
@@ -1153,9 +1321,25 @@
 		targets = (
 				29C7B681C8D62CBAC94D51C0,
 				EA5815D3D83100CE3F564964,
+				D51C55F1B7984E36A173E904,
 		);
 		};
 /* End PBXProject section */
+
+
+/* Begin PBXCopyFilesBuildPhase section */
+		D51C55F1B7984E36A173E908 /* PBXCopyFilesBuildPhase */ = {
+		isa = PBXCopyFilesBuildPhase;
+		buildActionMask = 2147483647;
+		dstPath = "";
+		dstSubfolderSpec = 13;
+		files = (
+				D51C55F1B7984E36A173E909,
+		);
+		name = "Embed Foundation Extensions";
+		runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXResourcesBuildPhase section */
 		948756E4B49084A627CA0B9A /* PBXResourcesBuildPhase */ = {
@@ -1163,6 +1347,13 @@
 		buildActionMask = 2147483647;
 		files = (
 				8AFA1F65F7CA60CD65736C02,
+		);
+		runOnlyForDeploymentPostprocessing = 0;
+		};
+		D51C55F1B7984E36A173E903 /* PBXResourcesBuildPhase */ = {
+		isa = PBXResourcesBuildPhase;
+		buildActionMask = 2147483647;
+		files = (
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1229,6 +1420,9 @@
 				64AB7A559958455983451578,
 				74AB7A559958455983451501,
 				74AB7A559958455983451502,
+				C51C55F1B7984E36A173E901,
+				C51C55F1B7984E36A173E902,
+				C51C55F1B7984E36A173E903,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1284,6 +1478,19 @@
 				88583A555CB94616A7B05C01,
 				22BA6D39B100498DB9F01C0A,
 				32BA6D39B100498DB9F01C01,
+				C51C55F1B7984E36A173E904,
+				C51C55F1B7984E36A173E905,
+		);
+		runOnlyForDeploymentPostprocessing = 0;
+		};
+		D51C55F1B7984E36A173E901 /* PBXSourcesBuildPhase */ = {
+		isa = PBXSourcesBuildPhase;
+		buildActionMask = 2147483647;
+		files = (
+				C51C55F1B7984E36A173E906,
+				C51C55F1B7984E36A173E908,
+				C51C55F1B7984E36A173E909,
+				C51C55F1B7984E36A173E90A,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1456,6 +1663,64 @@
 		};
 		name = Release;
 		};
+		D51C55F1B7984E36A173E906 /* XCBuildConfiguration */ = {
+		isa = XCBuildConfiguration;
+		buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = Y3W97K33QU;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_APP_SANDBOX = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 0.1.0;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = StowWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nehangpatel.Stow.StowWidget;
+				INFOPLIST_FILE = StowWidget/Info.plist;
+				GENERATE_INFOPLIST_FILE = NO;
+				CODE_SIGN_ENTITLEMENTS = StowWidget/StowWidget.entitlements;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
+				SKIP_INSTALL = YES;
+		};
+		name = Debug;
+		};
+		D51C55F1B7984E36A173E907 /* XCBuildConfiguration */ = {
+		isa = XCBuildConfiguration;
+		buildSettings = {
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 6.0;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = Y3W97K33QU;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_APP_SANDBOX = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				MARKETING_VERSION = 0.1.0;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				ENABLE_NS_ASSERTIONS = NO;
+				PRODUCT_NAME = StowWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.nehangpatel.Stow.StowWidget;
+				INFOPLIST_FILE = StowWidget/Info.plist;
+				GENERATE_INFOPLIST_FILE = NO;
+				CODE_SIGN_ENTITLEMENTS = StowWidget/StowWidget.entitlements;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks @executable_path/../../../../Frameworks";
+				SKIP_INSTALL = YES;
+		};
+		name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1482,6 +1747,15 @@
 		buildConfigurations = (
 				62C0502E9DD2F4A0E153A290,
 				A1076DB52F6D567F23A74575,
+		);
+		defaultConfigurationIsVisible = 0;
+		defaultConfigurationName = Debug;
+		};
+		D51C55F1B7984E36A173E905 /* XCConfigurationList */ = {
+		isa = XCConfigurationList;
+		buildConfigurations = (
+				D51C55F1B7984E36A173E906,
+				D51C55F1B7984E36A173E907,
 		);
 		defaultConfigurationIsVisible = 0;
 		defaultConfigurationName = Debug;

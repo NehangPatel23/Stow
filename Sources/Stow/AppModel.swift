@@ -177,6 +177,7 @@ final class AppModel {
     private var noticeTask: Task<Void, Never>?
     private var ocrTask: Task<Void, Never>?
     private var lastStorageEnforceAt: Date?
+    private var lastWidgetPauseGeneration = -1
     private var suppressSyncPush = false
     /// History payload currently on the system clipboard because Stow copied or pasted it.
     private var clipboardOriginHash: String?
@@ -373,6 +374,7 @@ final class AppModel {
         if !suppressSyncPush {
             syncEngine.noteLocalChange(preferences: preferences)
         }
+        WidgetSnapshotPublisher.publish(from: self)
     }
 
     func prepareForOpen() {
@@ -740,6 +742,23 @@ final class AppModel {
             preferences.pauseUntil = nil
             notify("Recording is paused", symbol: "pause.circle")
         }
+        WidgetSnapshotPublisher.publish(from: self)
+    }
+
+    /// Applies pause toggled from the widget or Shortcuts via the App Group bridge.
+    func applyExternalPauseFromWidget() {
+        let generation = WidgetPauseBridge.pauseGeneration()
+        guard generation != lastWidgetPauseGeneration else { return }
+        lastWidgetPauseGeneration = generation
+        let paused = WidgetPauseBridge.readMirroredPaused()
+        if paused {
+            preferences.manuallyPaused = true
+            preferences.pauseUntil = nil
+        } else {
+            preferences.manuallyPaused = false
+            preferences.pauseUntil = nil
+        }
+        WidgetSnapshotPublisher.publish(from: self)
     }
 
     func pauseForOneHour() {
