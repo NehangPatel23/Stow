@@ -123,6 +123,7 @@ struct SettingsView: View {
                 abbreviationsSection(theme)
                 storageSection(theme)
                 syncSection(theme)
+                trustSection(theme)
                 privacySection(theme)
                 pasteboardSection(theme)
                 accessSection(theme)
@@ -959,6 +960,60 @@ struct SettingsView: View {
             .menuIndicator(.hidden)
         }
         .padding(.vertical, 12)
+    }
+
+    private func trustSection(_ theme: Theme) -> some View {
+        settingsSection(
+            title: "Trust",
+            detail: "Keep the menu bar running while the panel and library stay locked after idle.",
+            symbol: "touchid",
+            theme: theme
+        ) {
+            VStack(spacing: 0) {
+                settingsToggle(
+                    title: "Require Touch ID after idle",
+                    detail: "After your Mac has been idle — or the screen locks — open the panel or library only after Touch ID or your password.",
+                    isOn: Binding(
+                        get: { model.preferences.touchIDAfterIdleEnabled },
+                        set: { model.preferences.touchIDAfterIdleEnabled = $0 }
+                    ),
+                    theme: theme
+                )
+                if model.preferences.touchIDAfterIdleEnabled {
+                    settingsDivider(theme)
+                    HStack(alignment: .center, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Idle for")
+                                .font(.system(size: 13, weight: .medium))
+                            Text("How long the Mac must sit unused before Stow asks again.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(theme.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 12)
+                        Picker("Idle for", selection: idleLockBinding) {
+                            ForEach(HistoryAccessPolicy.idleMinuteChoices, id: \.self) { minutes in
+                                Text(idleLabel(minutes)).tag(minutes)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(maxWidth: 160)
+                    }
+                    .padding(.vertical, 14)
+                }
+            }
+        }
+    }
+
+    private var idleLockBinding: Binding<Int> {
+        Binding(
+            get: { model.preferences.idleLockMinutes },
+            set: { model.preferences.idleLockMinutes = HistoryAccessPolicy.normalizedIdleMinutes($0) }
+        )
+    }
+
+    private func idleLabel(_ minutes: Int) -> String {
+        minutes == 1 ? "1 minute" : "\(minutes) minutes"
     }
 
     private func privacySection(_ theme: Theme) -> some View {

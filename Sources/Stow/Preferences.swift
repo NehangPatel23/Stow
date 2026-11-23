@@ -51,6 +51,10 @@ struct Preferences: Codable, Equatable, Sendable {
     var focusOffDefaults: FocusContextDefaults = FocusContextDefaults()
     /// After selecting text in another app, show a small chip for plain copy / save as snippet.
     var selectionChipEnabled: Bool = false
+    /// After the Mac has been idle, opening the panel or library requires Touch ID / password.
+    var touchIDAfterIdleEnabled: Bool = false
+    /// Minutes of idle before Touch ID is required. One of 1, 5, 15, 30.
+    var idleLockMinutes: Int = HistoryAccessPolicy.defaultIdleMinutes
 
     private static let defaultsKey = "Stow.Preferences"
 
@@ -63,6 +67,7 @@ struct Preferences: Codable, Equatable, Sendable {
         case syncEnabled, syncHistory, syncSnippets, syncFolderBookmark, syncFolderDisplayPath
         case includeUniversalClipboard
         case perAppContextRules, focusOnDefaults, focusOffDefaults, selectionChipEnabled
+        case touchIDAfterIdleEnabled, idleLockMinutes
     }
 
     init() {}
@@ -103,6 +108,10 @@ struct Preferences: Codable, Equatable, Sendable {
         focusOnDefaults = try container.decodeIfPresent(FocusContextDefaults.self, forKey: .focusOnDefaults) ?? FocusContextDefaults()
         focusOffDefaults = try container.decodeIfPresent(FocusContextDefaults.self, forKey: .focusOffDefaults) ?? FocusContextDefaults()
         selectionChipEnabled = try container.decodeIfPresent(Bool.self, forKey: .selectionChipEnabled) ?? false
+        touchIDAfterIdleEnabled = try container.decodeIfPresent(Bool.self, forKey: .touchIDAfterIdleEnabled) ?? false
+        idleLockMinutes = HistoryAccessPolicy.normalizedIdleMinutes(
+            try container.decodeIfPresent(Int.self, forKey: .idleLockMinutes) ?? HistoryAccessPolicy.defaultIdleMinutes
+        )
     }
 
     private static let retentionChoices = [0, 1, 7, 14, 30, 90, 365]

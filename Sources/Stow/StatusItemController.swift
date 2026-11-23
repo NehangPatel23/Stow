@@ -129,8 +129,12 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         return item
     }
 
+    private var historyLocked: Bool {
+        model.isPresenting || model.historyAccess.isHistoryLocked(preferences: model.preferences)
+    }
+
     private func menuTitle(for clip: Clip) -> String {
-        if model.isPresenting {
+        if historyLocked {
             return "\(clip.kind.title) · \(clip.sourceAppName)"
         }
         let line = ClipText.previewLine(from: clip.preview, limit: 72)
@@ -142,13 +146,13 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     private func menuImage(for clip: Clip) -> NSImage? {
         let size = NSSize(width: 16, height: 16)
-        if !model.isPresenting, clip.kind == .image, let path = clip.thumbRelativePath {
+        if !historyLocked, clip.kind == .image, let path = clip.thumbRelativePath {
             let url = model.store.url(forRelativePath: path)
             if let image = NSImage(contentsOf: url) {
                 return resized(image, to: size)
             }
         }
-        if !model.isPresenting, clip.kind == .color, let hex = clip.colorHex, let value = ColorValue.parse(hex) {
+        if !historyLocked, clip.kind == .color, let hex = clip.colorHex, let value = ColorValue.parse(hex) {
             let swatch = NSImage(size: size, flipped: false) { rect in
                 NSColor(calibratedRed: value.red, green: value.green, blue: value.blue, alpha: 1).setFill()
                 NSBezierPath(ovalIn: rect.insetBy(dx: 2, dy: 2)).fill()

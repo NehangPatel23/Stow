@@ -58,6 +58,17 @@ final class PanelController: NSObject, NSWindowDelegate {
     }
 
     func showLibrary() {
+        Task { @MainActor in
+            await showLibraryAuthenticated()
+        }
+    }
+
+    private func showLibraryAuthenticated() async {
+        let fadingIn = !library.isVisible
+        if fadingIn {
+            let allowed = await model.historyAccess.allowOpeningHistory(preferences: model.preferences)
+            guard allowed else { return }
+        }
         if !placedLibrary {
             if !library.setFrameUsingName("StowLibraryStage") {
                 library.setFrame(Self.stageFrame(), display: false)
@@ -65,7 +76,6 @@ final class PanelController: NSObject, NSWindowDelegate {
             library.setFrameAutosaveName("StowLibraryStage")
             placedLibrary = true
         }
-        let fadingIn = !library.isVisible
         if fadingIn {
             library.alphaValue = 0
             model.notePreviousApp(NSWorkspace.shared.frontmostApplication)
@@ -75,7 +85,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         library.makeKeyAndOrderFront(nil)
         installKeyMonitor()
         guard fadingIn else { return }
-        NSAnimationContext.runAnimationGroup { context in
+        await NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.22
             library.animator().alphaValue = 1
         }
@@ -142,6 +152,14 @@ final class PanelController: NSObject, NSWindowDelegate {
     }
 
     func openQuick() {
+        Task { @MainActor in
+            await openQuickAuthenticated()
+        }
+    }
+
+    private func openQuickAuthenticated() async {
+        let allowed = await model.historyAccess.allowOpeningHistory(preferences: model.preferences)
+        guard allowed else { return }
         ignorePanelResignUntil = Date().addingTimeInterval(0.45)
         model.notePreviousApp(NSWorkspace.shared.frontmostApplication)
         model.prepareForOpen()
@@ -151,7 +169,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         NSApp.activate()
         panel.makeKeyAndOrderFront(nil)
         installKeyMonitor()
-        NSAnimationContext.runAnimationGroup { context in
+        await NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.16
             panel.animator().alphaValue = 1
         }

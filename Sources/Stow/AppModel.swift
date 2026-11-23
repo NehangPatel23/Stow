@@ -62,6 +62,7 @@ enum MenuBarState: Equatable {
 @Observable
 final class AppModel {
     let store: HistoryStore
+    let historyAccess = HistoryAccessController()
     private let syncEngine: SyncEngine
 
     var preferences: Preferences {

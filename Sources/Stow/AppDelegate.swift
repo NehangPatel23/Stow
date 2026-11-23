@@ -136,6 +136,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             name: StowAppGroup.pauseDidChangeNotification,
             object: nil
         )
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(screenDidLock(_:)),
+            name: Notification.Name("com.apple.screenIsLocked"),
+            object: nil
+        )
     }
 
     @objc private func frontAppChanged(_ notification: Notification) {
@@ -149,6 +155,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func pauseChangedFromWidget(_ notification: Notification) {
         model?.applyExternalPauseFromWidget()
+    }
+
+    @objc private func screenDidLock(_ notification: Notification) {
+        model?.historyAccess.noteScreenLocked()
+        status?.refresh()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
