@@ -94,11 +94,11 @@ Ship a trustworthy history before snippets, OCR, or sync. The first version is t
 
 The later wave is in the app: clip transforms, multi-paste, collections, fill-in templates, a pinned compact panel, storage rules, optional abbreviations, a local archive, on-device OCR, opt-in encrypted folder sync, a Universal Clipboard toggle, and Shortcuts actions for latest clip, search, and save as snippet.
 
-Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, inline result, copy bursts, diff two clips, notes and snippet history, per-app and Focus defaults, selection chip, desktop widget, hide contents while presenting, Touch ID after idle, and skip-our-own-copies. Twenty of twenty-five.
+Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, inline result, copy bursts, diff two clips, notes and snippet history, per-app and Focus defaults, selection chip, desktop widget, hide contents while presenting, Touch ID after idle, short-code expiry, and skip-our-own-copies. Twenty-one of twenty-five.
 
 ## Further ideas
 
-These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Trust item is **Short-code expiry**.
+These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Trust item is **Ignore patterns**.
 
 <details>
 <summary>Slots (4)</summary>
@@ -146,7 +146,7 @@ These wait until history, preview, and paste already feel better than Maccy. Che
 
 - [x] **Hide contents while presenting.** When the screen is being recorded or shared, the panel shows titles only until sharing stops. Lists keep type marks and source; preview, thumbs, notes, menu previews, and the selection chip stay hidden.
 - [x] **Touch ID after idle.** Opening history after the Mac has been idle can require Touch ID. The menu-bar app itself keeps running. Off by default in Settings → Trust; password fallback when Touch ID is unavailable. Also required after the screen locks.
-- [ ] **Short-code expiry.** A copied six-digit code deletes itself after about a minute. You choose the pattern and the lifetime.
+- [x] **Short-code expiry.** A copied six-digit code deletes itself after about a minute. You choose the pattern and the lifetime. Off by default in Settings → Trust; pins are kept.
 - [ ] **Ignore patterns.** A list of patterns you write, such as one-time codes or tracking links, is never stored.
 - [x] **Skip our own copies.** Pasting from this app does not create another history row of the same clip.
 - [ ] **Large-copy cap.** A huge image or file is stored as a reference with a size warning, or skipped, so one copy cannot fill the disk.

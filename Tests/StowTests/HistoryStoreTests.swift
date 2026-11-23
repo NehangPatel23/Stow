@@ -322,6 +322,26 @@ final class HistoryStoreTests: XCTestCase {
         )
     }
 
+    func testDeleteExpiredShortLivedKeepsPinsAndFreshCodes() throws {
+        let created = Date(timeIntervalSince1970: 1_000)
+        var expired = makeDraft(text: "123456", createdAt: created)
+        expired.expiresAt = created.addingTimeInterval(60)
+        _ = try store.record(expired)
+
+        var pinned = makeDraft(text: "654321", createdAt: created, hash: ContentHash.text("654321"))
+        pinned.expiresAt = created.addingTimeInterval(60)
+        _ = try store.record(pinned)
+        try store.setPinned(contentHash: ContentHash.text("654321"), pinned: true)
+
+        var fresh = makeDraft(text: "111222", createdAt: created, hash: ContentHash.text("111222"))
+        fresh.expiresAt = created.addingTimeInterval(600)
+        _ = try store.record(fresh)
+
+        let removed = try store.deleteExpiredShortLived(before: created.addingTimeInterval(120))
+        XCTAssertEqual(removed.map(\.preview), ["123456"])
+        XCTAssertEqual(Set(try store.foldedHistory().map(\.preview)), ["654321", "111222"])
+    }
+
     func testStorageByteCountAndOrphanReap() throws {
         let before = store.storageByteCount()
         XCTAssertGreaterThan(before, 0)

@@ -507,6 +507,19 @@
 		isa = PBXBuildFile;
 		fileRef = F51C55F1B7984E36A173E903;
 		};
+
+		A81C55F1B7984E36A173E901 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = A71C55F1B7984E36A173E901;
+		};
+		A81C55F1B7984E36A173E902 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = A71C55F1B7984E36A173E901;
+		};
+		A81C55F1B7984E36A173E903 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = A71C55F1B7984E36A173E902;
+		};
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -1104,6 +1117,19 @@
 		path = HistoryAccessPolicyTests.swift;
 		sourceTree = "<group>";
 		};
+
+		A71C55F1B7984E36A173E901 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ShortCodePolicy.swift;
+		sourceTree = "<group>";
+		};
+		A71C55F1B7984E36A173E902 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ShortCodePolicyTests.swift;
+		sourceTree = "<group>";
+		};
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1151,6 +1177,7 @@
 				B51C55F1B7984E36A173E901,
 				E51C55F1B7984E36A173E901,
 				F51C55F1B7984E36A173E901,
+				A71C55F1B7984E36A173E901,
 				BB71A3C02C5455B3E36B5640,
 				6745D666DDC13D9262441C9F,
 				26AFEA612D0A9F861BDD7A27,
@@ -1226,6 +1253,7 @@
 				B51C55F1B7984E36A173E904,
 				E51C55F1B7984E36A173E903,
 				F51C55F1B7984E36A173E903,
+				A71C55F1B7984E36A173E902,
 				6A0235AAEF48118CE6F54DDF,
 				276739D5590AA35A23B6086F,
 				7859B409C26784E30012964A,
@@ -1504,6 +1532,7 @@
 				E61C55F1B7984E36A173E901,
 				E61C55F1B7984E36A173E903,
 				F61C55F1B7984E36A173E901,
+				A81C55F1B7984E36A173E901,
 				F61C55F1B7984E36A173E903,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
@@ -1566,6 +1595,8 @@
 				E61C55F1B7984E36A173E904,
 				F61C55F1B7984E36A173E902,
 				F61C55F1B7984E36A173E904,
+				A81C55F1B7984E36A173E902,
+				A81C55F1B7984E36A173E903,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 		};

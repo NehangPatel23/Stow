@@ -965,8 +965,8 @@ struct SettingsView: View {
     private func trustSection(_ theme: Theme) -> some View {
         settingsSection(
             title: "Trust",
-            detail: "Keep the menu bar running while the panel and library stay locked after idle.",
-            symbol: "touchid",
+            detail: "Touch ID after idle, and short-lived codes that leave history on their own.",
+            symbol: "lock.shield",
             theme: theme
         ) {
             VStack(spacing: 0) {
@@ -1001,8 +1001,74 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 14)
                 }
+                settingsDivider(theme)
+                settingsToggle(
+                    title: "Expire short codes",
+                    detail: "Matching copies leave history after a short time. Pins stay until you unpin them.",
+                    isOn: Binding(
+                        get: { model.preferences.shortCodeExpiryEnabled },
+                        set: { model.preferences.shortCodeExpiryEnabled = $0 }
+                    ),
+                    theme: theme
+                )
+                if model.preferences.shortCodeExpiryEnabled {
+                    settingsDivider(theme)
+                    HStack(alignment: .center, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Match")
+                                .font(.system(size: 13, weight: .medium))
+                            Text(model.preferences.shortCodePattern.detail)
+                                .font(.system(size: 11))
+                                .foregroundStyle(theme.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 12)
+                        Picker("Match", selection: shortCodePatternBinding) {
+                            ForEach(ShortCodePattern.allCases) { pattern in
+                                Text(pattern.title).tag(pattern)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(maxWidth: 180)
+                    }
+                    .padding(.vertical, 14)
+                    settingsDivider(theme)
+                    HStack(alignment: .center, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Remove after")
+                                .font(.system(size: 13, weight: .medium))
+                            Text("How long a matching copy stays in history.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(theme.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 12)
+                        Picker("Remove after", selection: shortCodeLifetimeBinding) {
+                            ForEach(ShortCodePolicy.lifetimeChoices, id: \.self) { seconds in
+                                Text(ShortCodePolicy.lifetimeTitle(seconds)).tag(seconds)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(maxWidth: 160)
+                    }
+                    .padding(.vertical, 14)
+                }
             }
         }
+    }
+
+    private var shortCodePatternBinding: Binding<ShortCodePattern> {
+        Binding(
+            get: { model.preferences.shortCodePattern },
+            set: { model.preferences.shortCodePattern = $0 }
+        )
+    }
+
+    private var shortCodeLifetimeBinding: Binding<Int> {
+        Binding(
+            get: { model.preferences.shortCodeLifetimeSeconds },
+            set: { model.preferences.shortCodeLifetimeSeconds = ShortCodePolicy.normalizedLifetimeSeconds($0) }
+        )
     }
 
     private var idleLockBinding: Binding<Int> {

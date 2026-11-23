@@ -30,6 +30,8 @@ struct Clip: Identifiable, Equatable, Sendable {
     var lastPastedAt: Date? = nil
     /// Page URL from a browser dual-copy (selection + tab URL). Not part of contentHash.
     var pageURL: String? = nil
+    /// When set, unpinned rows are removed after this time (short-code expiry).
+    var expiresAt: Date? = nil
 }
 
 struct ClipDraft: Equatable, Sendable {
@@ -53,4 +55,6 @@ struct ClipDraft: Equatable, Sendable {
     var ocrText: String? = nil
     /// Page URL from a browser dual-copy (selection + tab URL).
     var pageURL: String? = nil
+    /// When set, unpinned rows are removed after this time (short-code expiry).
+    var expiresAt: Date? = nil
 }

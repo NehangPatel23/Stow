@@ -55,6 +55,11 @@ struct Preferences: Codable, Equatable, Sendable {
     var touchIDAfterIdleEnabled: Bool = false
     /// Minutes of idle before Touch ID is required. One of 1, 5, 15, 30.
     var idleLockMinutes: Int = HistoryAccessPolicy.defaultIdleMinutes
+    /// Matching OTP-style copies are removed from history after a short lifetime.
+    var shortCodeExpiryEnabled: Bool = false
+    var shortCodePattern: ShortCodePattern = .sixDigit
+    /// One of 30, 60, 300, 900.
+    var shortCodeLifetimeSeconds: Int = ShortCodePolicy.defaultLifetimeSeconds
 
     private static let defaultsKey = "Stow.Preferences"
 
@@ -68,6 +73,7 @@ struct Preferences: Codable, Equatable, Sendable {
         case includeUniversalClipboard
         case perAppContextRules, focusOnDefaults, focusOffDefaults, selectionChipEnabled
         case touchIDAfterIdleEnabled, idleLockMinutes
+        case shortCodeExpiryEnabled, shortCodePattern, shortCodeLifetimeSeconds
     }
 
     init() {}
@@ -111,6 +117,12 @@ struct Preferences: Codable, Equatable, Sendable {
         touchIDAfterIdleEnabled = try container.decodeIfPresent(Bool.self, forKey: .touchIDAfterIdleEnabled) ?? false
         idleLockMinutes = HistoryAccessPolicy.normalizedIdleMinutes(
             try container.decodeIfPresent(Int.self, forKey: .idleLockMinutes) ?? HistoryAccessPolicy.defaultIdleMinutes
+        )
+        shortCodeExpiryEnabled = try container.decodeIfPresent(Bool.self, forKey: .shortCodeExpiryEnabled) ?? false
+        shortCodePattern = try container.decodeIfPresent(ShortCodePattern.self, forKey: .shortCodePattern) ?? .sixDigit
+        shortCodeLifetimeSeconds = ShortCodePolicy.normalizedLifetimeSeconds(
+            try container.decodeIfPresent(Int.self, forKey: .shortCodeLifetimeSeconds)
+                ?? ShortCodePolicy.defaultLifetimeSeconds
         )
     }
 

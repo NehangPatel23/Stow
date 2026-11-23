@@ -695,6 +695,8 @@ final class AppModel {
         }
         skipped = nil
         do {
+            var draft = draft
+            applyShortCodeExpiry(&draft)
             _ = try store.record(draft)
             refresh()
             onChromeChange?()
@@ -715,7 +717,9 @@ final class AppModel {
         guard let skipped else { return }
         self.skipped = nil
         do {
-            let clip = try store.record(skipped.draft)
+            var draft = skipped.draft
+            applyShortCodeExpiry(&draft)
+            let clip = try store.record(draft)
             refresh()
             selectedID = clip.id
             loadPreview()
@@ -1408,7 +1412,7 @@ final class AppModel {
                     hasImage: false,
                     fileURLs: []
                 )
-                let draft = ClipDraft(
+                var draft = ClipDraft(
                     sourceAppName: clip.sourceAppName,
                     sourceBundleID: clip.sourceBundleID,
                     kind: kind,
@@ -1427,6 +1431,7 @@ final class AppModel {
                     createdAt: now.addingTimeInterval(TimeInterval(-index) * 0.001),
                     ocrText: nil
                 )
+                applyShortCodeExpiry(&draft)
                 _ = try store.record(draft)
                 recorded += 1
             }
@@ -2192,10 +2197,31 @@ final class AppModel {
             preferences.frontAppPauseBundleID = nil
             preferences.frontAppPauseName = nil
         }
+        purgeShortLivedClips()
         enforceStorageRules()
         if before != menuBarState {
             onChromeChange?()
         }
+    }
+
+    private func applyShortCodeExpiry(_ draft: inout ClipDraft) {
+        guard preferences.shortCodeExpiryEnabled else { return }
+        let body = draft.text ?? draft.preview
+        guard ShortCodePolicy.matches(text: body, kind: draft.kind, pattern: preferences.shortCodePattern) else {
+            return
+        }
+        draft.expiresAt = ShortCodePolicy.expiresAt(
+            createdAt: draft.createdAt,
+            lifetimeSeconds: preferences.shortCodeLifetimeSeconds
+        )
+    }
+
+    private func purgeShortLivedClips() {
+        let removed = (try? store.deleteExpiredShortLived()) ?? []
+        guard !removed.isEmpty else { return }
+        let hashes = Set(removed.map(\.contentHash))
+        try? store.reapImages(hashes: hashes)
+        refresh()
     }
 
     func shortcutIndex(for clip: Clip) -> Int? {

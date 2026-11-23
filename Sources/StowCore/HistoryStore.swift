@@ -56,7 +56,8 @@ final class HistoryStore: @unchecked Sendable {
                 ocr_text TEXT,
                 paste_count INTEGER NOT NULL DEFAULT 0,
                 last_pasted_at REAL,
-                page_url TEXT
+                page_url TEXT,
+                expires_at REAL
             )
             """
         )
@@ -85,6 +86,7 @@ final class HistoryStore: @unchecked Sendable {
         try addClipOCRColumnIfNeeded()
         try addClipPasteColumnsIfNeeded()
         try addClipPageURLColumnIfNeeded()
+        try addClipExpiresAtColumnIfNeeded()
         try addSnippetPinnedColumnIfNeeded()
         try addSnippetCollectionColumnsIfNeeded()
         try addSnippetAbbreviationColumnIfNeeded()
@@ -110,8 +112,8 @@ final class HistoryStore: @unchecked Sendable {
                 INSERT INTO clips (
                     id, created_at, pinned, source_app_name, source_bundle_id, kind, preview,
                     text, html, rtf, image_path, thumb_path, file_urls, color_hex, content_hash,
-                    image_width, image_height, byte_size, ocr_text, paste_count, last_pasted_at, page_url
-                ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?)
+                    image_width, image_height, byte_size, ocr_text, paste_count, last_pasted_at, page_url, expires_at
+                ) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, ?, ?)
                 """,
                 bindings: { [self] statement in
                     bind(id.uuidString, at: 1, on: statement)
@@ -133,6 +135,11 @@ final class HistoryStore: @unchecked Sendable {
                     sqlite3_bind_int(statement, 17, Int32(draft.byteSize))
                     bindOptional(draft.ocrText, at: 18, on: statement)
                     bindOptional(draft.pageURL, at: 19, on: statement)
+                    if let expiresAt = draft.expiresAt {
+                        sqlite3_bind_double(statement, 20, expiresAt.timeIntervalSince1970)
+                    } else {
+                        sqlite3_bind_null(statement, 20)
+                    }
                 }
             )
             return Clip(
@@ -158,7 +165,8 @@ final class HistoryStore: @unchecked Sendable {
                 ocrText: draft.ocrText,
                 pasteCount: 0,
                 lastPastedAt: nil,
-                pageURL: draft.pageURL
+                pageURL: draft.pageURL,
+                expiresAt: draft.expiresAt
             )
         }
     }
@@ -588,6 +596,33 @@ final class HistoryStore: @unchecked Sendable {
         }
     }
 
+    /// Deletes unpinned clips whose short-code `expires_at` has passed.
+    @discardableResult
+    func deleteExpiredShortLived(before now: Date = Date()) throws -> [Clip] {
+        try lock.withLock {
+            let selectSQL = """
+            SELECT \(Self.fullColumns)
+            FROM clips
+            WHERE pinned = 0 AND expires_at IS NOT NULL AND expires_at < ?
+            """
+            let rows = try fetch(
+                selectSQL,
+                bindings: { statement in
+                    sqlite3_bind_double(statement, 1, now.timeIntervalSince1970)
+                },
+                includeRTF: true
+            )
+            guard !rows.isEmpty else { return [] }
+            try execute(
+                "DELETE FROM clips WHERE pinned = 0 AND expires_at IS NOT NULL AND expires_at < ?",
+                bindings: { statement in
+                    sqlite3_bind_double(statement, 1, now.timeIntervalSince1970)
+                }
+            )
+            return rows
+        }
+    }
+
     /// Removes image and thumb files that no clip still references. Returns bytes removed.
     @discardableResult
     func reapOrphanedImages() throws -> Int {
@@ -939,13 +974,13 @@ final class HistoryStore: @unchecked Sendable {
     private static let listColumns = """
     id, created_at, pinned, source_app_name, source_bundle_id, kind, preview, text, html,
     NULL, image_path, thumb_path, file_urls, color_hex, content_hash, image_width, image_height, byte_size, ocr_text,
-    paste_count, last_pasted_at, page_url
+    paste_count, last_pasted_at, page_url, expires_at
     """
 
     private static let fullColumns = """
     id, created_at, pinned, source_app_name, source_bundle_id, kind, preview, text, html,
     rtf, image_path, thumb_path, file_urls, color_hex, content_hash, image_width, image_height, byte_size, ocr_text,
-    paste_count, last_pasted_at, page_url
+    paste_count, last_pasted_at, page_url, expires_at
     """
 
     private func insert(_ clip: Clip) throws {
@@ -954,8 +989,8 @@ final class HistoryStore: @unchecked Sendable {
             INSERT OR REPLACE INTO clips (
                 id, created_at, pinned, source_app_name, source_bundle_id, kind, preview,
                 text, html, rtf, image_path, thumb_path, file_urls, color_hex, content_hash,
-                image_width, image_height, byte_size, ocr_text, paste_count, last_pasted_at, page_url
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                image_width, image_height, byte_size, ocr_text, paste_count, last_pasted_at, page_url, expires_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             bindings: { [self] statement in
                 bind(clip.id.uuidString, at: 1, on: statement)
@@ -984,6 +1019,11 @@ final class HistoryStore: @unchecked Sendable {
                     sqlite3_bind_null(statement, 21)
                 }
                 bindOptional(clip.pageURL, at: 22, on: statement)
+                if let expiresAt = clip.expiresAt {
+                    sqlite3_bind_double(statement, 23, expiresAt.timeIntervalSince1970)
+                } else {
+                    sqlite3_bind_null(statement, 23)
+                }
             }
         )
     }
@@ -1204,6 +1244,12 @@ final class HistoryStore: @unchecked Sendable {
         try execute("ALTER TABLE clips ADD COLUMN page_url TEXT")
     }
 
+    private func addClipExpiresAtColumnIfNeeded() throws {
+        let columns = try clipColumns()
+        guard !columns.contains("expires_at") else { return }
+        try execute("ALTER TABLE clips ADD COLUMN expires_at REAL")
+    }
+
     private func addSnippetPinnedColumnIfNeeded() throws {
         let columns = try snippetColumns()
         guard !columns.contains("pinned") else { return }
@@ -1380,7 +1426,8 @@ final class HistoryStore: @unchecked Sendable {
                     ocrText: columnText(statement, 18),
                     pasteCount: Int(sqlite3_column_int(statement, 19)),
                     lastPastedAt: columnDate(statement, 20),
-                    pageURL: columnText(statement, 21)
+                    pageURL: columnText(statement, 21),
+                    expiresAt: columnDate(statement, 22)
                 )
             )
         }
