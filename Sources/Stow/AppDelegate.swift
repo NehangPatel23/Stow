@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var status: StatusItemController?
     private var panel: PanelController?
     private var selectionChip: SelectionChipController?
+    private var presentationMonitor: ScreenPresentationMonitor?
     private var launch: LaunchController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -96,6 +97,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let selectionChip = SelectionChipController(model: model) { [weak panel] in
             panel?.isChromeVisible == true
         }
+        let presentationMonitor = ScreenPresentationMonitor(model: model)
 
         self.model = model
         self.monitor = monitor
@@ -105,6 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.status = status
         self.panel = panel
         self.selectionChip = selectionChip
+        self.presentationMonitor = presentationMonitor
         self.launch = launch
 
         registerHotkey()
@@ -112,6 +115,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         monitor.start()
         abbreviations.start()
         selectionChip.start()
+        presentationMonitor.start()
         model.notePreviousApp(NSWorkspace.shared.frontmostApplication)
         launch.start()
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -177,6 +181,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         slotHotkeys?.unregister()
         abbreviations?.stop()
         selectionChip?.stop()
+        presentationMonitor?.stop()
         monitor?.stop()
     }
 

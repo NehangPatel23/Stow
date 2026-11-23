@@ -26,9 +26,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     func refresh() {
         let state = model.menuBarState
         if state != lastState {
-            let icon = image(for: state)
-            icon.isTemplate = false
-            statusItem.button?.image = icon
+            statusItem.button?.image = image(for: state)
             lastState = state
         }
         statusItem.button?.toolTip = tooltip(for: state)
@@ -132,6 +130,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     }
 
     private func menuTitle(for clip: Clip) -> String {
+        if model.isPresenting {
+            return "\(clip.kind.title) · \(clip.sourceAppName)"
+        }
         let line = ClipText.previewLine(from: clip.preview, limit: 72)
         if line.isEmpty {
             return clip.kind.title
@@ -141,13 +142,13 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     private func menuImage(for clip: Clip) -> NSImage? {
         let size = NSSize(width: 16, height: 16)
-        if clip.kind == .image, let path = clip.thumbRelativePath {
+        if !model.isPresenting, clip.kind == .image, let path = clip.thumbRelativePath {
             let url = model.store.url(forRelativePath: path)
             if let image = NSImage(contentsOf: url) {
                 return resized(image, to: size)
             }
         }
-        if clip.kind == .color, let hex = clip.colorHex, let value = ColorValue.parse(hex) {
+        if !model.isPresenting, clip.kind == .color, let hex = clip.colorHex, let value = ColorValue.parse(hex) {
             let swatch = NSImage(size: size, flipped: false) { rect in
                 NSColor(calibratedRed: value.red, green: value.green, blue: value.blue, alpha: 1).setFill()
                 NSBezierPath(ovalIn: rect.insetBy(dx: 2, dy: 2)).fill()
@@ -182,24 +183,58 @@ final class StatusItemController: NSObject, NSMenuDelegate {
 
     private func image(for state: MenuBarState) -> NSImage {
         let length: CGFloat = 18
+        let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .medium)
+        let symbol = NSImage(systemSymbolName: "clipboard", accessibilityDescription: "Stow")?
+            .withSymbolConfiguration(config)
+
+        guard let badge = Self.badgeColor(for: state) else {
+            let icon = symbol ?? NSImage(size: NSSize(width: length, height: length))
+            icon.isTemplate = true
+            return icon
+        }
+
+        let ink: NSColor = {
+            let appearance = statusItem.button?.effectiveAppearance ?? NSApp.effectiveAppearance
+            return appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? .white : .black
+        }()
+
         let canvas = NSImage(size: NSSize(width: length, height: length), flipped: false) { rect in
-            NSApp.applicationIconImage.draw(
-                in: rect,
-                from: .zero,
-                operation: .sourceOver,
-                fraction: state == .paused ? 0.55 : 1
-            )
-            if let badge = Self.badgeColor(for: state) {
-                let dot = NSRect(x: rect.maxX - 7, y: rect.minY, width: 7, height: 7)
-                NSColor.white.setFill()
-                NSBezierPath(ovalIn: dot.insetBy(dx: -1, dy: -1)).fill()
-                badge.setFill()
-                NSBezierPath(ovalIn: dot).fill()
+            if let symbol {
+                let fitted = Self.fittedRect(for: symbol.size, in: rect)
+                let tinted = NSImage(size: fitted.size, flipped: false) { symbolRect in
+                    symbol.draw(in: symbolRect, from: .zero, operation: .sourceOver, fraction: 1)
+                    ink.setFill()
+                    symbolRect.fill(using: .sourceAtop)
+                    return true
+                }
+                tinted.draw(
+                    in: fitted,
+                    from: .zero,
+                    operation: .sourceOver,
+                    fraction: state == .paused ? 0.7 : 1
+                )
             }
+            let dot = NSRect(x: rect.maxX - 7, y: rect.minY, width: 7, height: 7)
+            NSColor.white.setFill()
+            NSBezierPath(ovalIn: dot.insetBy(dx: -1, dy: -1)).fill()
+            badge.setFill()
+            NSBezierPath(ovalIn: dot).fill()
             return true
         }
         canvas.isTemplate = false
         return canvas
+    }
+
+    private static func fittedRect(for size: NSSize, in bounds: NSRect) -> NSRect {
+        let scale = min(bounds.width / max(size.width, 1), bounds.height / max(size.height, 1))
+        let width = size.width * scale
+        let height = size.height * scale
+        return NSRect(
+            x: bounds.midX - width / 2,
+            y: bounds.midY - height / 2,
+            width: width,
+            height: height
+        )
     }
 
     private static func badgeColor(for state: MenuBarState) -> NSColor? {

@@ -174,6 +174,8 @@ final class AppModel {
     var notice: Notice?
     private(set) var storageByteCount = 0
     private(set) var syncStatus: SyncStatus = .idle
+    /// True while screen capture / share UI is detected; lists show titles only.
+    private(set) var isPresenting = false
     private var noticeTask: Task<Void, Never>?
     private var ocrTask: Task<Void, Never>?
     private var lastStorageEnforceAt: Date?
@@ -742,6 +744,17 @@ final class AppModel {
             preferences.pauseUntil = nil
             notify("Recording is paused", symbol: "pause.circle")
         }
+        WidgetSnapshotPublisher.publish(from: self)
+    }
+
+    func setPresenting(_ active: Bool) {
+        guard isPresenting != active else { return }
+        isPresenting = active
+        if active {
+            cancelEditBeforePaste()
+            endClipDiff()
+        }
+        onChromeChange?()
         WidgetSnapshotPublisher.publish(from: self)
     }
 

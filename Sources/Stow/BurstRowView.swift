@@ -20,7 +20,7 @@ struct BurstRowView: View {
             HStack(alignment: .top, spacing: 8) {
                 typeMark
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(burst.newest.preview)
+                    Text(model.isPresenting ? burst.newest.kind.title : burst.newest.preview)
                         .font(.system(size: 13))
                         .lineLimit(1)
                     HStack(spacing: 4) {

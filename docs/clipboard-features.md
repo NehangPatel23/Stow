@@ -94,11 +94,11 @@ Ship a trustworthy history before snippets, OCR, or sync. The first version is t
 
 The later wave is in the app: clip transforms, multi-paste, collections, fill-in templates, a pinned compact panel, storage rules, optional abbreviations, a local archive, on-device OCR, opt-in encrypted folder sync, a Universal Clipboard toggle, and Shortcuts actions for latest clip, search, and save as snippet.
 
-Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, inline result, copy bursts, diff two clips, notes and snippet history, per-app and Focus defaults, selection chip, desktop widget, and skip-our-own-copies. Eighteen of twenty-five.
+Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, inline result, copy bursts, diff two clips, notes and snippet history, per-app and Focus defaults, selection chip, desktop widget, hide contents while presenting, and skip-our-own-copies. Nineteen of twenty-five.
 
 ## Further ideas
 
-These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Trust item is **Hide contents while presenting**.
+These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Trust item is **Touch ID after idle**.
 
 <details>
 <summary>Slots (4)</summary>
@@ -144,7 +144,7 @@ These wait until history, preview, and paste already feel better than Maccy. Che
 <details>
 <summary>Trust (6)</summary>
 
-- [ ] **Hide contents while presenting.** When the screen is being recorded or shared, the panel shows titles only until sharing stops.
+- [x] **Hide contents while presenting.** When the screen is being recorded or shared, the panel shows titles only until sharing stops. Lists keep type marks and source; preview, thumbs, notes, menu previews, and the selection chip stay hidden.
 - [ ] **Touch ID after idle.** Opening history after the Mac has been idle can require Touch ID. The menu-bar app itself keeps running.
 - [ ] **Short-code expiry.** A copied six-digit code deletes itself after about a minute. You choose the pattern and the lifetime.
 - [ ] **Ignore patterns.** A list of patterns you write, such as one-time codes or tracking links, is never stored.

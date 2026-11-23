@@ -137,6 +137,15 @@ struct PanelRootView: View {
                     .padding(.horizontal, 7)
                     .padding(.vertical, 3)
                     .background(Capsule().fill(theme.chipActive))
+                if model.isPresenting {
+                    Text("Titles only")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(theme.secondary)
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(theme.chip))
+                        .help("Screen sharing or recording is active")
+                }
                 Spacer()
                 Picker("Library", selection: $model.library) {
                     ForEach(Library.allCases) { library in

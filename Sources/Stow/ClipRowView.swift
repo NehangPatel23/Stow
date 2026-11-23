@@ -113,7 +113,10 @@ struct ClipRowView: View {
         }
         .onTapGesture { model.click(clip.id) }
         .onDrag {
-            ClipDrag.provider(for: clip, store: model.store) ?? NSItemProvider(object: clip.preview as NSString)
+            if model.isPresenting {
+                return NSItemProvider(object: clip.kind.title as NSString)
+            }
+            return ClipDrag.provider(for: clip, store: model.store) ?? NSItemProvider(object: clip.preview as NSString)
         }
         .contextMenu { clipMenu }
         .accessibilityElement(children: .combine)
@@ -227,6 +230,9 @@ struct ClipRowView: View {
 
     /// When a search hits OCR inside an image, show that text instead of dimensions.
     private var rowTitle: String {
+        if model.isPresenting {
+            return clip.kind.title
+        }
         guard clip.kind == .image,
               let ocr = clip.ocrText?.trimmingCharacters(in: .whitespacesAndNewlines),
               !ocr.isEmpty,
@@ -245,11 +251,11 @@ struct ClipRowView: View {
             RoundedRectangle(cornerRadius: 6, style: .continuous)
                 .fill(theme.chip)
                 .frame(width: 26, height: 26)
-            if clip.kind == .image, let path = clip.thumbRelativePath {
+            if !model.isPresenting, clip.kind == .image, let path = clip.thumbRelativePath {
                 ThumbView(url: model.store.url(forRelativePath: path))
                     .frame(width: 26, height: 26)
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-            } else if clip.kind == .color, let hex = clip.colorHex, let color = ColorValue.parse(hex) {
+            } else if !model.isPresenting, clip.kind == .color, let hex = clip.colorHex, let color = ColorValue.parse(hex) {
                 Circle()
                     .fill(Color(red: color.red, green: color.green, blue: color.blue))
                     .frame(width: 12, height: 12)
@@ -302,7 +308,7 @@ struct SnippetRowView: View {
                     Text(snippet.title)
                         .font(.system(size: 13))
                         .lineLimit(1)
-                    if let note = snippet.displayNote {
+                    if !model.isPresenting, let note = snippet.displayNote {
                         Text(note)
                             .font(.system(size: 11))
                             .foregroundStyle(theme.secondary)

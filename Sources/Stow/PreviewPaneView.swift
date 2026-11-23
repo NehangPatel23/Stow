@@ -8,7 +8,9 @@ struct PreviewPaneView: View {
 
     var body: some View {
         Group {
-            if let session = model.clipDiff {
+            if model.isPresenting {
+                presentingPlaceholder
+            } else if let session = model.clipDiff {
                 ClipDiffPreviewView(session: session, theme: theme)
             } else if model.library == .snippets, let snippet = model.selectedSnippet() {
                 snippetPreview(snippet)
@@ -34,6 +36,33 @@ struct PreviewPaneView: View {
         .onChange(of: model.previewEditFocusToken) { _, _ in
             draftFocused = true
         }
+    }
+
+    private var presentingPlaceholder: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "eye.slash")
+                .font(.system(size: 26, weight: .medium))
+                .foregroundStyle(theme.accent)
+                .frame(width: 52, height: 52)
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(theme.chip))
+            Text("Titles only")
+                .font(.system(size: 16, weight: .semibold))
+            Text("Screen sharing or recording is active. Clip contents stay hidden until it stops.")
+                .font(.system(size: 14))
+                .foregroundStyle(theme.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 280)
+            if model.library == .snippets, let snippet = model.selectedSnippet() {
+                Text(snippet.title)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(theme.secondary)
+            } else if let clip = model.preview {
+                Text("\(clip.kind.title) · \(clip.sourceAppName)")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(theme.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     @ViewBuilder

@@ -46,7 +46,8 @@ final class SelectionChipController {
     private func tick() {
         let enabled = model.preferences.selectionChipEnabled
         let trusted = AccessibilityClient.isTrusted(prompt: false)
-        guard SelectionChipPolicy.shouldMonitor(enabled: enabled, accessibilityTrusted: trusted) else {
+        guard SelectionChipPolicy.shouldMonitor(enabled: enabled, accessibilityTrusted: trusted),
+              !model.isPresenting else {
             hide()
             debouncer.reset()
             return
