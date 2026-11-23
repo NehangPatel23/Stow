@@ -15,7 +15,7 @@ Update the Done column when you check boxes.
 | Match Maccy | Behaviors the first paste loop still has to have | 7 | 7 |
 | First version | Build before daily paste feels right | 15 | 15 |
 | Later wave | Add after the first version is trustworthy | 11 | 11 |
-| Further ideas | After history, preview, and paste beat Maccy | 25 | 13 |
+| Further ideas | After history, preview, and paste beat Maccy | 25 | 14 |
 
 ## Match Maccy first
 
@@ -86,7 +86,7 @@ Green in the original catalog is the first version. Blue is the later wave. Thos
 | --- | --- |
 | Open | Stow is a Dock app and a menu-bar app. The menu bar opens recent clips; More clips… opens the library near the size of the screen. ⌘⇧C toggles a quick panel. Search is focused. Nothing is selected until you click a clip. |
 | Read | Each row shows a type mark, a preview, then the source app and time. Copies from the same app a few seconds apart collapse into one session row you can expand; Frequent and search leave them separate. The preview pane shows the whole clip, including images and readable rich text. Text clips and snippets show characters, words, and lines under the transforms row. A sum, currency amount, or simple unit conversion also shows its result; the stored clip stays unchanged. |
-| Act | Return copies. Option-Return pastes into the previous app. Shift-Option-Return pastes plain text. Command-Option-Return pastes once and restores the previous clipboard. The footer lists Paste, Plain, Once, Copy, Pin, and Delete. Right-click adds Edit for Paste, Edit Clip or Edit Snippet, Save as Snippet on history, Split lines, Line tools, and Delete. When a browser kept the page URL, Paste as Markdown Link appears. When the clip is a link, email, address, or date, Open Link, Send Email, Open in Maps, or Add to Calendar appears in the preview and the menu. |
+| Act | Return copies. Option-Return pastes into the previous app. Shift-Option-Return pastes plain text. Command-Option-Return pastes once and restores the previous clipboard. The footer lists Paste, Plain, Once, Copy, Pin, and Delete. Right-click adds Edit for Paste, Edit Clip or Edit Snippet, Save as Snippet on history, Split lines, Line tools, and Delete. ⌘-click two text clips, then Diff, to compare them in the preview (Paste older / Paste newer, or the plain variants). When a browser kept the page URL, Paste as Markdown Link appears. When the clip is a link, email, address, or date, Open Link, Send Email, Open in Maps, or Add to Calendar appears in the preview and the menu. |
 
 ## Build order
 
@@ -94,11 +94,11 @@ Ship a trustworthy history before snippets, OCR, or sync. The first version is t
 
 The later wave is in the app: clip transforms, multi-paste, collections, fill-in templates, a pinned compact panel, storage rules, optional abbreviations, a local archive, on-device OCR, opt-in encrypted folder sync, a Universal Clipboard toggle, and Shortcuts actions for latest clip, search, and save as snippet.
 
-Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, inline result, copy bursts, and skip-our-own-copies. Thirteen of twenty-five.
+Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, inline result, copy bursts, diff two clips, and skip-our-own-copies. Fourteen of twenty-five.
 
 ## Further ideas
 
-These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Session item is **Diff two clips**.
+These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Session item is **Notes and snippet history**.
 
 <details>
 <summary>Slots (4)</summary>
@@ -127,7 +127,7 @@ These wait until history, preview, and paste already feel better than Maccy. Che
 <summary>Session (3)</summary>
 
 - [x] **Copy bursts.** Copies from the same app a few seconds apart collapse into one session. You can expand the session and paste the whole group. Grouping is on by default in Settings, and turns off while searching or browsing Frequent.
-- [ ] **Diff two clips.** Pick two text clips and see what changed before you paste either one.
+- [x] **Diff two clips.** Pick two text clips and see what changed before you paste either one. ⌘-click two text clips, then Diff on the right-click menu. The preview shows a line diff with Paste older / Paste newer and plain variants; both clips stay selected.
 - [ ] **Notes and snippet history.** Add a short note to a snippet. Editing a snippet keeps the previous wording so you can restore it.
 
 </details>

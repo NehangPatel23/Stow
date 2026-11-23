@@ -8,7 +8,9 @@ struct PreviewPaneView: View {
 
     var body: some View {
         Group {
-            if model.library == .snippets, let snippet = model.selectedSnippet() {
+            if let session = model.clipDiff {
+                ClipDiffPreviewView(session: session, theme: theme)
+            } else if model.library == .snippets, let snippet = model.selectedSnippet() {
                 snippetPreview(snippet)
             } else if let clip = model.preview {
                 clipPreview(clip)

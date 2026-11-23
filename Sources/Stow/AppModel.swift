@@ -44,6 +44,13 @@ enum CollectionFilter: Equatable, Hashable {
     case collection(UUID)
 }
 
+struct ClipDiffSession: Equatable, Sendable {
+    var older: Clip
+    var newer: Clip
+    var result: ClipDiffResult?
+    var failure: ClipDiff.Failure?
+}
+
 enum MenuBarState: Equatable {
     case ready
     case paused
@@ -90,6 +97,7 @@ final class AppModel {
         didSet {
             if oldValue != library {
                 cancelEditBeforePaste()
+                endClipDiff()
             }
         }
     }
@@ -121,6 +129,8 @@ final class AppModel {
     /// Clip or snippet id the draft belongs to.
     private var previewPasteDraftID: UUID?
     var previewEditFocusToken = 0
+    /// Explicit two-clip diff session. Cleared when selection no longer has both ids.
+    var clipDiff: ClipDiffSession?
     var templateFill: TemplateFillRequest?
     /// Carries an explicit one-shot choice across the template fill sheet.
     private var pendingTemplateOneShot: Bool?
@@ -372,6 +382,7 @@ final class AppModel {
         expandedHashes = []
         expandedBurstIDs = []
         cancelEditBeforePaste()
+        endClipDiff()
         refresh()
         if let selectedID, !containsSelection(selectedID) {
             self.selectedID = nil
@@ -383,12 +394,19 @@ final class AppModel {
 
     var isEditingBeforePaste: Bool { previewPasteDraft != nil }
 
+    var isShowingClipDiff: Bool { clipDiff != nil }
+
     var canEditBeforePaste: Bool {
         guard let clip = selectedClip() else { return false }
         return PreviewPasteDraft.supports(materialized(clip).kind)
     }
 
+    var canDiffSelection: Bool {
+        orderedDiffClips() != nil
+    }
+
     func beginEditBeforePaste(_ clip: Clip? = nil) {
+        endClipDiff()
         let target = clip.map { materialized($0) } ?? (selectedClip().map(materialized))
         guard let target else {
             notify("Select a clip", symbol: "arrow.down.doc")
@@ -411,6 +429,108 @@ final class AppModel {
         previewPasteDraftID = target.id
         previewPasteDraft = seed
         previewEditFocusToken += 1
+    }
+
+    func beginClipDiff() {
+        guard let pair = orderedDiffClips() else {
+            notify("Select two text clips", symbol: "arrow.left.arrow.right")
+            return
+        }
+        cancelEditBeforePaste()
+        let olderText = diffPlainText(for: pair.older)
+        let newerText = diffPlainText(for: pair.newer)
+        var session = ClipDiffSession(older: pair.older, newer: pair.newer, result: nil, failure: nil)
+        switch ClipDiff.compare(olderText, newerText) {
+        case .success(let result):
+            session.result = result
+        case .failure(let failure):
+            session.failure = failure
+        }
+        clipDiff = session
+    }
+
+    func endClipDiff() {
+        clipDiff = nil
+    }
+
+    func pasteDiffClip(older: Bool, plain: Bool = false) {
+        guard let session = clipDiff else { return }
+        let target = older ? session.older : session.newer
+        selection = [session.older.id, session.newer.id]
+        selectionAnchor = target.id
+        select(target.id)
+        pasteSelected(plain: plain)
+    }
+
+    private func orderedDiffClips() -> (older: Clip, newer: Clip)? {
+        guard selection.count == 2 else { return nil }
+        let clips = selection.compactMap { id -> Clip? in
+            resolveClipForDiff(id: id)
+        }
+        guard clips.count == 2 else { return nil }
+        let sorted = clips.sorted { $0.createdAt < $1.createdAt }
+        let older = sorted[0]
+        let newer = sorted[1]
+        guard PreviewPasteDraft.supports(older.kind),
+              PreviewPasteDraft.supports(newer.kind) else {
+            return nil
+        }
+        let olderText = diffPlainText(for: older)
+        let newerText = diffPlainText(for: newer)
+        guard !ClipText.isBlank(olderText), !ClipText.isBlank(newerText) else {
+            return nil
+        }
+        return (older, newer)
+    }
+
+    private func resolveClipForDiff(id: UUID) -> Clip? {
+        if library == .snippets {
+            guard let snippet = snippets.first(where: { $0.id == id }) else { return nil }
+            return clipFromSnippet(snippet)
+        }
+        if let match = allHistoryMembers.first(where: { $0.id == id }) {
+            return materialized(match)
+        }
+        if let match = copiesByHash.values.joined().first(where: { $0.id == id }) {
+            return materialized(match)
+        }
+        return nil
+    }
+
+    private func diffPlainText(for clip: Clip) -> String {
+        if let rtf = clip.rtf,
+           let attributed = NSAttributedString(rtf: rtf, documentAttributes: nil) {
+            return attributed.string
+        }
+        if let text = clip.text, !ClipText.isBlank(text) {
+            return text
+        }
+        return clip.preview
+    }
+
+    private func clipFromSnippet(_ snippet: Snippet) -> Clip {
+        Clip(
+            id: snippet.id,
+            createdAt: snippet.createdAt,
+            pinned: false,
+            sourceAppName: "Snippet",
+            sourceBundleID: "",
+            kind: snippet.kind,
+            preview: snippet.preview,
+            text: snippet.text,
+            html: nil,
+            rtf: nil,
+            imageRelativePath: nil,
+            thumbRelativePath: nil,
+            fileURLs: [],
+            colorHex: ColorValue.parse(snippet.text)?.hex,
+            contentHash: snippet.id.uuidString,
+            imageWidth: nil,
+            imageHeight: nil,
+            byteSize: snippet.text.utf8.count,
+            copyCount: 1,
+            ocrText: nil
+        )
     }
 
     func updatePreviewPasteDraft(_ text: String) {
@@ -583,14 +703,25 @@ final class AppModel {
             // Keep ids that are still on screen as top-level rows or nested burst members.
             let visible = Set(flattenedHistory.map(\.id) + allHistoryMembers.map(\.id))
             selection.formIntersection(visible)
+            refreshClipDiffIfNeeded()
             if let selectedID, containsSelection(selectedID) { return }
             selectedID = nil
             preview = nil
         case .snippets:
             selection.formIntersection(Set(visibleIDs()))
+            refreshClipDiffIfNeeded()
             if let selectedID, visibleSnippets.contains(where: { $0.id == selectedID }) { return }
             selectedID = nil
             preview = nil
+        }
+    }
+
+    private func refreshClipDiffIfNeeded() {
+        guard let session = clipDiff else { return }
+        let ids = Set([session.older.id, session.newer.id])
+        guard selection == ids || selection.isSuperset(of: ids) else {
+            endClipDiff()
+            return
         }
     }
 
@@ -598,6 +729,7 @@ final class AppModel {
         selection = [id]
         selectionAnchor = id
         select(id)
+        refreshClipDiffIfNeeded()
     }
 
     func toggleInSelection(_ id: UUID) {
@@ -612,6 +744,7 @@ final class AppModel {
             select(id)
         }
         selectionAnchor = id
+        refreshClipDiffIfNeeded()
     }
 
     func extendSelection(to id: UUID) {
@@ -627,6 +760,7 @@ final class AppModel {
         selection = Set(ids[lower...upper])
         selectionAnchor = anchor
         select(id)
+        refreshClipDiffIfNeeded()
     }
 
     func askJoinSeparator() {

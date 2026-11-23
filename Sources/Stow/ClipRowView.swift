@@ -202,6 +202,9 @@ struct ClipRowView: View {
             }
             if model.selection.count > 1, model.selection.contains(clip.id) {
                 Divider()
+                if model.canDiffSelection {
+                    Button("Diff") { model.beginClipDiff() }
+                }
                 Button("Paste in order") { model.pasteSelection(separator: "\n") }
                 Button("Join with comma") { model.pasteSelection(separator: ", ") }
                 Button("Join with…") { model.askJoinSeparator() }
@@ -402,6 +405,9 @@ struct SnippetRowView: View {
             }
             if model.selection.count > 1, model.selection.contains(snippet.id) {
                 Divider()
+                if model.canDiffSelection {
+                    Button("Diff") { model.beginClipDiff() }
+                }
                 Button("Paste in order") { model.pasteSelection(separator: "\n") }
                 Button("Join with comma") { model.pasteSelection(separator: ", ") }
                 Button("Join with…") { model.askJoinSeparator() }
