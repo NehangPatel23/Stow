@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var abbreviations: AbbreviationExpander?
     private var status: StatusItemController?
     private var panel: PanelController?
+    private var selectionChip: SelectionChipController?
     private var launch: LaunchController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -89,6 +90,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Stay menu-bar first after launch; the library opens from "More clips…".
         launch.onFinished = nil
 
+        let selectionChip = SelectionChipController(model: model) { [weak panel] in
+            panel?.isChromeVisible == true
+        }
+
         self.model = model
         self.monitor = monitor
         self.hotkeys = hotkeys
@@ -96,12 +101,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.abbreviations = abbreviations
         self.status = status
         self.panel = panel
+        self.selectionChip = selectionChip
         self.launch = launch
 
         registerHotkey()
         registerSlotHotkeys()
         monitor.start()
         abbreviations.start()
+        selectionChip.start()
         model.notePreviousApp(NSWorkspace.shared.frontmostApplication)
         launch.start()
         NSWorkspace.shared.notificationCenter.addObserver(
@@ -156,6 +163,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         hotkeys?.unregister()
         slotHotkeys?.unregister()
         abbreviations?.stop()
+        selectionChip?.stop()
         monitor?.stop()
     }
 

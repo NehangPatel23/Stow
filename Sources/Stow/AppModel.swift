@@ -1871,6 +1871,32 @@ final class AppModel {
         }
     }
 
+    /// Selection chip: write plain text without opening the panel.
+    func copyPlainTextFromSelectionChip(_ text: String) {
+        guard !ClipText.isBlank(text) else { return }
+        PasteService.writeText(text)
+        notePasteboardWrite?()
+    }
+
+    /// Selection chip: save a snippet without switching the library or focusing Stow.
+    func saveSnippetFromSelectionChip(_ text: String) {
+        guard !ClipText.isBlank(text) else { return }
+        let title = ClipText.previewLine(from: text, limit: 48)
+        let kind = ClipClassifier.classify(
+            text: text,
+            html: nil,
+            hasRTF: false,
+            hasImage: false,
+            fileURLs: []
+        )
+        do {
+            _ = try store.addSnippet(title: title, text: text, kind: kind, collectionID: nil)
+            refresh()
+        } catch {
+            // Chip flashes its own status; keep Stow quiet.
+        }
+    }
+
     func beginEditingSnippet(_ snippet: Snippet? = nil) {
         cancelEditBeforePaste()
         let target = snippet ?? selectedSnippet()

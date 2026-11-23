@@ -235,6 +235,16 @@ struct SettingsView: View {
                     theme: theme
                 )
                 settingsDivider(theme)
+                settingsToggle(
+                    title: "Selection chip",
+                    detail: "After you select text in another app, a small chip offers plain copy and save as snippet. Off until you turn it on; needs Accessibility.",
+                    isOn: Binding(
+                        get: { model.preferences.selectionChipEnabled },
+                        set: { model.preferences.selectionChipEnabled = $0 }
+                    ),
+                    theme: theme
+                )
+                settingsDivider(theme)
                 HStack(alignment: .center, spacing: 14) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Row density")

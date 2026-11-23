@@ -29,6 +29,6 @@
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSAccessibilityUsageDescription</key>
-	<string>Stow uses Accessibility to open with its shortcut and to paste a clip back into the app you were using.</string>
+	<string>Stow uses Accessibility to open with its shortcut, to paste a clip back into the app you were using, and — if you turn on Selection chip — to offer plain copy and save-as-snippet for the text you have selected.</string>
 </dict>
 </plist>

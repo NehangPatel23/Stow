@@ -94,11 +94,11 @@ Ship a trustworthy history before snippets, OCR, or sync. The first version is t
 
 The later wave is in the app: clip transforms, multi-paste, collections, fill-in templates, a pinned compact panel, storage rules, optional abbreviations, a local archive, on-device OCR, opt-in encrypted folder sync, a Universal Clipboard toggle, and Shortcuts actions for latest clip, search, and save as snippet.
 
-Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, inline result, copy bursts, diff two clips, notes and snippet history, per-app and Focus defaults, and skip-our-own-copies. Sixteen of twenty-five.
+Further ideas already in the app include one-shot paste, named slots, the menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, inline result, copy bursts, diff two clips, notes and snippet history, per-app and Focus defaults, selection chip, and skip-our-own-copies. Seventeen of twenty-five.
 
 ## Further ideas
 
-These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Context item is **Selection chip**.
+These wait until history, preview, and paste already feel better than Maccy. Check one only after the first-version boxes above are done. The next open Context item is **Desktop widget**.
 
 <details>
 <summary>Slots (4)</summary>
@@ -136,7 +136,7 @@ These wait until history, preview, and paste already feel better than Maccy. Che
 <summary>Context (3)</summary>
 
 - [x] **Per-app and Focus defaults.** The front app or Focus on/off can choose the collection you see first and whether paste is plain or rich. Named Focus modes are not readable on macOS, so rules use Focus on versus off. Settings → Context defaults.
-- [ ] **Selection chip.** After you select text, a small chip offers plain copy and save-as-snippet. The full panel stays closed.
+- [x] **Selection chip.** After you select text, a small chip offers plain copy and save-as-snippet. The full panel stays closed. Off by default in Settings → Window; needs Accessibility.
 - [ ] **Desktop widget.** A widget shows a handful of snippets. Control Center gets a pause switch next to the menu-bar icon.
 
 </details>

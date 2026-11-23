@@ -128,6 +128,11 @@ final class PanelController: NSObject, NSWindowDelegate {
         }
     }
 
+    /// True when the quick panel or library is on screen (selection chip should stay hidden).
+    var isChromeVisible: Bool {
+        panel.isVisible || library.isVisible
+    }
+
     func toggle() {
         if panel.isVisible {
             closeQuick(returnFocus: true)

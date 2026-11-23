@@ -49,6 +49,8 @@ struct Preferences: Codable, Equatable, Sendable {
     var focusOnDefaults: FocusContextDefaults = FocusContextDefaults()
     /// When Focus is off.
     var focusOffDefaults: FocusContextDefaults = FocusContextDefaults()
+    /// After selecting text in another app, show a small chip for plain copy / save as snippet.
+    var selectionChipEnabled: Bool = false
 
     private static let defaultsKey = "Stow.Preferences"
 
@@ -60,7 +62,7 @@ struct Preferences: Codable, Equatable, Sendable {
         case hotkeyKeyCode, hotkeyCarbonModifiers, hotkeyLabel
         case syncEnabled, syncHistory, syncSnippets, syncFolderBookmark, syncFolderDisplayPath
         case includeUniversalClipboard
-        case perAppContextRules, focusOnDefaults, focusOffDefaults
+        case perAppContextRules, focusOnDefaults, focusOffDefaults, selectionChipEnabled
     }
 
     init() {}
@@ -100,6 +102,7 @@ struct Preferences: Codable, Equatable, Sendable {
         perAppContextRules = try container.decodeIfPresent([PerAppContextRule].self, forKey: .perAppContextRules) ?? []
         focusOnDefaults = try container.decodeIfPresent(FocusContextDefaults.self, forKey: .focusOnDefaults) ?? FocusContextDefaults()
         focusOffDefaults = try container.decodeIfPresent(FocusContextDefaults.self, forKey: .focusOffDefaults) ?? FocusContextDefaults()
+        selectionChipEnabled = try container.decodeIfPresent(Bool.self, forKey: .selectionChipEnabled) ?? false
     }
 
     private static let retentionChoices = [0, 1, 7, 14, 30, 90, 365]
