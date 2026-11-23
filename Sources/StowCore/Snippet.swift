@@ -17,9 +17,22 @@ struct Snippet: Identifiable, Equatable, Sendable {
     var sortOrder: Int = 0
     /// Opt-in typing shortcut. `nil` or empty means this snippet never expands.
     var abbreviation: String? = nil
+    /// Short caption shown under the title. Empty means none.
+    var note: String? = nil
+    /// Body text from before the most recent text edit. Cleared after restore.
+    var previousText: String? = nil
 
     var preview: String {
         ClipText.previewLine(from: text)
+    }
+
+    var hasPreviousText: Bool {
+        guard let previousText else { return false }
+        return !ClipText.isBlank(previousText)
+    }
+
+    var displayNote: String? {
+        SnippetNote.normalize(note)
     }
 
     var templateFields: [TemplateField] {
@@ -28,6 +41,18 @@ struct Snippet: Identifiable, Equatable, Sendable {
 
     var normalizedAbbreviation: String? {
         SnippetAbbreviation.normalize(abbreviation)
+    }
+}
+
+enum SnippetNote {
+    static let maxLength = 120
+
+    /// Trims whitespace. Empty becomes `nil`. Over-length input is rejected by the store.
+    static func normalize(_ raw: String?) -> String? {
+        guard let raw else { return nil }
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        return trimmed
     }
 }
 

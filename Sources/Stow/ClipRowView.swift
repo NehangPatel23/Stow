@@ -302,6 +302,12 @@ struct SnippetRowView: View {
                     Text(snippet.title)
                         .font(.system(size: 13))
                         .lineLimit(1)
+                    if let note = snippet.displayNote {
+                        Text(note)
+                            .font(.system(size: 11))
+                            .foregroundStyle(theme.secondary)
+                            .lineLimit(1)
+                    }
                     Text(snippetSubtitle)
                         .font(.system(size: 11))
                         .foregroundStyle(theme.secondary)
@@ -372,6 +378,12 @@ struct SnippetRowView: View {
             Button("Edit Snippet…") {
                 model.selectOnly(snippet.id)
                 model.beginEditingSnippet(snippet)
+            }
+            if snippet.hasPreviousText {
+                Button("Restore Previous Wording") {
+                    model.selectOnly(snippet.id)
+                    model.restoreSnippetWording(snippet)
+                }
             }
             Menu("Assign to Slot") {
                 ForEach(model.slots) { slot in
@@ -458,22 +470,24 @@ struct SnippetRowView: View {
 struct SnippetEditorView: View {
     var snippet: Snippet
     var theme: Theme
-    var onSave: (String, String, String?) -> Void
+    var onSave: (String, String, String?, String?) -> Void
     var onCancel: () -> Void
 
     @State private var title: String
     @State private var text: String
     @State private var abbreviation: String
+    @State private var note: String
+    @State private var availablePrevious: String?
     @FocusState private var focused: Field?
 
     private enum Field: Hashable {
-        case title, abbreviation, body
+        case title, note, abbreviation, body
     }
 
     init(
         snippet: Snippet,
         theme: Theme,
-        onSave: @escaping (String, String, String?) -> Void,
+        onSave: @escaping (String, String, String?, String?) -> Void,
         onCancel: @escaping () -> Void
     ) {
         self.snippet = snippet
@@ -483,6 +497,8 @@ struct SnippetEditorView: View {
         _title = State(initialValue: snippet.title)
         _text = State(initialValue: snippet.text)
         _abbreviation = State(initialValue: snippet.abbreviation ?? "")
+        _note = State(initialValue: snippet.note ?? "")
+        _availablePrevious = State(initialValue: snippet.hasPreviousText ? snippet.previousText : nil)
     }
 
     var body: some View {
@@ -503,6 +519,20 @@ struct SnippetEditorView: View {
                         .background(theme.chip, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
                 }
 
+                labeledField("Note") {
+                    VStack(alignment: .leading, spacing: 6) {
+                        TextField("Short reminder", text: $note)
+                            .textFieldStyle(.plain)
+                            .focused($focused, equals: .note)
+                            .padding(10)
+                            .background(theme.chip, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        Text("Optional. Shown under the title. Up to \(SnippetNote.maxLength) characters.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(theme.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
                 labeledField("Abbreviation") {
                     VStack(alignment: .leading, spacing: 6) {
                         TextField("addr", text: $abbreviation)
@@ -518,13 +548,29 @@ struct SnippetEditorView: View {
                 }
 
                 labeledField("Snippet") {
-                    TextEditor(text: $text)
-                        .font(.system(size: 13))
-                        .focused($focused, equals: .body)
-                        .scrollContentBackground(.hidden)
-                        .padding(8)
-                        .frame(minHeight: 180)
-                        .background(theme.chip, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    VStack(alignment: .leading, spacing: 6) {
+                        TextEditor(text: $text)
+                            .font(.system(size: 13))
+                            .focused($focused, equals: .body)
+                            .scrollContentBackground(.hidden)
+                            .padding(8)
+                            .frame(minHeight: 140)
+                            .background(theme.chip, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        if let availablePrevious {
+                            HStack(spacing: 8) {
+                                Text("Previous wording is saved.")
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(theme.secondary)
+                                Spacer(minLength: 8)
+                                Button("Use previous wording") {
+                                    text = availablePrevious
+                                    self.availablePrevious = nil
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                            }
+                        }
+                    }
                 }
             }
             .padding(.horizontal, 14)
@@ -534,7 +580,7 @@ struct SnippetEditorView: View {
                 Button("Cancel", action: onCancel)
                     .keyboardShortcut(.cancelAction)
                 Button("Save") {
-                    onSave(title, text, abbreviation)
+                    onSave(title, text, abbreviation, note)
                 }
                 .keyboardShortcut(.defaultAction)
                 .buttonStyle(.borderedProminent)
@@ -543,8 +589,8 @@ struct SnippetEditorView: View {
             }
             .padding(14)
         }
-        .frame(width: 520, height: 460)
-        .onAppear { focused = .abbreviation }
+        .frame(width: 520, height: 540)
+        .onAppear { focused = .title }
     }
 
     private func labeledField<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {

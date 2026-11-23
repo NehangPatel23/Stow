@@ -88,6 +88,8 @@ final class HistoryStore: @unchecked Sendable {
         try addSnippetPinnedColumnIfNeeded()
         try addSnippetCollectionColumnsIfNeeded()
         try addSnippetAbbreviationColumnIfNeeded()
+        try addSnippetNoteColumnIfNeeded()
+        try addSnippetPreviousTextColumnIfNeeded()
         applyDataProtection()
     }
 
@@ -617,10 +619,12 @@ final class HistoryStore: @unchecked Sendable {
         kind: ClipKind,
         createdAt: Date = Date(),
         collectionID: UUID? = nil,
-        abbreviation: String? = nil
+        abbreviation: String? = nil,
+        note: String? = nil
     ) throws -> Snippet {
         try lock.withLock {
             let normalized = try validatedAbbreviation(abbreviation, excludingID: nil)
+            let normalizedNote = try validatedNote(note)
             let sortOrder = try nextSnippetSortOrder(collectionID: collectionID)
             let snippet = Snippet(
                 id: UUID(),
@@ -630,13 +634,15 @@ final class HistoryStore: @unchecked Sendable {
                 kind: kind,
                 collectionID: collectionID,
                 sortOrder: sortOrder,
-                abbreviation: normalized
+                abbreviation: normalized,
+                note: normalizedNote,
+                previousText: nil
             )
             try execute(
                 """
                 INSERT INTO snippets
-                (id, created_at, title, text, kind, pinned, collection_id, sort_order, abbreviation)
-                VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?)
+                (id, created_at, title, text, kind, pinned, collection_id, sort_order, abbreviation, note, previous_text)
+                VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, NULL)
                 """,
                 bindings: { [self] in
                     bind(snippet.id.uuidString, at: 1, on: $0)
@@ -647,6 +653,7 @@ final class HistoryStore: @unchecked Sendable {
                     bindOptional(collectionID?.uuidString, at: 6, on: $0)
                     sqlite3_bind_int($0, 7, Int32(sortOrder))
                     bindOptional(normalized, at: 8, on: $0)
+                    bindOptional(normalizedNote, at: 9, on: $0)
                 }
             )
             return snippet
@@ -657,7 +664,7 @@ final class HistoryStore: @unchecked Sendable {
         try lock.withLock {
             try fetchSnippets(
                 """
-                SELECT id, created_at, title, text, kind, pinned, collection_id, sort_order, abbreviation
+                SELECT \(Self.snippetColumnsSQL)
                 FROM snippets
                 ORDER BY pinned DESC, sort_order ASC, created_at DESC
                 """
@@ -670,7 +677,8 @@ final class HistoryStore: @unchecked Sendable {
         title: String,
         text: String,
         kind: ClipKind,
-        abbreviation: String?
+        abbreviation: String?,
+        note: String? = nil
     ) throws {
         try lock.withLock {
             let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -678,10 +686,27 @@ final class HistoryStore: @unchecked Sendable {
                 throw StoreError.sqlite("A snippet needs a title.")
             }
             let normalized = try validatedAbbreviation(abbreviation, excludingID: id)
+            let normalizedNote = try validatedNote(note)
+            let existing = try fetchSnippets(
+                """
+                SELECT \(Self.snippetColumnsSQL)
+                FROM snippets WHERE id = ?
+                """,
+                bindings: { [self] in bind(id.uuidString, at: 1, on: $0) }
+            ).first
+            guard let existing else {
+                throw StoreError.sqlite("That snippet is gone.")
+            }
+            let previousText: String?
+            if text != existing.text {
+                previousText = existing.text
+            } else {
+                previousText = existing.previousText
+            }
             try execute(
                 """
                 UPDATE snippets
-                SET title = ?, text = ?, kind = ?, abbreviation = ?
+                SET title = ?, text = ?, kind = ?, abbreviation = ?, note = ?, previous_text = ?
                 WHERE id = ?
                 """,
                 bindings: { [self] in
@@ -689,9 +714,55 @@ final class HistoryStore: @unchecked Sendable {
                     bind(text, at: 2, on: $0)
                     bind(kind.rawValue, at: 3, on: $0)
                     bindOptional(normalized, at: 4, on: $0)
-                    bind(id.uuidString, at: 5, on: $0)
+                    bindOptional(normalizedNote, at: 5, on: $0)
+                    bindOptional(previousText, at: 6, on: $0)
+                    bind(id.uuidString, at: 7, on: $0)
                 }
             )
+        }
+    }
+
+    /// Puts the previous body back and clears the stored previous wording.
+    @discardableResult
+    func restoreSnippetText(id: UUID) throws -> Snippet {
+        try lock.withLock {
+            let existing = try fetchSnippets(
+                """
+                SELECT \(Self.snippetColumnsSQL)
+                FROM snippets WHERE id = ?
+                """,
+                bindings: { [self] in bind(id.uuidString, at: 1, on: $0) }
+            ).first
+            guard let existing else {
+                throw StoreError.sqlite("That snippet is gone.")
+            }
+            guard let previous = existing.previousText, !ClipText.isBlank(previous) else {
+                throw StoreError.sqlite("No previous wording to restore.")
+            }
+            let kind = ClipClassifier.classify(
+                text: previous,
+                html: nil,
+                hasRTF: false,
+                hasImage: false,
+                fileURLs: []
+            )
+            try execute(
+                """
+                UPDATE snippets
+                SET text = ?, kind = ?, previous_text = NULL
+                WHERE id = ?
+                """,
+                bindings: { [self] in
+                    bind(previous, at: 1, on: $0)
+                    bind(kind.rawValue, at: 2, on: $0)
+                    bind(id.uuidString, at: 3, on: $0)
+                }
+            )
+            var restored = existing
+            restored.text = previous
+            restored.kind = kind
+            restored.previousText = nil
+            return restored
         }
     }
 
@@ -700,7 +771,7 @@ final class HistoryStore: @unchecked Sendable {
         try lock.withLock {
             let rows = try fetchSnippets(
                 """
-                SELECT id, created_at, title, text, kind, pinned, collection_id, sort_order, abbreviation
+                SELECT \(Self.snippetColumnsSQL)
                 FROM snippets WHERE id = ?
                 """,
                 bindings: { [self] in bind(id.uuidString, at: 1, on: $0) }
@@ -828,8 +899,8 @@ final class HistoryStore: @unchecked Sendable {
                 try execute(
                     """
                     INSERT OR REPLACE INTO snippets
-                    (id, created_at, title, text, kind, pinned, collection_id, sort_order, abbreviation)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    (id, created_at, title, text, kind, pinned, collection_id, sort_order, abbreviation, note, previous_text)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     bindings: { [self] in
                         bind(snippet.id.uuidString, at: 1, on: $0)
@@ -841,6 +912,8 @@ final class HistoryStore: @unchecked Sendable {
                         bindOptional(snippet.collectionID?.uuidString, at: 7, on: $0)
                         sqlite3_bind_int($0, 8, Int32(snippet.sortOrder))
                         bindOptional(snippet.normalizedAbbreviation, at: 9, on: $0)
+                        bindOptional(SnippetNote.normalize(snippet.note), at: 10, on: $0)
+                        bindOptional(snippet.previousText, at: 11, on: $0)
                     }
                 )
             }
@@ -858,6 +931,10 @@ final class HistoryStore: @unchecked Sendable {
     }
 
     // MARK: - SQL
+
+    private static let snippetColumnsSQL = """
+    id, created_at, title, text, kind, pinned, collection_id, sort_order, abbreviation, note, previous_text
+    """
 
     private static let listColumns = """
     id, created_at, pinned, source_app_name, source_bundle_id, kind, preview, text, html,
@@ -979,8 +1056,8 @@ final class HistoryStore: @unchecked Sendable {
         try execute(
             """
             INSERT INTO snippets
-            (id, created_at, title, text, kind, pinned, collection_id, sort_order, abbreviation)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (id, created_at, title, text, kind, pinned, collection_id, sort_order, abbreviation, note, previous_text)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             bindings: { [self] in
                 bind(snippet.id.uuidString, at: 1, on: $0)
@@ -992,6 +1069,8 @@ final class HistoryStore: @unchecked Sendable {
                 bindOptional(snippet.collectionID?.uuidString, at: 7, on: $0)
                 sqlite3_bind_int($0, 8, Int32(snippet.sortOrder))
                 bindOptional(snippet.normalizedAbbreviation, at: 9, on: $0)
+                bindOptional(SnippetNote.normalize(snippet.note), at: 10, on: $0)
+                bindOptional(snippet.previousText, at: 11, on: $0)
             }
         )
     }
@@ -1145,6 +1224,26 @@ final class HistoryStore: @unchecked Sendable {
         let columns = try snippetColumns()
         guard !columns.contains("abbreviation") else { return }
         try execute("ALTER TABLE snippets ADD COLUMN abbreviation TEXT")
+    }
+
+    private func addSnippetNoteColumnIfNeeded() throws {
+        let columns = try snippetColumns()
+        guard !columns.contains("note") else { return }
+        try execute("ALTER TABLE snippets ADD COLUMN note TEXT")
+    }
+
+    private func addSnippetPreviousTextColumnIfNeeded() throws {
+        let columns = try snippetColumns()
+        guard !columns.contains("previous_text") else { return }
+        try execute("ALTER TABLE snippets ADD COLUMN previous_text TEXT")
+    }
+
+    private func validatedNote(_ raw: String?) throws -> String? {
+        guard let normalized = SnippetNote.normalize(raw) else { return nil }
+        guard normalized.count <= SnippetNote.maxLength else {
+            throw StoreError.sqlite("Notes stay under \(SnippetNote.maxLength) characters.")
+        }
+        return normalized
     }
 
     private func validatedAbbreviation(_ raw: String?, excludingID: UUID?) throws -> String? {
@@ -1307,7 +1406,9 @@ final class HistoryStore: @unchecked Sendable {
                     pinned: sqlite3_column_int(statement, 5) != 0,
                     collectionID: collectionID,
                     sortOrder: Int(sqlite3_column_int(statement, 7)),
-                    abbreviation: columnText(statement, 8)
+                    abbreviation: columnText(statement, 8),
+                    note: columnText(statement, 9),
+                    previousText: columnText(statement, 10)
                 )
             )
         }

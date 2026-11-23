@@ -60,6 +60,21 @@ final class SearchQueryTests: XCTestCase {
         XCTAssertFalse(SearchQuery.parse("addr").matches(plain))
     }
 
+    func testSnippetNoteIsSearchable() {
+        let noted = Snippet(
+            id: UUID(),
+            createdAt: Date(),
+            title: "Reply",
+            text: "Thanks for writing in.",
+            kind: .text,
+            note: "weekend coverage"
+        )
+        XCTAssertTrue(SearchQuery.parse("weekend").matches(noted))
+        XCTAssertFalse(SearchQuery.parse("weekend").matches(
+            Snippet(id: UUID(), createdAt: Date(), title: "Reply", text: "Thanks", kind: .text)
+        ))
+    }
+
     func testTermsMatchImageOCRText() {
         let clip = makeClip(
             text: "1024 × 768 · 40 KB",

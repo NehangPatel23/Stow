@@ -28,12 +28,13 @@ struct PanelRootView: View {
             SnippetEditorView(
                 snippet: snippet,
                 theme: theme,
-                onSave: { title, text, abbreviation in
+                onSave: { title, text, abbreviation, note in
                     model.saveEditedSnippet(
                         id: snippet.id,
                         title: title,
                         text: text,
-                        abbreviation: abbreviation
+                        abbreviation: abbreviation,
+                        note: note
                     )
                 },
                 onCancel: { model.cancelSnippetEdit() }

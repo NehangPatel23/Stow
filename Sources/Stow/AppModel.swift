@@ -1776,7 +1776,7 @@ final class AppModel {
         snippetBeingEdited = target
     }
 
-    func saveEditedSnippet(id: UUID, title: String, text: String, abbreviation: String?) {
+    func saveEditedSnippet(id: UUID, title: String, text: String, abbreviation: String?, note: String?) {
         do {
             let kind = ClipClassifier.classify(
                 text: text,
@@ -1790,7 +1790,8 @@ final class AppModel {
                 title: title,
                 text: text,
                 kind: kind,
-                abbreviation: abbreviation
+                abbreviation: abbreviation,
+                note: note
             )
             snippetBeingEdited = nil
             refresh()
@@ -1810,6 +1811,27 @@ final class AppModel {
 
     func cancelSnippetEdit() {
         snippetBeingEdited = nil
+    }
+
+    func restoreSnippetWording(_ snippet: Snippet? = nil) {
+        let target = snippet ?? selectedSnippet()
+        guard let target else {
+            notify("Select a snippet", symbol: "text.badge.plus")
+            return
+        }
+        do {
+            let restored = try store.restoreSnippetText(id: target.id)
+            if snippetBeingEdited?.id == restored.id {
+                snippetBeingEdited = restored
+            }
+            refresh()
+            selectedID = restored.id
+            selection = [restored.id]
+            notify("Restored previous wording", symbol: "arrow.uturn.backward")
+        } catch {
+            let message = (error as? StoreError)?.description ?? "Couldn't restore that wording"
+            notify(message, symbol: "exclamationmark.circle")
+        }
     }
 
     func createCollection() {

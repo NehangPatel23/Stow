@@ -21,7 +21,17 @@ final class LocalArchiveTests: XCTestCase {
             text: "Hi {{name}}",
             kind: .text,
             collectionID: board.id,
-            abbreviation: "hi"
+            abbreviation: "hi",
+            note: "front desk"
+        )
+        let hello = try store.snippets().first { $0.title == "Hello" }!
+        try store.updateSnippet(
+            id: hello.id,
+            title: hello.title,
+            text: "Hello {{name}}",
+            kind: .text,
+            abbreviation: "hi",
+            note: "front desk"
         )
         _ = try store.record(makeDraft(text: "keep-me", createdAt: Date(timeIntervalSince1970: 1_000)))
         try store.setPinned(contentHash: ContentHash.text("keep-me"), pinned: true)
@@ -59,7 +69,10 @@ final class LocalArchiveTests: XCTestCase {
         let snippets = try store.snippets()
         XCTAssertEqual(snippets.count, 1)
         XCTAssertEqual(snippets[0].title, "Hello")
+        XCTAssertEqual(snippets[0].text, "Hello {{name}}")
         XCTAssertEqual(snippets[0].normalizedAbbreviation, "hi")
+        XCTAssertEqual(snippets[0].note, "front desk")
+        XCTAssertEqual(snippets[0].previousText, "Hi {{name}}")
         XCTAssertEqual(try store.collections().map(\.name), ["Support"])
 
         let imageURL = store.url(forRelativePath: "images/\(ContentHash.image(bytes)).png")

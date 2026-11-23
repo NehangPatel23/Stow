@@ -132,6 +132,7 @@ struct SearchQuery: Equatable, Sendable {
             snippet.title,
             snippet.text,
             snippet.normalizedAbbreviation ?? "",
+            snippet.displayNote ?? "",
         ].joined(separator: "\n").lowercased()
         return terms.allSatisfy { searchable.contains($0.lowercased()) }
     }

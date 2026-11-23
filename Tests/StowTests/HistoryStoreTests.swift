@@ -255,6 +255,73 @@ final class HistoryStoreTests: XCTestCase {
         XCTAssertEqual(folded?.lastPastedAt, Date(timeIntervalSince1970: 9_000))
     }
 
+    func testSnippetNoteAndPreviousTextRestore() throws {
+        let snippet = try store.addSnippet(
+            title: "Greeting",
+            text: "Hello there",
+            kind: .text,
+            note: "  first draft  "
+        )
+        XCTAssertEqual(snippet.note, "first draft")
+        XCTAssertEqual(try store.snippets().first?.displayNote, "first draft")
+        XCTAssertNil(try store.snippets().first?.previousText)
+
+        try store.updateSnippet(
+            id: snippet.id,
+            title: "Greeting",
+            text: "Hello again",
+            kind: .text,
+            abbreviation: nil,
+            note: "revised"
+        )
+        var loaded = try store.snippets().first
+        XCTAssertEqual(loaded?.text, "Hello again")
+        XCTAssertEqual(loaded?.previousText, "Hello there")
+        XCTAssertEqual(loaded?.note, "revised")
+
+        try store.updateSnippet(
+            id: snippet.id,
+            title: "Greeting v2",
+            text: "Hello again",
+            kind: .text,
+            abbreviation: nil,
+            note: "title only"
+        )
+        loaded = try store.snippets().first
+        XCTAssertEqual(loaded?.title, "Greeting v2")
+        XCTAssertEqual(loaded?.previousText, "Hello there")
+        XCTAssertEqual(loaded?.note, "title only")
+
+        try store.updateSnippet(
+            id: snippet.id,
+            title: "Greeting v2",
+            text: "Final copy",
+            kind: .text,
+            abbreviation: nil,
+            note: "title only"
+        )
+        loaded = try store.snippets().first
+        XCTAssertEqual(loaded?.previousText, "Hello again")
+
+        let restored = try store.restoreSnippetText(id: snippet.id)
+        XCTAssertEqual(restored.text, "Hello again")
+        XCTAssertNil(restored.previousText)
+        XCTAssertEqual(try store.snippets().first?.text, "Hello again")
+        XCTAssertNil(try store.snippets().first?.previousText)
+
+        XCTAssertThrowsError(try store.restoreSnippetText(id: snippet.id))
+        XCTAssertThrowsError(
+            try store.updateSnippet(
+                id: snippet.id,
+                title: "Greeting",
+                text: "x",
+                kind: .text,
+                abbreviation: nil,
+                note: String(repeating: "n", count: SnippetNote.maxLength + 1)
+            )
+        )
+    }
+
     func testStorageByteCountAndOrphanReap() throws {
         let before = store.storageByteCount()
         XCTAssertGreaterThan(before, 0)

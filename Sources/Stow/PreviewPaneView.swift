@@ -312,6 +312,11 @@ struct PreviewPaneView: View {
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(theme.accent)
             }
+            if let note = snippet.displayNote, !draftActive {
+                Text(note)
+                    .font(.system(size: 12))
+                    .foregroundStyle(theme.secondary)
+            }
             if let abbr = snippet.normalizedAbbreviation, !draftActive {
                 Text("Abbreviation \(abbr) · type it, then space or return")
                     .font(.system(size: 11, weight: .medium))

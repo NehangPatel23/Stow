@@ -336,6 +336,8 @@ private struct ArchiveSnippet: Codable {
     var collectionID: UUID?
     var sortOrder: Int
     var abbreviation: String?
+    var note: String?
+    var previousText: String?
 
     init(snippet: Snippet) {
         id = snippet.id
@@ -347,6 +349,8 @@ private struct ArchiveSnippet: Codable {
         collectionID = snippet.collectionID
         sortOrder = snippet.sortOrder
         abbreviation = snippet.normalizedAbbreviation
+        note = SnippetNote.normalize(snippet.note)
+        previousText = snippet.previousText
     }
 
     func makeSnippet() throws -> Snippet {
@@ -362,7 +366,9 @@ private struct ArchiveSnippet: Codable {
             pinned: pinned,
             collectionID: collectionID,
             sortOrder: sortOrder,
-            abbreviation: abbreviation
+            abbreviation: abbreviation,
+            note: SnippetNote.normalize(note),
+            previousText: previousText
         )
     }
 }
