@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsPage: View {
     @Bindable var model: AppModel
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let theme = Theme(scheme: scheme)
@@ -22,10 +23,10 @@ struct SettingsPage: View {
                     model.performUndo()
                 }
                 .padding(.top, 64)
-                .transition(.move(edge: .top).combined(with: .opacity))
+                .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
             }
         }
-        .animation(.snappy(duration: 0.22), value: model.notice?.id)
+        .animation(reduceMotion ? nil : .snappy(duration: 0.22), value: model.notice?.id)
     }
 
     private func settingsChrome(_ theme: Theme) -> some View {
@@ -42,6 +43,7 @@ struct SettingsPage: View {
             .buttonStyle(.plain)
             .keyboardShortcut(.cancelAction)
             .help("Back")
+            .accessibilityLabel("Back")
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("Settings")
@@ -87,16 +89,18 @@ struct SettingsView: View {
     @Bindable var model: AppModel
     @Environment(\.colorScheme) private var scheme
     @State private var ignoredType = ""
+    @State private var ignorePatternDraft = ""
     @State private var recording = false
     @State private var syncPassphrase = ""
     @State private var showSyncPassphrase = false
     @State private var passphraseSaved = SyncKeychain.hasPassphrase
     @FocusState private var ignoredFocused: Bool
+    @FocusState private var ignorePatternFocused: Bool
 
-    private var densityBinding: Binding<Bool> {
+    private var densityBinding: Binding<RowDensity> {
         Binding(
-            get: { model.preferences.compactRows },
-            set: { model.preferences.compactRows = $0 }
+            get: { model.preferences.rowDensity },
+            set: { model.preferences.rowDensity = $0 }
         )
     }
 
@@ -250,19 +254,21 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Row density")
                             .font(.system(size: 13, weight: .medium))
-                        Text("Comfortable leaves more air. Compact fits more clips.")
+                        Text(model.preferences.rowDensity.detail)
                             .font(.system(size: 11))
                             .foregroundStyle(theme.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     Spacer(minLength: 12)
                     Picker("Row density", selection: densityBinding) {
-                        Text("Comfortable").tag(false)
-                        Text("Compact").tag(true)
+                        ForEach(RowDensity.allCases) { density in
+                            Text(density.title).tag(density)
+                        }
                     }
                     .pickerStyle(.segmented)
                     .labelsHidden()
-                    .frame(maxWidth: 220)
+                    .frame(maxWidth: 280)
+                    .accessibilityLabel("Row density")
                 }
                 .padding(.vertical, 14)
             }
@@ -965,7 +971,7 @@ struct SettingsView: View {
     private func trustSection(_ theme: Theme) -> some View {
         settingsSection(
             title: "Trust",
-            detail: "Touch ID after idle, and short-lived codes that leave history on their own.",
+            detail: "Touch ID after idle, short-lived codes, ignore patterns, and a cap on huge copies.",
             symbol: "lock.shield",
             theme: theme
         ) {
@@ -1053,8 +1059,131 @@ struct SettingsView: View {
                     }
                     .padding(.vertical, 14)
                 }
+                settingsDivider(theme)
+                VStack(alignment: .leading, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Ignore patterns")
+                            .font(.system(size: 13, weight: .medium))
+                        Text("Matching copies are never stored. Use plain text, *contains*, or /regex/.")
+                            .font(.system(size: 11))
+                            .foregroundStyle(theme.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    if model.preferences.ignorePatterns.isEmpty {
+                        emptyHint("No patterns yet.", theme: theme)
+                    } else {
+                        FlowWrap(spacing: 6) {
+                            ForEach(model.preferences.ignorePatterns, id: \.self) { pattern in
+                                HStack(spacing: 6) {
+                                    Text(pattern)
+                                        .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                    Button {
+                                        model.removeIgnorePattern(pattern)
+                                    } label: {
+                                        Image(systemName: "xmark")
+                                            .font(.system(size: 8, weight: .bold))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .foregroundStyle(theme.accent)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(Capsule().fill(theme.chipActive))
+                            }
+                        }
+                    }
+                    HStack(spacing: 8) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(theme.secondary)
+                        TextField("password or /utm_\\w+/", text: $ignorePatternDraft)
+                            .textFieldStyle(.plain)
+                            .focused($ignorePatternFocused)
+                            .onSubmit(addIgnorePattern)
+                        Button("Add") {
+                            addIgnorePattern()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                        .disabled(IgnorePatternPolicy.normalize(ignorePatternDraft) == nil)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 11)
+                    .background(theme.chip, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .strokeBorder(ignorePatternFocused ? theme.accent.opacity(0.35) : theme.separator)
+                    )
+                }
+                .padding(.vertical, 14)
+                settingsDivider(theme)
+                settingsToggle(
+                    title: "Limit large copies",
+                    detail: "Huge images and files stay off disk as a reference, or are skipped entirely.",
+                    isOn: Binding(
+                        get: { model.preferences.largeCopyCapEnabled },
+                        set: { model.preferences.largeCopyCapEnabled = $0 }
+                    ),
+                    theme: theme
+                )
+                if model.preferences.largeCopyCapEnabled {
+                    settingsDivider(theme)
+                    HStack(alignment: .center, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Larger than")
+                                .font(.system(size: 13, weight: .medium))
+                            Text("Compared to what Stow would store, including referenced file sizes.")
+                                .font(.system(size: 11))
+                                .foregroundStyle(theme.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 12)
+                        Picker("Larger than", selection: largeCopyMaxBytesBinding) {
+                            ForEach(LargeCopyPolicy.maxByteChoices, id: \.self) { bytes in
+                                Text(LargeCopyPolicy.maxBytesTitle(bytes)).tag(bytes)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(maxWidth: 140)
+                    }
+                    .padding(.vertical, 14)
+                    settingsDivider(theme)
+                    HStack(alignment: .center, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("When over the limit")
+                                .font(.system(size: 13, weight: .medium))
+                            Text(model.preferences.largeCopyMode.detail)
+                                .font(.system(size: 11))
+                                .foregroundStyle(theme.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 12)
+                        Picker("When over the limit", selection: largeCopyModeBinding) {
+                            ForEach(LargeCopyMode.allCases) { mode in
+                                Text(mode.title).tag(mode)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(maxWidth: 180)
+                    }
+                    .padding(.vertical, 14)
+                }
             }
         }
+    }
+
+    private var largeCopyMaxBytesBinding: Binding<Int> {
+        Binding(
+            get: { model.preferences.largeCopyMaxBytes },
+            set: { model.preferences.largeCopyMaxBytes = LargeCopyPolicy.normalizedMaxBytes($0) }
+        )
+    }
+
+    private var largeCopyModeBinding: Binding<LargeCopyMode> {
+        Binding(
+            get: { model.preferences.largeCopyMode },
+            set: { model.preferences.largeCopyMode = $0 }
+        )
     }
 
     private var shortCodePatternBinding: Binding<ShortCodePattern> {
@@ -1219,35 +1348,43 @@ struct SettingsView: View {
     private func accessSection(_ theme: Theme) -> some View {
         settingsSection(
             title: "Accessibility",
-            detail: "Needed so Option-Return can paste into the previous app.",
+            detail: "Paste permission, Reduce Motion, larger rows, and remembering which display the panel used.",
             symbol: "hand.raised",
             theme: theme
         ) {
-            Button {
-                AccessibilityClient.openSettings()
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(theme.accent)
-                        .frame(width: 32, height: 32)
-                        .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(theme.chipActive))
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Open Accessibility Settings")
-                            .font(.system(size: 13, weight: .medium))
-                        Text("System Settings → Privacy & Security")
-                            .font(.system(size: 11))
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Reduce Motion in System Settings skips panel fade and list animations. Large rows live under Window → Row density. The quick panel reopens on the display where you left it.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(theme.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button {
+                    AccessibilityClient.openSettings()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(theme.accent)
+                            .frame(width: 32, height: 32)
+                            .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(theme.chipActive))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Open Accessibility Settings")
+                                .font(.system(size: 13, weight: .medium))
+                            Text("System Settings → Privacy & Security")
+                                .font(.system(size: 11))
+                                .foregroundStyle(theme.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "arrow.up.right")
+                            .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(theme.secondary)
                     }
-                    Spacer()
-                    Image(systemName: "arrow.up.right")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(theme.secondary)
+                    .padding(4)
+                    .contentShape(Rectangle())
                 }
-                .padding(4)
-                .contentShape(Rectangle())
+                .buttonStyle(.plain)
+                .accessibilityLabel("Open Accessibility Settings")
+                .accessibilityHint("Opens System Settings Privacy and Security")
             }
-            .buttonStyle(.plain)
         }
     }
 
@@ -1338,6 +1475,11 @@ struct SettingsView: View {
             .foregroundStyle(theme.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.vertical, 8)
+    }
+
+    private func addIgnorePattern() {
+        model.addIgnorePattern(ignorePatternDraft)
+        ignorePatternDraft = ""
     }
 
     private func addIgnoredType() {

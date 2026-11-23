@@ -5,6 +5,7 @@ struct PanelRootView: View {
     @Bindable var model: AppModel
     var surface: StowSurface = .library
     @Environment(\.colorScheme) private var scheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @FocusState private var searchFocused: Bool
 
     var body: some View {
@@ -16,7 +17,7 @@ struct PanelRootView: View {
                 libraryContent(theme)
             }
         }
-        .animation(.snappy(duration: 0.22), value: model.notice?.id)
+        .animation(reduceMotion ? nil : .snappy(duration: 0.22), value: model.notice?.id)
         .sheet(item: $model.clipBeingEdited) { clip in
             ClipEditorView(clip: clip) { attributed in
                 model.saveEditedClip(clip, attributed: attributed)
@@ -67,7 +68,7 @@ struct PanelRootView: View {
                     model.performUndo()
                 }
                     .padding(.top, 10)
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .opacity))
             }
     }
 
@@ -116,8 +117,10 @@ struct PanelRootView: View {
         .onChange(of: model.undo) { _, _ in relayout() }
         .onChange(of: model.showPermission) { _, _ in relayout() }
         .onChange(of: model.preferences.showShortcutFooter) { _, _ in relayout() }
-        .animation(.snappy(duration: 0.22), value: model.selectedID)
-        .animation(.snappy(duration: 0.22), value: model.library)
+        .animation(reduceMotion ? nil : .snappy(duration: 0.22), value: model.selectedID)
+        .animation(reduceMotion ? nil : .snappy(duration: 0.22), value: model.library)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(surface == .quickPick ? "Stow quick panel" : "Stow library")
     }
 
     private func relayout() {
@@ -145,6 +148,7 @@ struct PanelRootView: View {
                         .padding(.vertical, 3)
                         .background(Capsule().fill(theme.chip))
                         .help("Screen sharing or recording is active")
+                        .accessibilityLabel("Titles only while presenting")
                 }
                 Spacer()
                 Picker("Library", selection: $model.library) {
@@ -155,6 +159,8 @@ struct PanelRootView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .fixedSize(horizontal: true, vertical: false)
+                .accessibilityLabel("Library")
+                .accessibilityValue(model.library.title)
                 Button {
                     model.preferences.keepPanelOpen.toggle()
                 } label: {
@@ -166,6 +172,7 @@ struct PanelRootView: View {
                 }
                 .buttonStyle(.plain)
                 .help(model.preferences.keepPanelOpen ? "Panel stays open while pasting" : "Keep panel open while pasting")
+                .accessibilityLabel(model.preferences.keepPanelOpen ? "Unpin panel" : "Keep panel open while pasting")
                 panelMenu(theme)
             }
             .padding(.leading, surface == .quickPick ? 54 : 0)
@@ -173,6 +180,7 @@ struct PanelRootView: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(theme.secondary)
+                    .accessibilityHidden(true)
                 TextField(
                     model.library == .snippets
                         ? "Search snippets, or board:Support"
@@ -181,6 +189,7 @@ struct PanelRootView: View {
                 )
                     .textFieldStyle(.plain)
                     .focused($searchFocused)
+                    .accessibilityLabel(model.library == .snippets ? "Search snippets" : "Search history")
                 if !model.query.isEmpty {
                     Button {
                         model.query = ""
@@ -190,6 +199,7 @@ struct PanelRootView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Clear search")
+                    .accessibilityLabel("Clear search")
                 }
             }
             .padding(.horizontal, 10)
@@ -215,7 +225,9 @@ struct PanelRootView: View {
             Button("Pause for an hour") { model.pauseForOneHour() }
             Button("Ignore next copy") { model.ignoreNextCopy() }
             if let skipped = model.skipped {
-                Button("Keep skipped \(skipped.reason.title)") { model.keepSkipped() }
+                if skipped.reason.allowsKeep {
+                    Button("Keep skipped \(skipped.reason.title)") { model.keepSkipped() }
+                }
                 Button("Discard skipped copy") { model.discardSkipped() }
             }
             Divider()
@@ -235,6 +247,8 @@ struct PanelRootView: View {
         .menuIndicator(.hidden)
         .frame(width: 28)
         .help("Pause, clear, settings")
+        .accessibilityLabel("More actions")
+        .accessibilityHint("Pause, clear history, settings, and quit")
     }
 
     private func chips(_ theme: Theme) -> some View {
@@ -302,6 +316,7 @@ struct PanelRootView: View {
             HStack(spacing: 4) {
                 Image(systemName: symbol)
                     .font(.system(size: 9, weight: .semibold))
+                    .accessibilityHidden(true)
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
             }
@@ -311,6 +326,8 @@ struct PanelRootView: View {
             .background(Capsule().fill(active ? theme.chipActive : theme.chip))
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityAddTraits(active ? .isSelected : [])
     }
 
     private func listColumn(_ theme: Theme) -> some View {
@@ -438,6 +455,7 @@ struct PanelRootView: View {
                     }
                     .buttonStyle(.plain)
                     .help("Hide shortcut footer")
+                    .accessibilityLabel("Hide shortcut footer")
                 }
             } else {
                 HStack {
@@ -446,6 +464,7 @@ struct PanelRootView: View {
                         .buttonStyle(.plain)
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(theme.secondary)
+                        .accessibilityLabel("Show shortcuts")
                 }
             }
         }
@@ -453,6 +472,8 @@ struct PanelRootView: View {
         .padding(.vertical, 10)
         .background(theme.card.opacity(0.55))
         .overlay(alignment: .top) { Rectangle().fill(theme.separator).frame(height: 1) }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Shortcuts")
     }
 
     private func footerKey(_ shortcut: String, _ name: String, _ theme: Theme) -> some View {
@@ -466,5 +487,7 @@ struct PanelRootView: View {
                 .font(.system(size: 11))
         }
         .foregroundStyle(theme.secondary)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(name), \(shortcut)")
     }
 }

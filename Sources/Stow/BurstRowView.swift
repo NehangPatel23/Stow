@@ -21,8 +21,8 @@ struct BurstRowView: View {
                 typeMark
                 VStack(alignment: .leading, spacing: 2) {
                     Text(model.isPresenting ? burst.newest.kind.title : burst.newest.preview)
-                        .font(.system(size: 13))
-                        .lineLimit(1)
+                        .font(.system(size: model.preferences.rowDensity.titleFontSize))
+                        .lineLimit(model.preferences.rowDensity.titleLineLimit)
                     HStack(spacing: 4) {
                         Text(burst.sourceAppName)
                         Text("·")
@@ -38,8 +38,9 @@ struct BurstRowView: View {
                             }
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(expanded ? "Hide session items" : "Show \(burst.count) session items")
                     }
-                    .font(.system(size: 11))
+                    .font(.system(size: model.preferences.rowDensity.metaFontSize))
                     .foregroundStyle(theme.secondary)
                     .lineLimit(1)
                 }
@@ -68,7 +69,7 @@ struct BurstRowView: View {
             }
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, model.preferences.compactRows ? 5 : 8)
+        .padding(.vertical, model.preferences.rowDensity.verticalPadding)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(isSelected && !expanded ? theme.highlight : (hovered && !expanded ? theme.chip.opacity(0.85) : Color.clear))
@@ -78,7 +79,7 @@ struct BurstRowView: View {
                 RoundedRectangle(cornerRadius: 1)
                     .fill(theme.accent)
                     .frame(width: 2)
-                    .padding(.vertical, model.preferences.compactRows ? 5 : 8)
+                    .padding(.vertical, model.preferences.rowDensity.verticalPadding)
                     .padding(.leading, 3)
             }
         }
@@ -95,7 +96,14 @@ struct BurstRowView: View {
         .accessibilityLabel(
             "Copy session, \(burst.count) items from \(burst.sourceAppName), \(burst.newest.preview)"
         )
+        .accessibilityHint("Double-tap to paste the session")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityAction(named: "Paste session") {
+            model.pasteBurst(burst)
+        }
+        .accessibilityAction(named: expanded ? "Collapse" : "Expand") {
+            model.toggleExpandedBurst(burst.id)
+        }
     }
 
     private var burstMenu: some View {

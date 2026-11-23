@@ -210,6 +210,9 @@ struct PreviewPaneView: View {
             parts.append("\(width) × \(height)")
         }
         parts.append(ByteFormat.string(for: clip.byteSize))
+        if clip.imageRelativePath == nil, clip.thumbRelativePath != nil {
+            parts.append("Reference only")
+        }
         return parts.joined(separator: " · ")
     }
 
@@ -440,6 +443,8 @@ struct PreviewPaneView: View {
                         }
                         .buttonStyle(.plain)
                         .help("Paste the selection as a Markdown link to the page URL")
+                        .accessibilityLabel(PageURL.title)
+                        .accessibilityHint("Paste the selection as a Markdown link to the page URL")
                     }
                     if let obvious {
                         Button {
@@ -453,6 +458,7 @@ struct PreviewPaneView: View {
                         }
                         .buttonStyle(.plain)
                         .help(obvious.title)
+                        .accessibilityLabel(obvious.title)
                     }
                     if showSplit {
                         Button {
@@ -466,6 +472,8 @@ struct PreviewPaneView: View {
                         }
                         .buttonStyle(.plain)
                         .help("Turn each line into its own history clip. The original stays as it is.")
+                        .accessibilityLabel(ClipLineOps.title)
+                        .accessibilityHint("Turn each line into its own history clip")
                     }
                     ForEach(lineTools) { tool in
                         Button {
@@ -479,6 +487,8 @@ struct PreviewPaneView: View {
                         }
                         .buttonStyle(.plain)
                         .help("Copy \(tool.title). The saved clip stays as it is.")
+                        .accessibilityLabel(tool.title)
+                        .accessibilityHint("Copy \(tool.title). The saved clip stays as it is.")
                     }
                     ForEach(actions) { transform in
                         Button {
@@ -492,6 +502,8 @@ struct PreviewPaneView: View {
                         }
                         .buttonStyle(.plain)
                         .help("Copy \(transform.title). The saved clip stays as it is.")
+                        .accessibilityLabel(transform.title)
+                        .accessibilityHint("Copy \(transform.title). The saved clip stays as it is.")
                     }
                 }
             }

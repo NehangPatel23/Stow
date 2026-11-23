@@ -85,9 +85,14 @@ final class PanelController: NSObject, NSWindowDelegate {
         library.makeKeyAndOrderFront(nil)
         installKeyMonitor()
         guard fadingIn else { return }
-        await NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.22
-            library.animator().alphaValue = 1
+        let duration = MotionPolicy.duration(0.22)
+        if duration == 0 {
+            library.alphaValue = 1
+        } else {
+            await NSAnimationContext.runAnimationGroup { context in
+                context.duration = duration
+                library.animator().alphaValue = 1
+            }
         }
     }
 
@@ -163,20 +168,29 @@ final class PanelController: NSObject, NSWindowDelegate {
         ignorePanelResignUntil = Date().addingTimeInterval(0.45)
         model.notePreviousApp(NSWorkspace.shared.frontmostApplication)
         model.prepareForOpen()
-        resizeQuick(animated: false)
-        positionUnderCursor()
+        resizeQuick(animated: false, preferSavedDisplay: true)
+        positionQuickPanel()
         panel.alphaValue = 0
         NSApp.activate()
         panel.makeKeyAndOrderFront(nil)
         installKeyMonitor()
-        await NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.16
-            panel.animator().alphaValue = 1
+        let duration = MotionPolicy.duration(0.16)
+        if duration == 0 {
+            panel.alphaValue = 1
+        } else {
+            await NSAnimationContext.runAnimationGroup { context in
+                context.duration = duration
+                panel.animator().alphaValue = 1
+            }
         }
+        rememberQuickPanelPlacement()
     }
 
     func closeQuick(returnFocus: Bool) {
         let wasVisible = panel.isVisible
+        if wasVisible {
+            rememberQuickPanelPlacement()
+        }
         panel.orderOut(nil)
         if library.isVisible == false {
             removeKeyMonitor()
@@ -299,8 +313,8 @@ final class PanelController: NSObject, NSWindowDelegate {
         return host
     }
 
-    private func resizeQuick(animated: Bool) {
-        guard let screen = screenForPanel() else { return }
+    private func resizeQuick(animated: Bool, preferSavedDisplay: Bool = false) {
+        guard let screen = screenForPanel(preferSavedDisplay: preferSavedDisplay) else { return }
         let size = PanelMetrics.quickSize(for: model, screenHeight: screen.visibleFrame.height)
         var frame = panel.frame
         let heightDelta = size.height - frame.height
@@ -309,7 +323,7 @@ final class PanelController: NSObject, NSWindowDelegate {
             frame.origin.y -= heightDelta
         }
         frame = clamped(frame, on: screen)
-        if animated && panel.isVisible {
+        if animated && panel.isVisible && !MotionPolicy.reduceMotion {
             panel.animator().setFrame(frame, display: true)
         } else {
             panel.setFrame(frame, display: panel.isVisible)
@@ -440,19 +454,44 @@ final class PanelController: NSObject, NSWindowDelegate {
         return false
     }
 
-    private func positionUnderCursor() {
+    private func positionQuickPanel() {
         let mouse = NSEvent.mouseLocation
-        let screen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main
+        let mouseScreen = NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main
+        let screen = PanelDisplayMemory.preferredScreen(
+            savedDisplayID: model.preferences.lastQuickPanelDisplayID,
+            fallback: mouseScreen
+        )
         guard let screen else { return }
         var frame = panel.frame
-        frame.origin.x = mouse.x - frame.width / 2
-        frame.origin.y = mouse.y - frame.height - 12
+        if PanelDisplayMemory.screen(forDisplayID: model.preferences.lastQuickPanelDisplayID) != nil,
+           let x = model.preferences.lastQuickPanelOriginX,
+           let y = model.preferences.lastQuickPanelOriginY {
+            frame.origin = NSPoint(x: x, y: y)
+        } else {
+            frame.origin.x = mouse.x - frame.width / 2
+            frame.origin.y = mouse.y - frame.height - 12
+        }
         panel.setFrame(clamped(frame, on: screen), display: false)
     }
 
-    private func screenForPanel() -> NSScreen? {
+    private func rememberQuickPanelPlacement() {
+        if let screen = panel.screen, let id = PanelDisplayMemory.displayID(for: screen) {
+            model.preferences.lastQuickPanelDisplayID = id
+        }
+        model.preferences.lastQuickPanelOriginX = panel.frame.origin.x
+        model.preferences.lastQuickPanelOriginY = panel.frame.origin.y
+    }
+
+    private func screenForPanel(preferSavedDisplay: Bool = false) -> NSScreen? {
         let mouse = NSEvent.mouseLocation
-        return NSScreen.screens.first { $0.frame.contains(mouse) } ?? panel.screen ?? NSScreen.main
+        let mouseScreen = NSScreen.screens.first { $0.frame.contains(mouse) }
+        if preferSavedDisplay {
+            return PanelDisplayMemory.preferredScreen(
+                savedDisplayID: model.preferences.lastQuickPanelDisplayID,
+                fallback: mouseScreen ?? panel.screen ?? NSScreen.main
+            )
+        }
+        return panel.screen ?? mouseScreen ?? NSScreen.main
     }
 
     private func clamped(_ frame: NSRect, on screen: NSScreen) -> NSRect {

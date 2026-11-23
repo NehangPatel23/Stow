@@ -16,8 +16,8 @@ struct ClipRowView: View {
                 typeMark
                 VStack(alignment: .leading, spacing: 2) {
                     highlighted(rowTitle)
-                        .font(.system(size: 13))
-                        .lineLimit(1)
+                        .font(.system(size: model.preferences.rowDensity.titleFontSize))
+                        .lineLimit(model.preferences.rowDensity.titleLineLimit)
                     HStack(spacing: 4) {
                         Text(clip.sourceAppName)
                         Text("·")
@@ -38,9 +38,10 @@ struct ClipRowView: View {
                                 }
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel(expanded ? "Hide duplicate copies" : "Show \(clip.copyCount) copies")
                         }
                     }
-                    .font(.system(size: 11))
+                    .font(.system(size: model.preferences.rowDensity.metaFontSize))
                     .foregroundStyle(theme.secondary)
                     .lineLimit(1)
                 }
@@ -91,7 +92,7 @@ struct ClipRowView: View {
             }
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, model.preferences.compactRows ? 5 : 8)
+        .padding(.vertical, model.preferences.rowDensity.verticalPadding)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(isSelected ? theme.highlight : (hovered ? theme.chip.opacity(0.85) : Color.clear))
@@ -101,7 +102,7 @@ struct ClipRowView: View {
                 RoundedRectangle(cornerRadius: 1)
                     .fill(theme.accent)
                     .frame(width: 2)
-                    .padding(.vertical, model.preferences.compactRows ? 5 : 8)
+                    .padding(.vertical, model.preferences.rowDensity.verticalPadding)
                     .padding(.leading, 3)
             }
         }
@@ -120,8 +121,24 @@ struct ClipRowView: View {
         }
         .contextMenu { clipMenu }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(clip.kind.title), \(rowTitle), \(clip.sourceAppName)")
+        .accessibilityLabel(clipAccessibilityLabel)
+        .accessibilityHint("Double-tap to paste")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityAction(named: "Paste") {
+            model.selectOnly(clip.id)
+            model.pasteSelected(plain: false)
+        }
+        .accessibilityAction(named: "Copy") {
+            model.selectOnly(clip.id)
+            model.copySelected()
+        }
+    }
+
+    private var clipAccessibilityLabel: String {
+        var parts = [clip.kind.title, rowTitle, clip.sourceAppName]
+        if clip.pinned { parts.append("pinned") }
+        if clip.copyCount > 1 { parts.append("\(clip.copyCount) copies") }
+        return parts.joined(separator: ", ")
     }
 
     private var clipMenu: some View {
@@ -306,16 +323,16 @@ struct SnippetRowView: View {
                     .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(theme.chip))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(snippet.title)
-                        .font(.system(size: 13))
-                        .lineLimit(1)
+                        .font(.system(size: model.preferences.rowDensity.titleFontSize))
+                        .lineLimit(model.preferences.rowDensity.titleLineLimit)
                     if !model.isPresenting, let note = snippet.displayNote {
                         Text(note)
-                            .font(.system(size: 11))
+                            .font(.system(size: model.preferences.rowDensity.metaFontSize))
                             .foregroundStyle(theme.secondary)
-                            .lineLimit(1)
+                            .lineLimit(model.preferences.rowDensity == .large ? 2 : 1)
                     }
                     Text(snippetSubtitle)
-                        .font(.system(size: 11))
+                        .font(.system(size: model.preferences.rowDensity.metaFontSize))
                         .foregroundStyle(theme.secondary)
                 }
                 Spacer()
@@ -344,7 +361,7 @@ struct SnippetRowView: View {
             }
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, model.preferences.compactRows ? 5 : 8)
+        .padding(.vertical, model.preferences.rowDensity.verticalPadding)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
                 .fill(isSelected ? theme.highlight : (hovered ? theme.chip.opacity(0.85) : Color.clear))
@@ -353,6 +370,14 @@ struct SnippetRowView: View {
         .onHover { hovered = $0 }
         .onTapGesture { model.click(snippet.id) }
         .onTapGesture(count: 2) {
+            model.selectOnly(snippet.id)
+            model.pasteSelected(plain: false)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(snippetAccessibilityLabel)
+        .accessibilityHint("Double-tap to paste")
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityAction(named: "Paste") {
             model.selectOnly(snippet.id)
             model.pasteSelected(plain: false)
         }
@@ -449,6 +474,15 @@ struct SnippetRowView: View {
             }
             return true
         }
+    }
+
+    private var snippetAccessibilityLabel: String {
+        var parts = ["Snippet", snippet.title]
+        if snippet.pinned { parts.append("pinned") }
+        if !snippet.templateFields.isEmpty { parts.append("fill-in template") }
+        if let abbr = snippet.normalizedAbbreviation { parts.append("abbreviation \(abbr)") }
+        if let note = snippet.displayNote, !model.isPresenting { parts.append(note) }
+        return parts.joined(separator: ", ")
     }
 
     private var snippetSubtitle: String {

@@ -76,7 +76,9 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         }
         menu.addItem(item("Ignore next copy", action: #selector(ignoreNext)))
         if let skipped = model.skipped {
-            menu.addItem(item("Keep skipped \(skipped.reason.title)", action: #selector(keepSkipped)))
+            if skipped.reason.allowsKeep {
+                menu.addItem(item("Keep skipped \(skipped.reason.title)", action: #selector(keepSkipped)))
+            }
             menu.addItem(item("Discard skipped copy", action: #selector(discardSkipped)))
         }
         if model.undo != nil {

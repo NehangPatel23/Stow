@@ -74,7 +74,7 @@ enum PanelMetrics {
     static func quickBand(for model: AppModel) -> CGFloat {
         let count = itemCount(model)
         let rows = CGFloat(max(count, 1))
-        let rowHeight: CGFloat = model.preferences.compactRows ? 52 : 68
+        let rowHeight = model.preferences.rowDensity.listRowHeight
         let natural = rows * rowHeight + (model.selectedID == nil ? 12 : 36)
         return min(max(natural, 188), 340)
     }

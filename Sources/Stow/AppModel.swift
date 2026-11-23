@@ -14,9 +14,35 @@ struct ArchiveExportPickerState: Identifiable, Equatable {
     var clips: [Clip]
 }
 
+enum CaptureSkipReason: Equatable, Sendable {
+    case secret(SecretDetector.Reason)
+    /// Matched user ignore pattern; never offered as Keep.
+    case ignorePattern(String)
+    /// Over the large-copy cap in Skip mode; Keep stores the full draft.
+    case tooLarge(Int)
+
+    var title: String {
+        switch self {
+        case .secret(let reason):
+            return reason.title
+        case .ignorePattern:
+            return "ignore pattern"
+        case .tooLarge:
+            return "large copy"
+        }
+    }
+
+    var allowsKeep: Bool {
+        switch self {
+        case .secret, .tooLarge: true
+        case .ignorePattern: false
+        }
+    }
+}
+
 struct SkippedCapture: Equatable {
     var draft: ClipDraft
-    var reason: SecretDetector.Reason
+    var reason: CaptureSkipReason
 }
 
 struct SnippetSection: Identifiable, Equatable {
@@ -69,7 +95,7 @@ final class AppModel {
         didSet {
             let hotkeyChanged = oldValue.hotkeyKeyCode != preferences.hotkeyKeyCode
                 || oldValue.hotkeyCarbonModifiers != preferences.hotkeyCarbonModifiers
-            let layoutChanged = oldValue.compactRows != preferences.compactRows
+            let layoutChanged = oldValue.rowDensity != preferences.rowDensity
                 || oldValue.showShortcutFooter != preferences.showShortcutFooter
             let retentionChanged = oldValue.textRetentionDays != preferences.textRetentionDays
                 || oldValue.imageRetentionDays != preferences.imageRetentionDays
@@ -688,33 +714,70 @@ final class AppModel {
             clipboardOriginHash = nil
         }
         if let secret {
-            skipped = SkippedCapture(draft: draft, reason: secret)
+            skipped = SkippedCapture(draft: draft, reason: .secret(secret))
             notify("Skipped a \(secret.title)", detail: "Keep it from the menu if you want it stored.", symbol: "eye.slash")
             onChromeChange?()
             return
         }
+        if let pattern = IgnorePatternPolicy.firstMatch(in: draft.text, patterns: preferences.ignorePatterns) {
+            skipped = SkippedCapture(draft: draft, reason: .ignorePattern(pattern))
+            notify(
+                "Skipped a matching copy",
+                detail: "Matched ignore pattern “\(pattern)”. It was not stored.",
+                symbol: "eye.slash"
+            )
+            onChromeChange?()
+            return
+        }
+        var draft = draft
+        var savedAsReference = false
+        if preferences.largeCopyCapEnabled,
+           LargeCopyPolicy.exceedsCap(draft, maxBytes: preferences.largeCopyMaxBytes) {
+            let estimated = LargeCopyPolicy.estimatedStorageBytes(draft)
+            switch preferences.largeCopyMode {
+            case .skip:
+                skipped = SkippedCapture(draft: draft, reason: .tooLarge(estimated))
+                notify(
+                    "Skipped a large copy",
+                    detail: "\(ByteFormat.string(for: estimated)). Keep it from the menu if you want it stored.",
+                    symbol: "externaldrive.badge.exclamationmark"
+                )
+                onChromeChange?()
+                return
+            case .reference:
+                LargeCopyPolicy.applyReferenceStorage(&draft, estimatedBytes: estimated)
+                savedAsReference = true
+            }
+        }
         skipped = nil
         do {
-            var draft = draft
             applyShortCodeExpiry(&draft)
             _ = try store.record(draft)
             refresh()
             onChromeChange?()
-            if draft.kind == .image, draft.ocrText == nil {
+            if draft.kind == .image, draft.imagePNG != nil, draft.ocrText == nil {
                 scheduleOCRIndexing()
             }
-            notify(
-                "Saved to Stow",
-                detail: ClipText.previewLine(from: draft.preview, limit: 72),
-                symbol: "checkmark.circle.fill"
-            )
+            if savedAsReference {
+                notify(
+                    "Saved a reference",
+                    detail: ClipText.previewLine(from: draft.preview, limit: 72),
+                    symbol: "externaldrive.badge.checkmark"
+                )
+            } else {
+                notify(
+                    "Saved to Stow",
+                    detail: ClipText.previewLine(from: draft.preview, limit: 72),
+                    symbol: "checkmark.circle.fill"
+                )
+            }
         } catch {
             notify("Couldn't save that copy", symbol: "exclamationmark.circle")
         }
     }
 
     func keepSkipped() {
-        guard let skipped else { return }
+        guard let skipped, skipped.reason.allowsKeep else { return }
         self.skipped = nil
         do {
             var draft = skipped.draft
@@ -831,6 +894,18 @@ final class AppModel {
     func removeIgnoredType(_ type: String) {
         preferences.extraIgnoredPasteboardTypes.removeAll { $0 == type }
         notify("Removed that pasteboard type", detail: type, symbol: "checkmark.circle")
+    }
+
+    func addIgnorePattern(_ raw: String) {
+        guard let pattern = IgnorePatternPolicy.normalize(raw) else { return }
+        guard !preferences.ignorePatterns.contains(pattern) else { return }
+        preferences.ignorePatterns.append(pattern)
+        notify("Ignoring matching copies", detail: pattern, symbol: "nosign")
+    }
+
+    func removeIgnorePattern(_ pattern: String) {
+        preferences.ignorePatterns.removeAll { $0 == pattern }
+        notify("Removed that ignore pattern", detail: pattern, symbol: "checkmark.circle")
     }
 
     func reconcileSelection() {
@@ -1399,10 +1474,15 @@ final class AppModel {
         let now = Date()
         var recorded = 0
         var skippedSecrets = 0
+        var skippedPatterns = 0
         do {
             for (index, line) in lines.enumerated() {
                 if SecretDetector.detect(in: line) != nil {
                     skippedSecrets += 1
+                    continue
+                }
+                if IgnorePatternPolicy.firstMatch(in: line, patterns: preferences.ignorePatterns) != nil {
+                    skippedPatterns += 1
                     continue
                 }
                 let kind = ClipClassifier.classify(
@@ -1436,17 +1516,35 @@ final class AppModel {
                 recorded += 1
             }
             refresh()
+            let skippedTotal = skippedSecrets + skippedPatterns
             if recorded == 0 {
+                let detail: String?
+                if skippedSecrets > 0, skippedPatterns > 0 {
+                    detail = "Each line looked like a secret or matched an ignore pattern."
+                } else if skippedSecrets > 0 {
+                    detail = "Each line looked like a secret."
+                } else if skippedPatterns > 0 {
+                    detail = "Each line matched an ignore pattern."
+                } else {
+                    detail = nil
+                }
                 notify(
                     "Couldn't split those lines",
-                    detail: skippedSecrets > 0 ? "Each line looked like a secret." : nil,
+                    detail: detail,
                     symbol: "exclamationmark.circle"
                 )
                 return
             }
             var detail: String? = "The original clip stays as it is."
-            if skippedSecrets > 0 {
-                detail = "Skipped \(skippedSecrets) secret-looking \(skippedSecrets == 1 ? "line" : "lines"). The original clip stays."
+            if skippedTotal > 0 {
+                var parts: [String] = []
+                if skippedSecrets > 0 {
+                    parts.append("\(skippedSecrets) secret-looking")
+                }
+                if skippedPatterns > 0 {
+                    parts.append("\(skippedPatterns) matching an ignore pattern")
+                }
+                detail = "Skipped \(parts.joined(separator: " and ")) \(skippedTotal == 1 ? "line" : "lines"). The original clip stays."
             }
             notify(
                 "Split into \(recorded) \(recorded == 1 ? "clip" : "clips")",

@@ -19,9 +19,14 @@ struct Preferences: Codable, Equatable, Sendable {
     var keepPanelOpen: Bool = false
     /// After Option-Return paste, put the previous system clipboard back.
     var oneShotPaste: Bool = false
-    var compactRows: Bool = false
+    /// Compact, comfortable, or large list rows.
+    var rowDensity: RowDensity = .comfortable
     /// Collapse consecutive same-app copies a few seconds apart into one session row.
     var groupCopyBursts: Bool = true
+    /// Last display the quick panel used (`NSScreen` display ID).
+    var lastQuickPanelDisplayID: UInt32? = nil
+    var lastQuickPanelOriginX: Double? = nil
+    var lastQuickPanelOriginY: Double? = nil
     var hasSeenFirstRun: Bool = false
     /// Days to keep unpinned text-like clips. `0` means keep forever.
     var textRetentionDays: Int = 0
@@ -60,13 +65,20 @@ struct Preferences: Codable, Equatable, Sendable {
     var shortCodePattern: ShortCodePattern = .sixDigit
     /// One of 30, 60, 300, 900.
     var shortCodeLifetimeSeconds: Int = ShortCodePolicy.defaultLifetimeSeconds
+    /// User patterns that never enter history (literal / `*contains*` / `/regex/`). Empty by default.
+    var ignorePatterns: [String] = []
+    /// Cap how large a single copy can be before skip or reference-only storage.
+    var largeCopyCapEnabled: Bool = false
+    /// One of LargeCopyPolicy.maxByteChoices.
+    var largeCopyMaxBytes: Int = LargeCopyPolicy.defaultMaxBytes
+    var largeCopyMode: LargeCopyMode = .reference
 
     private static let defaultsKey = "Stow.Preferences"
 
     enum CodingKeys: String, CodingKey {
         case excludedApps, extraIgnoredPasteboardTypes, manuallyPaused, pauseUntil
         case frontAppPauseBundleID, frontAppPauseName, frontAppPauseUntil, ignoreNextCopy
-        case showShortcutFooter, keepPanelOpen, oneShotPaste, compactRows, groupCopyBursts, hasSeenFirstRun
+        case showShortcutFooter, keepPanelOpen, oneShotPaste, rowDensity, groupCopyBursts, hasSeenFirstRun
         case textRetentionDays, imageRetentionDays, abbreviationExpansionEnabled
         case hotkeyKeyCode, hotkeyCarbonModifiers, hotkeyLabel
         case syncEnabled, syncHistory, syncSnippets, syncFolderBookmark, syncFolderDisplayPath
@@ -74,6 +86,13 @@ struct Preferences: Codable, Equatable, Sendable {
         case perAppContextRules, focusOnDefaults, focusOffDefaults, selectionChipEnabled
         case touchIDAfterIdleEnabled, idleLockMinutes
         case shortCodeExpiryEnabled, shortCodePattern, shortCodeLifetimeSeconds
+        case ignorePatterns
+        case largeCopyCapEnabled, largeCopyMaxBytes, largeCopyMode
+        case lastQuickPanelDisplayID, lastQuickPanelOriginX, lastQuickPanelOriginY
+    }
+
+    private enum LegacyCodingKeys: String, CodingKey {
+        case compactRows
     }
 
     init() {}
@@ -91,7 +110,14 @@ struct Preferences: Codable, Equatable, Sendable {
         showShortcutFooter = try container.decodeIfPresent(Bool.self, forKey: .showShortcutFooter) ?? true
         keepPanelOpen = try container.decodeIfPresent(Bool.self, forKey: .keepPanelOpen) ?? false
         oneShotPaste = try container.decodeIfPresent(Bool.self, forKey: .oneShotPaste) ?? false
-        compactRows = try container.decodeIfPresent(Bool.self, forKey: .compactRows) ?? false
+        if let density = try container.decodeIfPresent(RowDensity.self, forKey: .rowDensity) {
+            rowDensity = density
+        } else {
+            let legacy = try decoder.container(keyedBy: LegacyCodingKeys.self)
+            rowDensity = RowDensity.migrating(
+                fromCompactRows: try legacy.decodeIfPresent(Bool.self, forKey: .compactRows)
+            )
+        }
         groupCopyBursts = try container.decodeIfPresent(Bool.self, forKey: .groupCopyBursts) ?? true
         hasSeenFirstRun = try container.decodeIfPresent(Bool.self, forKey: .hasSeenFirstRun) ?? false
         textRetentionDays = Self.normalizedRetention(
@@ -124,6 +150,16 @@ struct Preferences: Codable, Equatable, Sendable {
             try container.decodeIfPresent(Int.self, forKey: .shortCodeLifetimeSeconds)
                 ?? ShortCodePolicy.defaultLifetimeSeconds
         )
+        ignorePatterns = try container.decodeIfPresent([String].self, forKey: .ignorePatterns) ?? []
+        largeCopyCapEnabled = try container.decodeIfPresent(Bool.self, forKey: .largeCopyCapEnabled) ?? false
+        largeCopyMaxBytes = LargeCopyPolicy.normalizedMaxBytes(
+            try container.decodeIfPresent(Int.self, forKey: .largeCopyMaxBytes)
+                ?? LargeCopyPolicy.defaultMaxBytes
+        )
+        largeCopyMode = try container.decodeIfPresent(LargeCopyMode.self, forKey: .largeCopyMode) ?? .reference
+        lastQuickPanelDisplayID = try container.decodeIfPresent(UInt32.self, forKey: .lastQuickPanelDisplayID)
+        lastQuickPanelOriginX = try container.decodeIfPresent(Double.self, forKey: .lastQuickPanelOriginX)
+        lastQuickPanelOriginY = try container.decodeIfPresent(Double.self, forKey: .lastQuickPanelOriginY)
     }
 
     private static let retentionChoices = [0, 1, 7, 14, 30, 90, 365]

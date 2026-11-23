@@ -47,27 +47,27 @@ Honest snapshot against [`docs/clipboard-features.md`](./docs/clipboard-features
 - **First version** — preview, type recognition, search, duplicate folding, snippets with the same type filters, undo on the toast, secret skip, app exclusions, and a first-run splash that explains the shortcut and Accessibility. Fifteen of fifteen.
 - **Match Maccy** — seven of seven, including pin, pause, ignore-next-copy, and number keys.
 - **Later wave** — clip transforms, multi-paste, snippet collections, fill-in templates, a pinned panel with compact rows, storage rules, optional abbreviations, a local archive, on-device OCR, opt-in encrypted folder sync, Universal Clipboard toggle, and Shortcuts actions. Eleven of eleven.
-- **Further ideas** — one-shot paste, named slots, menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing (open link, email, Maps, calendar), keep the page URL (paste as Markdown link), inline result (sums, currency, unit conversion), copy bursts, diff two clips, notes and snippet history, per-app and Focus defaults, selection chip, desktop widget, hide contents while presenting, Touch ID after idle, short-code expiry, and skip-our-own-copies. Twenty-one of twenty-five.
-- **Tests** — history, search, classification, transforms, line split, line tools, text length, obvious actions, page URL, inline result, copy bursts, clip diff, snippet notes and previous wording, context defaults, selection chip policy, widget snapshot ordering, presentation capture detection, history access policy, short-code policy, colors, secret detection, syntax highlighting, paste targets, pasteboard policy, pasteboard snapshot (one-shot restore), named slots, Frequent ranking, snippet templates, abbreviations, storage rules, local archive, image OCR, and sync crypto.
+- **Further ideas** — one-shot paste, named slots, menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing (open link, email, Maps, calendar), keep the page URL (paste as Markdown link), inline result (sums, currency, unit conversion), copy bursts, diff two clips, notes and snippet history, per-app and Focus defaults, selection chip, desktop widget, hide contents while presenting, Touch ID after idle, short-code expiry, ignore patterns, large-copy cap, skip-our-own-copies, and accessible panel (VoiceOver, Reduce Motion, large rows, remembered display). Twenty-four of twenty-four.
+- **Tests** — history, search, classification, transforms, line split, line tools, text length, obvious actions, page URL, inline result, copy bursts, clip diff, snippet notes and previous wording, context defaults, selection chip policy, widget snapshot ordering, presentation capture detection, history access policy, short-code policy, ignore patterns, large-copy policy, row density, panel display memory, colors, secret detection, syntax highlighting, paste targets, pasteboard policy, pasteboard snapshot (one-shot restore), named slots, Frequent ranking, snippet templates, abbreviations, storage rules, local archive, image OCR, and sync crypto.
 
 ### Not in this version
 
-A one-time Maccy history import and most further ideas stay unchecked. The later wave above is in the app.
+The first version, later wave, and further ideas above are in the app. Sync stays off until you enable it.
 
 ---
 
 ## What's next
 
-The first version and later wave are in the app. What remains in [`docs/clipboard-features.md`](./docs/clipboard-features.md) is further ideas — pick those up once daily use feels solid. Sync stays off until you enable it and choose a folder.
+The first version, later wave, and further ideas are in the app. Sync stays off until you enable it and choose a folder.
 
 | Wave | Focus |
 | --- | --- |
 | **Match Maccy** | Hotkey and menu-bar icon, search-as-you-type, number keys, pin, delete and clear, pause and ignore-next-copy, concealed pasteboard types |
 | **First version** | Panel, preview, type recognition, filters, shortcut footer and context menu, paste-target awareness, a separate snippets list, undo on the toast, secret skip, app exclusions, source and time, duplicate folding, drag-out images and files, paused icon, first-run splash |
 | **Later wave** | Clip transforms and multi-paste, snippet boards, `{{field}}` fill-in templates, keep-open pin, compact rows, storage rules, opt-in abbreviations, local archive, on-device OCR, opt-in encrypted folder sync, Universal Clipboard toggle, Shortcuts (latest clip, search, save as snippet) |
-| **Further** | One-shot paste, named slots (⌃⌥1–5), menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, inline result, copy bursts, diff two clips, notes and snippet history, per-app and Focus defaults, selection chip (off by default), desktop snippets widget (with pause), hide contents while presenting, Touch ID after idle (off by default), short-code expiry (off by default), and skip-our-own-copies are in the app. Still open (see catalog): ignore patterns, large-copy cap, Maccy import, accessible panel |
+| **Further** | One-shot paste, named slots (⌃⌥1–5), menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, inline result, copy bursts, diff two clips, notes and snippet history, per-app and Focus defaults, selection chip (off by default), desktop snippets widget (with pause), hide contents while presenting, Touch ID after idle (off by default), short-code expiry (off by default), ignore patterns, large-copy cap (off by default), skip-our-own-copies, and accessible panel (VoiceOver labels, Reduce Motion, Large rows, remembered display) are in the app |
 
-Daily use and the further-ideas list are next — not another later-wave checkbox.
+Daily use is next — polish and feedback, not another catalog wave.
 
 ---
 
@@ -83,8 +83,8 @@ Full wording and checkboxes live in the catalog. This is the map.
 | **Transforms** | HTML to Markdown, pretty JSON, unwrap lines, and strip tracking parameters. Line tools: uppercase, lowercase, title case, sort lines, drop duplicates, trim whitespace, and join with commas. Each copies a new version and leaves the stored clip alone | — |
 | **Multi-paste** | Several clips paste in the order they were copied, joined with a newline, a comma, or a separator you type. ⌘-click two text clips, then Diff, for a line comparison in the preview with Paste older / Paste newer before you paste either one | — |
 | **Reuse it** | Snippets live apart from history. Boards group them. Optional notes show under the title. Editing a snippet keeps the previous wording so you can restore it. `{{name}}` fields open a fill-in form before paste. Marked abbreviations expand while typing | — |
-| **Privacy** | App exclusions, Universal Clipboard toggle, secret skip, skip-our-own-copies (pasting from Stow does not re-ingest the same clip), titles-only while screen sharing or recording, optional Touch ID after idle and short-code expiry (Settings → Trust), a menu-bar icon that shows pause, Mac data protection, separate text and image expiry, storage readout and trim | — |
-| **Window** | Library window plus a quick panel, pin to keep it open while pasting, compact or comfortable rows, one undo toast, first-run splash, hideable shortcut footer. Context defaults open a board first and set plain/rich paste from the front app or Focus on/off. Optional selection chip (Settings → Window) offers plain copy and save-as-snippet without opening the panel. Desktop / Notification Center widget lists snippets (tap to copy) and can pause recording | — |
+| **Privacy** | App exclusions, Universal Clipboard toggle, secret skip, skip-our-own-copies (pasting from Stow does not re-ingest the same clip), titles-only while screen sharing or recording, optional Touch ID after idle, short-code expiry, ignore patterns, and large-copy cap (Settings → Trust), a menu-bar icon that shows pause, Mac data protection, separate text and image expiry, storage readout and trim | — |
+| **Window** | Library window plus a quick panel, pin to keep it open while pasting, compact / comfortable / large rows, one undo toast, first-run splash, hideable shortcut footer. Context defaults open a board first and set plain/rich paste from the front app or Focus on/off. Optional selection chip (Settings → Window) offers plain copy and save-as-snippet without opening the panel. Desktop / Notification Center widget lists snippets (tap to copy) and can pause recording. VoiceOver names panel actions; Reduce Motion skips fades; the quick panel reopens on the display where you left it | — |
 | **Carry it** | Export and import a `.stowarchive` file you choose. Export can leave clips out; import can add new items only or replace everything. Opt-in encrypted sync through a folder you choose (history and snippets separately; secrets never sync). Shortcuts actions for latest clip, search, and save as snippet | — |
 
 ### How the window should feel
@@ -143,8 +143,7 @@ Specific, and current:
 
 - **Paste needs Accessibility.** The clip is written to the clipboard either way. The keystroke that pastes it into the previous app needs that permission. Abbreviation expansion while typing needs it too.
 - **Not notarized.** This is a local build. macOS may ask you to allow it the first time you open it.
-- **Large copies are trimmed.** Text is stored up to one million characters. An image over 12 MB is kept at a reduced size.
-- **No import path from Maccy yet.** "Import a Maccy history" is listed under Further ideas.
+- **Large copies are trimmed.** Text is stored up to one million characters. An image over 12 MB is kept at a reduced size. An optional large-copy cap in Settings → Trust can skip or store a reference instead.
 - **Sync is off by default.** Enable it in Settings, choose a shared folder, and set the same passphrase on each Mac. History stays local until you do.
 - **OCR is local and best-effort.** Text inside new image clips is indexed on the Mac in the background; older screenshots are backfilled on launch.
 
