@@ -119,6 +119,7 @@ struct SettingsView: View {
                 shortcutSection(theme)
                 slotsSection(theme)
                 windowSection(theme)
+                contextDefaultsSection(theme)
                 abbreviationsSection(theme)
                 storageSection(theme)
                 syncSection(theme)
@@ -254,6 +255,235 @@ struct SettingsView: View {
                 }
                 .padding(.vertical, 14)
             }
+        }
+    }
+
+    private func contextDefaultsSection(_ theme: Theme) -> some View {
+        settingsSection(
+            title: "Context defaults",
+            detail: "Open a board first and choose plain or rich paste based on the front app or whether Focus is on. Named Focus modes are not readable on macOS.",
+            symbol: "app.badge.checkmark",
+            theme: theme
+        ) {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Per app")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(theme.secondary)
+
+                if model.preferences.perAppContextRules.isEmpty {
+                    emptyHint("No app rules yet. Add the app you were just in.", theme: theme)
+                } else {
+                    VStack(spacing: 10) {
+                        ForEach(model.preferences.perAppContextRules) { rule in
+                            contextRuleRow(rule, theme: theme)
+                        }
+                    }
+                }
+
+                settingsAction("Add rule for last app", symbol: "plus.circle", theme: theme) {
+                    model.addContextRuleForFrontApp()
+                }
+
+                settingsDivider(theme)
+
+                Text("Focus")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(theme.secondary)
+
+                focusDefaultsBlock(
+                    title: "When Focus is on",
+                    defaults: Binding(
+                        get: { model.preferences.focusOnDefaults },
+                        set: { model.preferences.focusOnDefaults = $0 }
+                    ),
+                    theme: theme
+                )
+
+                focusDefaultsBlock(
+                    title: "When Focus is off",
+                    defaults: Binding(
+                        get: { model.preferences.focusOffDefaults },
+                        set: { model.preferences.focusOffDefaults = $0 }
+                    ),
+                    theme: theme
+                )
+
+                HStack(spacing: 10) {
+                    Text(FocusStatusClient.shared.authorizationTitle)
+                        .font(.system(size: 11))
+                        .foregroundStyle(theme.secondary)
+                    Spacer()
+                    Button("Allow Focus status") {
+                        FocusStatusClient.shared.requestAuthorization()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+            }
+        }
+    }
+
+    private func contextRuleRow(_ rule: PerAppContextRule, theme: Theme) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(rule.name)
+                        .font(.system(size: 13, weight: .medium))
+                    Text(rule.bundleID)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(theme.secondary)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Button {
+                    model.removeContextRule(rule)
+                } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(theme.secondary)
+                        .frame(width: 26, height: 26)
+                        .background(Circle().fill(theme.chip))
+                }
+                .buttonStyle(.plain)
+                .help("Remove \(rule.name)")
+            }
+
+            boardPicker(
+                selection: Binding(
+                    get: { rule.board },
+                    set: { board in
+                        var updated = rule
+                        updated.board = board
+                        model.updateContextRule(updated)
+                    }
+                ),
+                theme: theme
+            )
+
+            pasteModePicker(
+                selection: Binding(
+                    get: { rule.pasteMode },
+                    set: { mode in
+                        var updated = rule
+                        updated.pasteMode = mode
+                        model.updateContextRule(updated)
+                    }
+                )
+            )
+        }
+        .padding(12)
+        .background(theme.chip.opacity(0.65), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private func focusDefaultsBlock(
+        title: String,
+        defaults: Binding<FocusContextDefaults>,
+        theme: Theme
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Toggle(title, isOn: Binding(
+                get: { defaults.wrappedValue.enabled },
+                set: { enabled in
+                    var value = defaults.wrappedValue
+                    value.enabled = enabled
+                    defaults.wrappedValue = value
+                }
+            ))
+            .toggleStyle(.switch)
+            .font(.system(size: 13, weight: .medium))
+
+            if defaults.wrappedValue.enabled {
+                boardPicker(
+                    selection: Binding(
+                        get: { defaults.wrappedValue.board },
+                        set: { board in
+                            var value = defaults.wrappedValue
+                            value.board = board
+                            defaults.wrappedValue = value
+                        }
+                    ),
+                    theme: theme
+                )
+                pasteModePicker(
+                    selection: Binding(
+                        get: { defaults.wrappedValue.pasteMode },
+                        set: { mode in
+                            var value = defaults.wrappedValue
+                            value.pasteMode = mode
+                            defaults.wrappedValue = value
+                        }
+                    )
+                )
+            }
+        }
+        .padding(12)
+        .background(theme.chip.opacity(0.65), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+    }
+
+    private func boardPicker(selection: Binding<ContextBoardChoice>, theme: Theme) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Open first")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(theme.secondary)
+            Picker("Open first", selection: Binding(
+                get: { selection.wrappedValue.kind },
+                set: { kind in
+                    switch kind {
+                    case .history:
+                        selection.wrappedValue = .history
+                    case .snippetsAll:
+                        selection.wrappedValue = .snippetsAll
+                    case .snippetsUnfiled:
+                        selection.wrappedValue = .snippetsUnfiled
+                    case .collection:
+                        if let first = model.collections.first {
+                            selection.wrappedValue = .collection(first.id)
+                        } else {
+                            selection.wrappedValue = .snippetsAll
+                        }
+                    }
+                }
+            )) {
+                ForEach(ContextBoardChoice.Kind.allCases) { kind in
+                    if kind != .collection || !model.collections.isEmpty {
+                        Text(kind.title).tag(kind)
+                    }
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+
+            if selection.wrappedValue.kind == .collection, !model.collections.isEmpty {
+                Picker("Board", selection: Binding(
+                    get: { selection.wrappedValue.collectionID ?? model.collections[0].id },
+                    set: { selection.wrappedValue = .collection($0) }
+                )) {
+                    ForEach(model.collections) { collection in
+                        Text(collection.name).tag(collection.id)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.menu)
+            }
+        }
+    }
+
+    private func pasteModePicker(selection: Binding<ContextPasteMode>) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Paste")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(Theme(scheme: scheme).secondary)
+            Picker("Paste", selection: selection) {
+                ForEach(ContextPasteMode.allCases) { mode in
+                    Text(mode.title).tag(mode)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.segmented)
+            Text(selection.wrappedValue.detail)
+                .font(.system(size: 11))
+                .foregroundStyle(Theme(scheme: scheme).secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

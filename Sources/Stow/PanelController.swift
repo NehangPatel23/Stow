@@ -68,6 +68,8 @@ final class PanelController: NSObject, NSWindowDelegate {
         let fadingIn = !library.isVisible
         if fadingIn {
             library.alphaValue = 0
+            model.notePreviousApp(NSWorkspace.shared.frontmostApplication)
+            model.prepareForOpen()
         }
         NSApp.activate()
         library.makeKeyAndOrderFront(nil)

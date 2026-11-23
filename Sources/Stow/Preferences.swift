@@ -43,6 +43,12 @@ struct Preferences: Codable, Equatable, Sendable {
     var syncFolderDisplayPath: String? = nil
     /// When off, copies arriving via Universal Clipboard (iPhone / iPad) are not recorded.
     var includeUniversalClipboard: Bool = true
+    /// Front app can open a board first and choose plain vs rich paste.
+    var perAppContextRules: [PerAppContextRule] = []
+    /// When Focus is on (named modes are not readable on macOS).
+    var focusOnDefaults: FocusContextDefaults = FocusContextDefaults()
+    /// When Focus is off.
+    var focusOffDefaults: FocusContextDefaults = FocusContextDefaults()
 
     private static let defaultsKey = "Stow.Preferences"
 
@@ -54,6 +60,7 @@ struct Preferences: Codable, Equatable, Sendable {
         case hotkeyKeyCode, hotkeyCarbonModifiers, hotkeyLabel
         case syncEnabled, syncHistory, syncSnippets, syncFolderBookmark, syncFolderDisplayPath
         case includeUniversalClipboard
+        case perAppContextRules, focusOnDefaults, focusOffDefaults
     }
 
     init() {}
@@ -90,6 +97,9 @@ struct Preferences: Codable, Equatable, Sendable {
         syncFolderBookmark = try container.decodeIfPresent(Data.self, forKey: .syncFolderBookmark)
         syncFolderDisplayPath = try container.decodeIfPresent(String.self, forKey: .syncFolderDisplayPath)
         includeUniversalClipboard = try container.decodeIfPresent(Bool.self, forKey: .includeUniversalClipboard) ?? true
+        perAppContextRules = try container.decodeIfPresent([PerAppContextRule].self, forKey: .perAppContextRules) ?? []
+        focusOnDefaults = try container.decodeIfPresent(FocusContextDefaults.self, forKey: .focusOnDefaults) ?? FocusContextDefaults()
+        focusOffDefaults = try container.decodeIfPresent(FocusContextDefaults.self, forKey: .focusOffDefaults) ?? FocusContextDefaults()
     }
 
     private static let retentionChoices = [0, 1, 7, 14, 30, 90, 365]

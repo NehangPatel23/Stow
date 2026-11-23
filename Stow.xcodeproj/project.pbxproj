@@ -391,6 +391,22 @@
 		isa = PBXBuildFile;
 		fileRef = 111E072106144B8DB4BE5A60;
 		};
+		DA1EDAE897D544DDB62FA280 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 051C55F1B7984E36A173E9C5;
+		};
+		78583A555CB94616A7B05CD3 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 051C55F1B7984E36A173E9C5;
+		};
+		64AB7A559958455983451578 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = E75329BD6DC64DBEA90834C6;
+		};
+		22BA6D39B100498DB9F01C0A /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 956426BC918B403F8BB6BB81;
+		};
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -452,6 +468,24 @@
 		isa = PBXFileReference;
 		lastKnownFileType = sourcecode.swift;
 		path = ClipDiff.swift;
+		sourceTree = "<group>";
+		};
+		051C55F1B7984E36A173E9C5 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ContextDefaults.swift;
+		sourceTree = "<group>";
+		};
+		E75329BD6DC64DBEA90834C6 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = FocusStatusClient.swift;
+		sourceTree = "<group>";
+		};
+		956426BC918B403F8BB6BB81 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = ContextDefaultsTests.swift;
 		sourceTree = "<group>";
 		};
 		7815DC069DA5420486EBD655 /* PBXFileReference */ = {
@@ -887,6 +921,7 @@
 				D49B91E2D1578E6DB17D1045,
 				E9BE551E87484B449B2603FA,
 				BC8E964F5A3C459088229D5E,
+				051C55F1B7984E36A173E9C5,
 				BB71A3C02C5455B3E36B5640,
 				6745D666DDC13D9262441C9F,
 				26AFEA612D0A9F861BDD7A27,
@@ -916,6 +951,7 @@
 				BADA37BB19ACD2670457341D,
 				EDD8EE04F6F04B8287BD5C9A,
 				7815DC069DA5420486EBD655,
+				E75329BD6DC64DBEA90834C6,
 				4BACAE29352BF62D87B20E69,
 				B81C2E88D4B65F0193C0AA20,
 				5CBE27053B1B8960F11C5172,
@@ -950,6 +986,7 @@
 				4AD28D375A53BE2CBEDC39C6,
 				0194AA3C2CD04C4CA3F7F640,
 				111E072106144B8DB4BE5A60,
+				956426BC918B403F8BB6BB81,
 				6A0235AAEF48118CE6F54DDF,
 				276739D5590AA35A23B6086F,
 				7859B409C26784E30012964A,
@@ -1139,6 +1176,8 @@
 				A2D8EE04F6F04B8287BD5C9A,
 				373DC6D57D414DEFAD6151CE,
 				F50DAC8B44694C73939C68B9,
+				DA1EDAE897D544DDB62FA280,
+				64AB7A559958455983451578,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1190,6 +1229,8 @@
 				A394AA3C2CD04C4CA3F7F640,
 				37A6DA96BFF94136AF15CB73,
 				38ED00180083403BAB64894B,
+				78583A555CB94616A7B05CD3,
+				22BA6D39B100498DB9F01C0A,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 		};

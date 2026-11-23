@@ -131,6 +131,8 @@ final class AppModel {
     var previewEditFocusToken = 0
     /// Explicit two-clip diff session. Cleared when selection no longer has both ids.
     var clipDiff: ClipDiffSession?
+    /// Paste mode from the last context-default resolve. Cleared when no rule applies.
+    var sessionContextPasteMode: ContextPasteMode?
     var templateFill: TemplateFillRequest?
     /// Carries an explicit one-shot choice across the template fill sheet.
     private var pendingTemplateOneShot: Bool?
@@ -381,15 +383,112 @@ final class AppModel {
         collectionFilter = .all
         expandedHashes = []
         expandedBurstIDs = []
+        sessionContextPasteMode = nil
         cancelEditBeforePaste()
         endClipDiff()
         refresh()
+        applyContextDefaults()
         if let selectedID, !containsSelection(selectedID) {
             self.selectedID = nil
             preview = nil
         }
         loadPreview()
         focusToken += 1
+    }
+
+    /// Apply per-app / Focus board and paste defaults for the app the user returns to.
+    func applyContextDefaults() {
+        FocusStatusClient.shared.refresh()
+        pruneStaleContextRules()
+        let resolved = ContextDefaultsResolver.resolve(
+            bundleID: previousApp?.bundleIdentifier,
+            isFocused: FocusStatusClient.shared.isFocused,
+            perAppRules: preferences.perAppContextRules,
+            focusOn: preferences.focusOnDefaults,
+            focusOff: preferences.focusOffDefaults,
+            knownCollections: Set(collections.map(\.id))
+        )
+        sessionContextPasteMode = resolved.pasteMode
+        guard let board = resolved.board else { return }
+        applyContextBoard(board)
+    }
+
+    private func applyContextBoard(_ board: ContextBoardChoice) {
+        switch board.kind {
+        case .history:
+            library = .history
+            collectionFilter = .all
+        case .snippetsAll:
+            library = .snippets
+            collectionFilter = .all
+        case .snippetsUnfiled:
+            library = .snippets
+            collectionFilter = .unfiled
+        case .collection:
+            library = .snippets
+            if let id = board.collectionID, collections.contains(where: { $0.id == id }) {
+                collectionFilter = .collection(id)
+            } else {
+                collectionFilter = .all
+            }
+        }
+    }
+
+    private func pruneStaleContextRules() {
+        let known = Set(collections.map(\.id))
+        var prefs = preferences
+        var changed = false
+        for index in prefs.perAppContextRules.indices {
+            let resolved = prefs.perAppContextRules[index].board.resolved(knownCollections: known)
+            if resolved != prefs.perAppContextRules[index].board {
+                prefs.perAppContextRules[index].board = resolved
+                changed = true
+            }
+        }
+        let onResolved = prefs.focusOnDefaults.board.resolved(knownCollections: known)
+        if onResolved != prefs.focusOnDefaults.board {
+            prefs.focusOnDefaults.board = onResolved
+            changed = true
+        }
+        let offResolved = prefs.focusOffDefaults.board.resolved(knownCollections: known)
+        if offResolved != prefs.focusOffDefaults.board {
+            prefs.focusOffDefaults.board = offResolved
+            changed = true
+        }
+        if changed {
+            preferences = prefs
+        }
+    }
+
+    func addContextRuleForFrontApp() {
+        guard let app = appWorthExcluding(), let bundleID = app.bundleIdentifier else {
+            notify("No front app to use", symbol: "exclamationmark.circle")
+            return
+        }
+        if preferences.perAppContextRules.contains(where: { $0.bundleID == bundleID }) {
+            notify("That app already has a rule", detail: app.localizedName ?? bundleID, symbol: "checkmark.circle")
+            return
+        }
+        preferences.perAppContextRules.append(
+            PerAppContextRule(
+                bundleID: bundleID,
+                name: app.localizedName ?? bundleID,
+                board: .history,
+                pasteMode: .auto
+            )
+        )
+        notify("Added context rule", detail: app.localizedName ?? bundleID, symbol: "app.badge.checkmark")
+    }
+
+    func removeContextRule(_ rule: PerAppContextRule) {
+        preferences.perAppContextRules.removeAll { $0.bundleID == rule.bundleID }
+    }
+
+    func updateContextRule(_ rule: PerAppContextRule) {
+        guard let index = preferences.perAppContextRules.firstIndex(where: { $0.bundleID == rule.bundleID }) else {
+            return
+        }
+        preferences.perAppContextRules[index] = rule
     }
 
     var isEditingBeforePaste: Bool { previewPasteDraft != nil }
@@ -1143,9 +1242,12 @@ final class AppModel {
         trackUse: Bool = false
     ) {
         let target = previousApp
-        let plain = requestedPlain || full.kind == .code || PasteTarget.prefersPlainText(
+        let plain = ContextPasteResolver.shouldPastePlain(
+            requestedPlain: requestedPlain,
+            clipKind: full.kind,
             bundleID: target?.bundleIdentifier,
-            appName: target?.localizedName
+            appName: target?.localizedName,
+            sessionMode: sessionContextPasteMode
         )
 
         if AccessibilityClient.isTrusted(prompt: false),
