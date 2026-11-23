@@ -359,6 +359,22 @@
 		isa = PBXBuildFile;
 		fileRef = 81F4E47FAE5A28AE55AFB7EC;
 		};
+		A1BE551E87484B449B2603FA /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = E9BE551E87484B449B2603FA;
+		};
+		B1BE551E87484B449B2603FA /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = E9BE551E87484B449B2603FA;
+		};
+		A2D8EE04F6F04B8287BD5C9A /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = EDD8EE04F6F04B8287BD5C9A;
+		};
+		A394AA3C2CD04C4CA3F7F640 /* PBXBuildFile */ = {
+		isa = PBXBuildFile;
+		fileRef = 0194AA3C2CD04C4CA3F7F640;
+		};
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -408,6 +424,24 @@
 		isa = PBXFileReference;
 		lastKnownFileType = sourcecode.swift;
 		path = HistoryOrganizer.swift;
+		sourceTree = "<group>";
+		};
+		E9BE551E87484B449B2603FA /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = CopyBurst.swift;
+		sourceTree = "<group>";
+		};
+		EDD8EE04F6F04B8287BD5C9A /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = BurstRowView.swift;
+		sourceTree = "<group>";
+		};
+		0194AA3C2CD04C4CA3F7F640 /* PBXFileReference */ = {
+		isa = PBXFileReference;
+		lastKnownFileType = sourcecode.swift;
+		path = CopyBurstTests.swift;
 		sourceTree = "<group>";
 		};
 		BB71A3C02C5455B3E36B5640 /* PBXFileReference */ = {
@@ -817,6 +851,7 @@
 				A410FFA018394A5EC0CDEBAA,
 				E8DE8FA8BF40A18EA633E5C7,
 				D49B91E2D1578E6DB17D1045,
+				E9BE551E87484B449B2603FA,
 				BB71A3C02C5455B3E36B5640,
 				6745D666DDC13D9262441C9F,
 				26AFEA612D0A9F861BDD7A27,
@@ -844,6 +879,7 @@
 				45C57EE0257E6E6D66C920FA,
 				E21AD0ABA34C1ED004B02D6D,
 				BADA37BB19ACD2670457341D,
+				EDD8EE04F6F04B8287BD5C9A,
 				4BACAE29352BF62D87B20E69,
 				B81C2E88D4B65F0193C0AA20,
 				5CBE27053B1B8960F11C5172,
@@ -876,6 +912,7 @@
 				56E7A5962B3F4CDF2CF82E4A,
 				6A5C6D99A553D46CA8246FAE,
 				4AD28D375A53BE2CBEDC39C6,
+				0194AA3C2CD04C4CA3F7F640,
 				6A0235AAEF48118CE6F54DDF,
 				276739D5590AA35A23B6086F,
 				7859B409C26784E30012964A,
@@ -1061,6 +1098,8 @@
 				D04113A4FEEED36CE521A9B6,
 				E7C31A90B2D84F16A0C85E21,
 				A91C0E44D7B18F2536C4AA10,
+				A1BE551E87484B449B2603FA,
+				A2D8EE04F6F04B8287BD5C9A,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1108,6 +1147,8 @@
 				FB969FF36F384EE36B2CBB40,
 				69E5736EAB6B7631F3709062,
 				2406B9433A15F08195FD6EDA,
+				B1BE551E87484B449B2603FA,
+				A394AA3C2CD04C4CA3F7F640,
 		);
 		runOnlyForDeploymentPostprocessing = 0;
 		};

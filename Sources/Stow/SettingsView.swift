@@ -224,6 +224,16 @@ struct SettingsView: View {
                     theme: theme
                 )
                 settingsDivider(theme)
+                settingsToggle(
+                    title: "Group copy bursts",
+                    detail: "Copies from the same app a few seconds apart collapse into one session. Expand to browse, or paste the whole group.",
+                    isOn: Binding(
+                        get: { model.preferences.groupCopyBursts },
+                        set: { model.preferences.groupCopyBursts = $0 }
+                    ),
+                    theme: theme
+                )
+                settingsDivider(theme)
                 HStack(alignment: .center, spacing: 14) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Row density")

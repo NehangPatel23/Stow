@@ -106,6 +106,7 @@ final class AppModel {
     var selection: Set<UUID> = []
     var selectionAnchor: UUID?
     var expandedHashes: Set<String> = []
+    var expandedBurstIDs: Set<UUID> = []
     var copiesByHash: [String: [Clip]] = [:]
     var preview: Clip?
     var banner: String?
@@ -239,14 +240,27 @@ final class AppModel {
         return history.filter { parsed.matches($0, now: now) }
     }
 
+    /// Bursts only when browsing the chronological list with no search text.
+    var shouldGroupCopyBursts: Bool {
+        preferences.groupCopyBursts
+            && !chipFrequent
+            && query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
     var historySections: [HistorySection] {
         if chipFrequent {
             return HistoryOrganizer.frequentSections(clips: visibleHistory)
         }
-        return HistoryOrganizer.sections(clips: visibleHistory, now: Date())
+        let gap = shouldGroupCopyBursts ? CopyBurst.defaultGap : nil
+        return HistoryOrganizer.sections(clips: visibleHistory, now: Date(), burstGap: gap)
     }
 
     var flattenedHistory: [Clip] {
+        HistoryOrganizer.flattenedRepresentatives(historySections, expandedBurstIDs: expandedBurstIDs)
+    }
+
+    /// Every clip currently shown in history sections, including collapsed burst members.
+    var allHistoryMembers: [Clip] {
         HistoryOrganizer.flattened(historySections)
     }
 
@@ -342,7 +356,7 @@ final class AppModel {
             self.selectedID = nil
             preview = nil
         }
-        selection.formIntersection(Set(flattenedHistory.map(\.id) + orderedSnippets.map(\.id)))
+        selection.formIntersection(Set(allHistoryMembers.map(\.id) + orderedSnippets.map(\.id)))
         loadPreview()
         if !suppressSyncPush {
             syncEngine.noteLocalChange(preferences: preferences)
@@ -356,6 +370,7 @@ final class AppModel {
         chipFrequent = false
         collectionFilter = .all
         expandedHashes = []
+        expandedBurstIDs = []
         cancelEditBeforePaste()
         refresh()
         if let selectedID, !containsSelection(selectedID) {
@@ -563,13 +578,16 @@ final class AppModel {
     }
 
     func reconcileSelection() {
-        selection.formIntersection(Set(visibleIDs()))
         switch library {
         case .history:
-            if let selectedID, flattenedHistory.contains(where: { $0.id == selectedID }) { return }
+            // Keep ids that are still on screen as top-level rows or nested burst members.
+            let visible = Set(flattenedHistory.map(\.id) + allHistoryMembers.map(\.id))
+            selection.formIntersection(visible)
+            if let selectedID, containsSelection(selectedID) { return }
             selectedID = nil
             preview = nil
         case .snippets:
+            selection.formIntersection(Set(visibleIDs()))
             if let selectedID, visibleSnippets.contains(where: { $0.id == selectedID }) { return }
             selectedID = nil
             preview = nil
@@ -646,7 +664,7 @@ final class AppModel {
     private func selectionTexts() -> [String] {
         let chosen = selection.isEmpty ? Set(selectedID.map { [$0] } ?? []) : selection
         if library == .history {
-            return flattenedHistory
+            return allHistoryMembers
                 .filter { chosen.contains($0.id) }
                 .sorted { $0.createdAt < $1.createdAt }
                 .map { clip in
@@ -664,7 +682,7 @@ final class AppModel {
         let chosen = selection.isEmpty ? Set(selectedID.map { [$0] } ?? []) : selection
         var seen = Set<String>()
         var hashes: [String] = []
-        for clip in flattenedHistory where chosen.contains(clip.id) {
+        for clip in allHistoryMembers where chosen.contains(clip.id) {
             guard seen.insert(clip.contentHash).inserted else { continue }
             hashes.append(clip.contentHash)
         }
@@ -784,6 +802,33 @@ final class AppModel {
             expandedHashes.insert(hash)
             copiesByHash[hash] = (try? store.copies(contentHash: hash)) ?? []
         }
+    }
+
+    func toggleExpandedBurst(_ id: UUID) {
+        if expandedBurstIDs.contains(id) {
+            expandedBurstIDs.remove(id)
+        } else {
+            expandedBurstIDs.insert(id)
+        }
+        reconcileSelection()
+    }
+
+    func pasteBurst(_ burst: CopyBurst, separator: String = "\n") {
+        selection = Set(burst.clips.map(\.id))
+        selectionAnchor = burst.newest.id
+        selectedID = burst.newest.id
+        pasteSelection(separator: separator)
+    }
+
+    func burst(containing id: UUID) -> CopyBurst? {
+        for section in historySections {
+            for entry in section.entries {
+                if case .burst(let burst) = entry, burst.clips.contains(where: { $0.id == id }) {
+                    return burst
+                }
+            }
+        }
+        return nil
     }
 
     func beginEditing(_ clip: Clip) {
@@ -1849,7 +1894,8 @@ final class AppModel {
     }
 
     func selectedHistoryClip() -> Clip? {
-        flattenedHistory.first { $0.id == selectedID }
+        allHistoryMembers.first { $0.id == selectedID }
+            ?? flattenedHistory.first { $0.id == selectedID }
     }
 
     func selectedSnippet() -> Snippet? {
@@ -1924,7 +1970,7 @@ final class AppModel {
     }
 
     private func containsSelection(_ id: UUID) -> Bool {
-        if flattenedHistory.contains(where: { $0.id == id }) { return true }
+        if allHistoryMembers.contains(where: { $0.id == id }) { return true }
         if visibleSnippets.contains(where: { $0.id == id }) { return true }
         return copiesByHash.values.joined().contains { $0.id == id }
     }

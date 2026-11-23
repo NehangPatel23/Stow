@@ -349,9 +349,15 @@ struct PanelRootView: View {
                     .foregroundStyle(theme.secondary)
                     .padding(.horizontal, 8)
                     .padding(.top, 8)
-                ForEach(section.clips) { clip in
-                    ClipRowView(clip: clip, theme: theme)
-                        .id(clip.id)
+                ForEach(section.entries) { entry in
+                    switch entry {
+                    case .clip(let clip):
+                        ClipRowView(clip: clip, theme: theme)
+                            .id(clip.id)
+                    case .burst(let burst):
+                        BurstRowView(burst: burst, theme: theme)
+                            .id(burst.id)
+                    }
                 }
             }
         }

@@ -22,7 +22,7 @@
   <img src="https://img.shields.io/badge/history-on_this_Mac-14b8a6?style=flat-square" alt="History stays on this Mac" />
   <img src="https://img.shields.io/badge/first_version-15_of_15-8b5cf6?style=flat-square" alt="First version: 15 of 15" />
   <img src="https://img.shields.io/badge/later_wave-11_of_11-8b5cf6?style=flat-square" alt="Later wave: 11 of 11" />
-  <img src="https://img.shields.io/badge/further_ideas-12_of_26-8b5cf6?style=flat-square" alt="Further ideas: 12 of 26" />
+  <img src="https://img.shields.io/badge/further_ideas-13_of_25-8b5cf6?style=flat-square" alt="Further ideas: 13 of 25" />
 </p>
 
 ---
@@ -47,8 +47,8 @@ Honest snapshot against [`docs/clipboard-features.md`](./docs/clipboard-features
 - **First version** — preview, type recognition, search, duplicate folding, snippets with the same type filters, undo on the toast, secret skip, app exclusions, and a first-run splash that explains the shortcut and Accessibility. Fifteen of fifteen.
 - **Match Maccy** — seven of seven, including pin, pause, ignore-next-copy, and number keys.
 - **Later wave** — clip transforms, multi-paste, snippet collections, fill-in templates, a pinned panel with compact rows, storage rules, optional abbreviations, a local archive, on-device OCR, opt-in encrypted folder sync, Universal Clipboard toggle, and Shortcuts actions. Eleven of eleven.
-- **Further ideas** — one-shot paste, named slots, menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing (open link, email, Maps, calendar), keep the page URL (paste as Markdown link), inline result (sums, currency, unit conversion), and skip-our-own-copies. Twelve of twenty-six.
-- **Tests** — history, search, classification, transforms, line split, line tools, text length, obvious actions, page URL, inline result, colors, secret detection, syntax highlighting, paste targets, pasteboard policy, snippet templates, abbreviations, storage rules, local archive, image OCR, and sync crypto.
+- **Further ideas** — one-shot paste, named slots, menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing (open link, email, Maps, calendar), keep the page URL (paste as Markdown link), inline result (sums, currency, unit conversion), copy bursts, and skip-our-own-copies. Thirteen of twenty-five.
+- **Tests** — history, search, classification, transforms, line split, line tools, text length, obvious actions, page URL, inline result, copy bursts, colors, secret detection, syntax highlighting, paste targets, pasteboard policy, pasteboard snapshot (one-shot restore), named slots, Frequent ranking, snippet templates, abbreviations, storage rules, local archive, image OCR, and sync crypto.
 
 ### Not in this version
 
@@ -65,7 +65,7 @@ The first version and later wave are in the app. What remains in [`docs/clipboar
 | **Match Maccy** | Hotkey and menu-bar icon, search-as-you-type, number keys, pin, delete and clear, pause and ignore-next-copy, concealed pasteboard types |
 | **First version** | Panel, preview, type recognition, filters, shortcut footer and context menu, paste-target awareness, a separate snippets list, undo on the toast, secret skip, app exclusions, source and time, duplicate folding, drag-out images and files, paused icon, first-run splash |
 | **Later wave** | Clip transforms and multi-paste, snippet boards, `{{field}}` fill-in templates, keep-open pin, compact rows, storage rules, opt-in abbreviations, local archive, on-device OCR, opt-in encrypted folder sync, Universal Clipboard toggle, Shortcuts (latest clip, search, save as snippet) |
-| **Further** | One-shot paste, named slots (⌃⌥1–5), menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, and inline result are in the app. Still open: copy bursts, per-app defaults, recording-aware privacy, a one-time Maccy history import |
+| **Further** | One-shot paste, named slots (⌃⌥1–5), menu of recent items, Frequent, edit-before-paste, split lines, line tools, length in the preview, do the obvious thing, keep the page URL, inline result, copy bursts, and skip-our-own-copies are in the app. Still open (see catalog): diff two clips, notes and snippet history, per-app defaults, selection chip, desktop widget, presenting mode, Touch ID after idle, short-code expiry, ignore patterns, large-copy cap, Maccy import, accessible panel |
 
 Daily use and the further-ideas list are next — not another later-wave checkbox.
 
@@ -78,20 +78,20 @@ Full wording and checkboxes live in the catalog. This is the map.
 | Area | Shipped | Still later |
 | --- | --- | --- |
 | **See it** | Preview pane, type recognition (text, rich text, code, link, email, color, image, file), characters / words / lines on text clips and snippets, inline result for sums / currency / unit conversion, drag-out thumbnails, source app and Today / Yesterday / Older | — |
-| **Find it** | Type, pin, and Frequent chips on history; type and pin chips on snippets; operators like `type:image`, `from:today`, `board:Support`, and `abbr:addr`; duplicate folding; on-device OCR for text inside screenshots | — |
-| **Paste it** | Return copies. Option-Return pastes. Shift-Option-Return pastes plain text. Command-Option-Return pastes once and restores the previous clipboard. Named slots (⌃⌥1–5) paste a saved register with the panel closed. Terminals get plain text. A secure field is copied, not typed into. Edit for Paste changes the preview only; Edit Clip updates the stored clip. Split lines turns a multi-line clip into one history row per line and leaves the original. A link, email, address, or date offers Open Link, Send Email, Open in Maps, or Add to Calendar. A browser selection kept with its page URL offers Paste as Markdown Link | — |
+| **Find it** | Type, pin, and Frequent chips on history; type and pin chips on snippets; operators like `type:image`, `from:today`, `board:Support`, and `abbr:addr`; duplicate folding; copy bursts (same-app copies a few seconds apart collapse into one expandable session; off while searching or on Frequent); on-device OCR for text inside screenshots | — |
+| **Paste it** | Return copies. Option-Return pastes. Shift-Option-Return pastes plain text. Command-Option-Return pastes once and restores the previous clipboard (a Settings toggle makes Option-Return do the same). Named slots (⌃⌥1–5) paste a saved register with the panel closed. Terminals get plain text. A secure field is copied, not typed into. Edit for Paste changes the preview only; Edit Clip updates the stored clip. Split lines turns a multi-line clip into one history row per line and leaves the original. A link, email, address, or date offers Open Link, Send Email, Open in Maps, or Add to Calendar. A browser selection kept with its page URL offers Paste as Markdown Link | — |
 | **Transforms** | HTML to Markdown, pretty JSON, unwrap lines, and strip tracking parameters. Line tools: uppercase, lowercase, title case, sort lines, drop duplicates, trim whitespace, and join with commas. Each copies a new version and leaves the stored clip alone | — |
 | **Multi-paste** | Several clips paste in the order they were copied, joined with a newline, a comma, or a separator you type | — |
 | **Reuse it** | Snippets live apart from history. Boards group them. `{{name}}` fields open a fill-in form before paste. Marked abbreviations expand while typing | — |
-| **Privacy** | App exclusions, Universal Clipboard toggle, secret skip, a menu-bar icon that shows pause, Mac data protection, separate text and image expiry, storage readout and trim | — |
+| **Privacy** | App exclusions, Universal Clipboard toggle, secret skip, skip-our-own-copies (pasting from Stow does not re-ingest the same clip), a menu-bar icon that shows pause, Mac data protection, separate text and image expiry, storage readout and trim | — |
 | **Window** | Library window plus a quick panel, pin to keep it open while pasting, compact or comfortable rows, one undo toast, first-run splash, hideable shortcut footer | — |
 | **Carry it** | Export and import a `.stowarchive` file you choose. Export can leave clips out; import can add new items only or replace everything. Opt-in encrypted sync through a folder you choose (history and snippets separately; secrets never sync). Shortcuts actions for latest clip, search, and save as snippet | — |
 
 ### How the window should feel
 
 - **Open.** The menu bar opens recent clips; More clips… opens the library. ⌘⇧C toggles the quick panel. Search is focused. Nothing is selected until you choose a clip.
-- **Read.** Two lines per clip: a type mark, a preview, then the source app and time. The preview pane shows the whole clip, including images. Text clips and snippets show characters, words, and lines under the transforms row. A sum, currency amount, or simple unit conversion also shows its result there; the stored clip stays unchanged.
-- **Act.** The shortcut footer lists Paste, Plain, Once, Copy, Pin, and Delete. The same actions are on the right-click menu, along with Edit Clip or Edit Snippet. A link, email, address, or date also offers Open Link, Send Email, Open in Maps, or Add to Calendar. Rows do not show those buttons.
+- **Read.** Two lines per clip: a type mark, a preview, then the source app and time. Same-app copies a few seconds apart collapse into one session you can expand and paste as a group. The preview pane shows the whole clip, including images. Text clips and snippets show characters, words, and lines under the transforms row. A sum, currency amount, or simple unit conversion also shows its result there; the stored clip stays unchanged.
+- **Act.** The shortcut footer lists Paste, Plain, Once, Copy, Pin, and Delete. The right-click menu adds Edit for Paste, Edit Clip or Edit Snippet, Save as Snippet, Split lines, and Line tools. A browser selection kept with its page URL offers Paste as Markdown Link. A link, email, address, or date also offers Open Link, Send Email, Open in Maps, or Add to Calendar. Rows do not show those buttons.
 
 ### Leave these out
 
